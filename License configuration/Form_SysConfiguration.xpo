@@ -1,0 +1,1036 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #SysConfiguration
+  PROPERTIES
+    Name                #SysConfiguration
+    Origin              #{59AABB5B-B17E-476A-B558-FA22216A95C7}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #class FormRun extends ObjectRun
+      #{
+      #    #resAppl
+      #    TmpTree                  tmpTree;
+      #    ImageListAppl_checkbox   imageList;
+      #    ConfigurationKeySet      set;
+      #    ConfigurationKeySet      originalSet;
+      #    configurationKeyId       helpKey;
+      #    Map                      helpMap;
+      #    #define.versionStr("Version")
+      #}
+    ENDSOURCE
+    SOURCE #buildTree
+      #//AOSRunMode::Client
+      #void buildTree(configurationKeyId parentKey, int parentNode, int forceId = 0)
+      #{
+      #    FormTreeItem            formTreeItem;
+      #    TmpTree                 tmpTreeTemp;
+      #    int                     node;
+      #    SysDictConfigurationKey dictKey;
+      #    ;
+      #
+      #    // For Retail SMB, only 'Retail' root key and 'Full feature set' sub-key are shown
+      #    if (RetailSMB::IsRetailSMBEnabled())
+      #    {
+      #        // Add 'Retail' root key
+      #        dictKey = new SysDictConfigurationKey(configurationKeyNum(Retail));
+      #
+      #        formTreeItem = new FormTreeItem();
+      #        //BP Deviation documented
+      #        formTreeItem.text(dictKey.label());
+      #        formTreeItem.data(dictKey.id());
+      #        formTreeItem.image(imageList.image(#ImageCheckAll));
+      #        formTreeItem.selectedImage(formTreeItem.image());
+      #        node = tree.addItem(0, 0, formTreeItem);
+      #        formTreeItem = tree.getItem(node);
+      #        formTreeItem.overlayImage(imageList.image(#ImageOverlayRedLock));
+      #        formTreeItem.children(-1);
+      #        tree.setItem(formTreeItem);
+      #
+      #        // Add 'Full feature set' sub-key
+      #        dictKey = new SysDictConfigurationKey(configurationKeyNum(RetailNonSMB));
+      #
+      #        formTreeItem = new FormTreeItem();
+      #        //BP Deviation documented
+      #        formTreeItem.text(dictKey.label());
+      #        formTreeItem.data(dictKey.id());
+      #        formTreeItem.image(imageList.image(#ImageCheckAll));
+      #        formTreeItem.children(-1);
+      #        formTreeItem.selectedImage(formTreeItem.image());
+      #        node = tree.addItem(node, 0, formTreeItem);
+      #        if (isConfigurationKeyEnabled(configurationKeyNum(RetailEssentials)))
+      #        {
+      #            formTreeItem = tree.getItem(node);
+      #            formTreeItem.overlayImage(imageList.image(#ImageOverlayRedLock));
+      #            formTreeItem.children(-1);
+      #            tree.setItem(formTreeItem);
+      #        }
+      #    }
+      #    else
+      #    {
+      #        tmpTreeTemp.setTmpData(tmpTree);
+      #
+      #        while select tmpTreeTemp
+      #            order by Name
+      #            where tmpTreeTemp.Parent == parentKey
+      #        {
+      #            if (!forceId || tmpTreeTemp.Id == forceId)
+      #            {
+      #                dictKey = new SysDictConfigurationKey(tmpTreeTemp.Id);
+      #                formTreeItem = new FormTreeItem();
+      #                //BP Deviation documented
+      #                formTreeItem.text(tmpTreeTemp.Name);
+      #                formTreeItem.children(-1);
+      #                formTreeItem.data(dictKey.id());
+      #                formTreeItem.image(imageList.image(#ImageCheckAll));
+      #                formTreeItem.selectedImage(formTreeItem.image());
+      #                node = tree.addItem(parentNode, 0, formTreeItem);
+      #
+      #                if (!dictKey.allowDisable())
+      #                {
+      #                    formTreeItem = tree.getItem(node);
+      #                    formTreeItem.overlayImage(imageList.image(#ImageOverlayRedLock));
+      #                    formTreeItem.children(-1);
+      #                    tree.setItem(formTreeItem);
+      #                }
+      #
+      #                element.buildTree(tmpTreeTemp.Id, node);
+      #            }
+      #        }
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #close
+      #void close()
+      #{
+      #    tree.lockWindowUpdate(true);
+      #    super();
+      #}
+    ENDSOURCE
+    SOURCE #closeOk
+      #void closeOk()
+      #{
+      #    if (apply.enabled())
+      #    {
+      #        element.dialogSave();
+      #    }
+      #
+      #    if (apply.enabled() == false)
+      #    {
+      #        SysCheckList::finished(classnum(SysCheckListItem_ConfigurationKey));
+      #        super();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #dialogSave
+      #void dialogSave()
+      #{
+      #    ;
+      #//    disableConfig=FALSE;
+      #//    if (this.difference(true))      //If disabled more configkeys
+      #//    {
+      #//        if (Box::yesNo("@SYS21594" + '\n\n' + "@SYS53084", DialogButton::No,"@SYS20531",'') == DialogButton::No)
+      #//        {
+      #//            return;
+      #//        }
+      #//        disableConfig=TRUE;
+      #//    }
+      #
+      #    element.save();
+      #}
+    ENDSOURCE
+    SOURCE #difference
+      #boolean difference(boolean testOnlyDisabled = false)
+      #{
+      #    int i;
+      #    configurationKeyId id;
+      #
+      #    for (i=1; i<=set.cnt(); i++)
+      #    {
+      #        id = set.cnt2Id(i);
+      #        if (testOnlyDisabled)
+      #        {
+      #            if (!set.enabled(id) && set.enabled(id) != originalSet.enabled(id))
+      #                return true;
+      #        }
+      #        else
+      #        {
+      #            if (set.enabled(id) != originalSet.enabled(id))
+      #                return true;
+      #        }
+      #    }
+      #    return false;
+      #}
+    ENDSOURCE
+    SOURCE #drawTree
+      #void drawTree(int node = tree.getRoot())
+      #{
+      #    FormTreeItem       formTreeItem = tree.getItem(node);
+      #    ;
+      #    startLengthyOperation();
+      #
+      #    while(formTreeItem)
+      #    {
+      #        if (this.enabled(formTreeItem.data()))
+      #        {
+      #            formTreeItem.image(imageList.image(#ImageCheckAll));
+      #            formTreeItem.selectedImage(imageList.image(#ImageCheckAll));
+      #        }
+      #        else
+      #        {
+      #            formTreeItem.image(imageList.image(#ImageCheckNone));
+      #            formTreeItem.selectedImage(imageList.image(#ImageCheckNone));
+      #            element.markParent(tree.getParent(node));
+      #        }
+      #
+      #        tree.setItem(formTreeItem);
+      #
+      #        if(formTreeItem.children())
+      #            element.drawTree(tree.getChild(formTreeItem.idx()));
+      #
+      #        formTreeItem = tree.getItem(tree.getNextSibling(formTreeItem.idx()));
+      #    }
+      #    tree.setFocus();
+      #}
+    ENDSOURCE
+    SOURCE #enabled
+      #boolean enabled(int id, boolean enable = set.enabled(id))
+      #{
+      #    if (!prmisdefault(enable))
+      #    {
+      #        set.enabled(id, enable);
+      #        this.updateApply();
+      #    }
+      #
+      #    return enable;
+      #}
+    ENDSOURCE
+    SOURCE #export
+      #void export()
+      #{
+      #    TextIo     exportFile;
+      #    Filename    filename;
+      #    int         i;
+      #    container   filter;
+      #    Filename        path;
+      #    Filename        tempName;
+      #    Filename        ext;
+      #    #file
+      #
+      #    DictConfigurationKey dictConfigurationKey;
+      #    ;
+      #
+      #    filter   = [#cfgType, #AllFilesName+#cfg];
+      #    filename = WinAPI::getSaveFileName(element.hWnd(), filter, xInfo::directory(DirectoryType::Config), "@SYS26059");
+      #
+      #    [path, tempName, ext] = fileNameSplit(filename);
+      #
+      #    if (tempName)
+      #    {
+      #        startLengthyOperation();
+      #
+      #        exportFile = new TextIo(filename, #io_write);
+      #        exportFile.write(strfmt('%1 %2', #VersionStr, xInfo::releaseVersion()));
+      #        exportFile.outFieldDelimiter('\t// ');
+      #
+      #        for (i=1; i<=set.cnt(); i++)
+      #        {
+      #            dictConfigurationKey = new DictConfigurationKey(set.cnt2Id(i));
+      #            if (set.touchedByUser(dictConfigurationKey.id()) && !set.enabled(dictConfigurationKey.id()))
+      #                exportFile.write(dictConfigurationKey.id(), dictConfigurationKey.label());
+      #        }
+      #    }
+      #    tree.setFocus();
+      #}
+    ENDSOURCE
+    SOURCE #import
+      #void import(Filename filename = '')
+      #{
+      #    TextIo            importFile;
+      #    container          readContainer;
+      #    configurationKeyId id;
+      #    Name               name;
+      #    container          filter;
+      #
+      #    Filename           path;
+      #    Filename           tempName;
+      #    Filename           ext;
+      #    str                version;
+      #
+      #    #file
+      #    #define.versionStr('Version');
+      #
+      #    [path, tempName, ext] = fileNameSplit(filename);
+      #
+      #    if(!tempName)
+      #    {
+      #        filter += [#cfgType, #AllFilesName+#cfg];
+      #        filename = WinAPI::getOpenFileName(element.hWnd(), filter, xInfo::directory(DirectoryType::Config), "@SYS26059", #cfg);
+      #    }
+      #
+      #    [path, tempName, ext] = fileNameSplit(filename);
+      #
+      #    if(tempName)
+      #        importFile = new TextIo(filename, #io_Read);
+      #
+      #    if(importFile)
+      #    {
+      #        if(!importFile.status())
+      #        {
+      #            startLengthyOperation();
+      #            set = new ConfigurationKeySet();
+      #            [version] = importFile.read();
+      #            if (substr(version,1,strlen(#versionStr)) != #VersionStr)
+      #                throw error("@SYS71036");
+      #
+      #            importFile.inFieldDelimiter('\t// ');
+      #            readContainer       = importFile.read();
+      #            while(readContainer)
+      #            {
+      #                [id, name]    = readContainer;
+      #                if(id)
+      #                    set.enabled(id, false);
+      #                readContainer = importFile.read();
+      #            }
+      #            element.drawTree();
+      #            element.updateApply();
+      #        }
+      #    }
+      #
+      #    tree.setFocus();
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #void init()
+      #{
+      #    super();
+      #
+      #    if (element.args().parm())
+      #        tree.linesAtRoot(false);
+      #
+      #    imageList = new ImageListAppl_checkbox();
+      #    tmpTree   = SysDictConfigurationKey::getTree();
+      #    tree.setImagelist(imageList.imageList());
+      #}
+    ENDSOURCE
+    SOURCE #WIK_setElement
+      #public void WIK_setElement()
+      #{
+      #    int                     idx             = Tree.getSelection();
+      #    FormTreeItem            node            = Tree.getItem(idx);
+      #    boolean                 isValidLicense  = node && !node.overlayImage();
+      #    ConfigurationKeyName    configKeyName;
+      #
+      #    SysModelElement     elementNode;
+      #    SysModelElementData elementData;
+      #    SysModelManifest    model;
+      #    SysModelLayer       layer;
+      #
+      #    if (isValidLicense)
+      #    {
+      #        configKeyName = configurationkeyId2Name(Tree.getItem(idx).data());
+      #
+      #        select firstOnly Name from model
+      #            join elementNode
+      #                where  elementNode.Name         == configKeyName
+      #                    && elementNode.ElementType  == UtilElementType::ConfigurationKey
+      #            join elementData
+      #                where  elementData.ModelElement == elementNode.RecId
+      #                    && model.Model              == elementData.ModelId
+      #            join Layer from layer
+      #                where layer.RecId   == elementData.Layer;
+      #    }
+      #
+      #    WIK_LicenseConfig.text(isValidLicense ? configKeyName : '');
+      #    WIK_LicenseLayer.text(isValidLicense ? enum2Symbol(enumNum(UtilEntryLevel), layer.Layer) : '');
+      #    WIK_LicenseModel.text(isValidLicense ? model.Name : '');
+      #}
+    ENDSOURCE
+    SOURCE #load
+      #void load()
+      #{
+      #    startLengthyOperation();
+      #
+      #    set         = new ConfigurationKeySet();
+      #    set.loadSystemSetup();
+      #    originalSet = new ConfigurationKeySet(set.pack());
+      #
+      #    tree.lockWindowUpdate(true);
+      #    element.drawTree();
+      #    tree.lockWindowUpdate(false);
+      #    tree.setFocus();
+      #}
+    ENDSOURCE
+    SOURCE #markParent
+      #void markParent(int node)
+      #{
+      #    FormTreeItem    formTreeItem;
+      #    boolean         enabled;
+      #
+      #    if (node)
+      #    {
+      #        formTreeItem = tree.getItem(node);
+      #        enabled      = this.enabled(formTreeItem.data());
+      #        if(enabled)
+      #        {
+      #            formTreeItem.image(imageList.image(#ImageCheckSome));
+      #            formTreeItem.selectedImage(imageList.image(#ImageCheckSome));
+      #        }
+      #        tree.setItem(formTreeItem);
+      #        element.markParent(tree.getParent(node));
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #run
+      #void run()
+      #{
+      #    DictConfigurationKey dictConfigurationKey;
+      #
+      #    startLengthyOperation();
+      #
+      #    tree.deleteAll();
+      #
+      #    if (element.args().parm())
+      #    {
+      #        dictConfigurationKey = new DictConfigurationKey(configurationKeyName2Id(element.args().parm()));
+      #        if ( dictConfigurationKey )
+      #        {
+      #            element.design().caption(strfmt('%1 - %2', element.design().caption(), dictConfigurationKey.label()));
+      #        }
+      #        tools.visible(false);
+      #    }
+      #    element.buildTree(0, 0, (dictConfigurationKey?dictConfigurationKey.id():0));
+      #
+      #    if ( dictConfigurationKey )
+      #    {
+      #        tree.expand(tree.getRoot());
+      #    }
+      #
+      #    element.load();
+      #    element.drawTree();
+      #    tree.select(tree.getRoot());
+      #    tree.selectSetFirstVisible(tree.getRoot());
+      #    super();
+      #    tree.setFocus();
+      #}
+    ENDSOURCE
+    SOURCE #save
+      #void save()
+      #{
+      #
+      #    // if disabling, ask user to approve first
+      #    // if user cancels, nothing should be saved
+      #    if (this.validate())
+      #    {
+      #        SysDictConfigurationKey::save(set.pack());
+      #        originalSet = new ConfigurationKeySet(set.pack());
+      #        this.updateApply();
+      #
+      #        SysSecurity::reload(true, true, true);
+      #        element.drawTree();
+      #        tree.setFocus();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #updateApply
+      #void updateApply()
+      #{
+      #    apply.enabled(this.difference());
+      #}
+    ENDSOURCE
+    SOURCE #validate
+      #boolean validate()
+      #{
+      #    int                 i;
+      #    configurationKeyId  id;
+      #    SysRemoveLicense    remLic;
+      #    SysRemoveConfig     remConf;
+      #    DictConfigurationKey    dictConfigurationKey;
+      #    int                 confCount = 0;
+      #    FormRun             confirmForm;
+      #    Args                args    = new Args(formstr(SysLicenseCompareForm));
+      #
+      #
+      #    delete_from remLic;
+      #    delete_from remConf;
+      #
+      #    for (i=1; i<=set.cnt(); i++)
+      #    {
+      #        id = set.cnt2Id(i);
+      #        if (!set.enabled(id) && originalSet.enabled(id))
+      #        {
+      #            // insert into SysRemoveConfig table
+      #            remConf.ConfigKey = id;
+      #            dictConfigurationKey = new DictConfigurationKey(id);
+      #            remConf.KeyDescription = dictConfigurationKey.label();
+      #
+      #            remConf.insert();
+      #            confCount++;
+      #        }
+      #    }
+      #
+      #    // if we are diabling config key, show the impact to user
+      #    if (confCount > 0 )
+      #    {
+      #        confirmForm = classfactory.formRunClass(args);
+      #
+      #        confirmForm.init();
+      #        confirmForm.run();
+      #        confirmForm.wait();
+      #
+      #        if ( confirmForm.closedCancel() )
+      #            return false;
+      #    }
+      #
+      #    return true;
+      #
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #SysConfig
+          Table               #SysConfig
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #SqlDictionary
+          Table               #SqlDictionary
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #sysRemoveFields
+          Table               #SysRemoveFields
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #sysRemoveTables
+          Table               #SysRemoveTables
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Width               #Column width
+      Height              #Column height
+      Caption             #@SYS336364
+      WindowResize        #Dynamic
+      HideToolbar         #Yes
+      SetCompany          #No
+      Columns             #2
+      ArrangeGuide        
+        ARRAY INDEX Columns 
+          #0
+          #0
+        ENDARRAY
+      HideIfEmpty         #No
+      StatusBarStyle      #None
+      ViewEditMode        #Edit
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ButtonGroup1
+          Left                #Auto (right)
+          Top                 #Bottom edge
+          ElementPosition     #1431655764
+          ArrangeMethod       #Horizontal, flush right
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #Tools
+          AutoDeclaration     #Yes
+          ElementPosition     #2013265918
+          HierarchyParent     #AllGrp
+          LeftMargin          #8
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #AllGrp
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #715827882
+          Columns             #3
+          Columnspace         #0
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #WIK_LicenseDetails
+          AllowEdit           #No
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1543503870
+          HierarchyParent     #AllGrp
+          LeftMargin          #10
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #Apply
+          AutoDeclaration     #Yes
+          Enabled             #No
+          HelpText            #@SYS94283
+          ElementPosition     #1879048190
+          HierarchyParent     #ButtonGroup1
+          Text                #@SYS24973
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    element.dialogSave();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #Default
+          HelpText            #@SYS94282
+          ElementPosition     #1879048190
+          HierarchyParent     #Tools
+          Text                #@SYS9490
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    if (Box::yesNo("@SYS26854",DialogButton::No) == DialogButton::Yes)
+            #    {
+            #        set = new ConfigurationKeySet();
+            #        SysDictConfigurationKey::saveMinimizedConfiguration(set);
+            #        element.drawTree();
+            #    }
+            #    super();
+            #
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #Export
+          HelpText            #@SYS94280
+          ElementPosition     #1610612734
+          HierarchyParent     #Tools
+          Text                #@SYS14863
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    element.export();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #Import
+          HelpText            #@SYS94281
+          ElementPosition     #1073741823
+          HierarchyParent     #Tools
+          Text                #@SYS1052
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    element.import();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #Cancel
+          ElementPosition     #1610612734
+          HierarchyParent     #ButtonGroup1
+          Text                #@SYS57717
+          Command             #264
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #OK
+          ElementPosition     #1073741823
+          HierarchyParent     #ButtonGroup1
+          Text                #@SYS5473
+          Command             #263
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WIK_LicenseConfig
+          AutoDeclaration     #Yes
+          Width               #Column width
+          ElementPosition     #858993458
+          HierarchyParent     #WIK_LicenseDetails
+          Label               #@SYS336364
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WIK_LicenseLayer
+          AutoDeclaration     #Yes
+          ElementPosition     #1288490187
+          HierarchyParent     #WIK_LicenseDetails
+          Label               #@SYS56472
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WIK_LicenseModel
+          AutoDeclaration     #Yes
+          ElementPosition     #1717986916
+          HierarchyParent     #WIK_LicenseDetails
+          Label               #@SYS9923
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TREE
+        PROPERTIES
+          Name                #Tree
+          Width               #300
+          Height              #Column height
+          VerticalSpacing     #0
+          ElementPosition     #1073741823
+          HierarchyParent     #AllGrp
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #keyDown
+            #boolean keyDown(int vKey, boolean ctrl, boolean shift)
+            #{
+            #    FormTreeItem        parentNode, node;
+            #    int                 parentMode;
+            #    boolean             enabled;
+            #    int                 idx;
+            #
+            #    if (vKey == 32)
+            #    {
+            #        idx         = this.getSelection();
+            #        parentNode  = this.getItem(this.getParent(idx));
+            #        node        = this.getItem(idx);
+            #
+            #        if (node)
+            #        {
+            #            if(parentNode)
+            #            {
+            #                if (element.enabled(parentNode.data()))
+            #                    parentMode = true;
+            #            }
+            #            else
+            #                parentMode  = true;
+            #
+            #            if (parentMode)
+            #            {
+            #                if (!node.overlayImage())
+            #                {
+            #                    enabled = (element.enabled(this.getItem(idx).data()) ? false : true);
+            #                    element.enabled(this.getItem(idx).data(), enabled);
+            #                    element.drawTree();
+            #                }
+            #                return 1;
+            #            }
+            #        }
+            #    }
+            #    return super(vKey, ctrl, shift);
+            #}
+            #
+          ENDSOURCE
+          SOURCE #mouseDown
+            #int mouseDown(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int idx,f;
+            #
+            #    FormTreeItem        parentNode, node;
+            #    int                 parentMode;
+            #    boolean             enabled;
+            #    #FormTreeControl;
+            #
+            #    [idx,f] = this.hitTest(x,y);
+            #
+            #    parentNode  = this.getItem(this.getParent(idx));
+            #    node        = this.getItem(idx);
+            #
+            #    if (node)
+            #    {
+            #        if(parentNode)
+            #        {
+            #            if (element.enabled(parentNode.data()))
+            #                parentMode = true;
+            #        }
+            #        else
+            #            parentMode  = true;
+            #
+            #        if ((f & #FTCHT_ONITEMICON) && parentMode)
+            #        {
+            #            if (!node.overlayImage())
+            #            {
+            #                enabled = (element.enabled(this.getItem(idx).data()) ? false : true);
+            #                element.enabled(this.getItem(idx).data(), enabled);
+            #                element.drawTree();
+            #            }
+            #            return 1;
+            #        }
+            #    }
+            #    return super(x, y, button, ctrl, shift);
+            #}
+            #
+          ENDSOURCE
+          SOURCE #selectionChanged
+            #void selectionChanged(FormTreeItem oldItem, FormTreeItem newItem, FormTreeSelect how)
+            #{
+            #
+            #    super(oldItem, newItem, how);
+            #    this.setFocus();
+            #
+            #    element.WIK_setElement();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+  ASSOCIATEDFORM #SysLicenseCompareForm
+    PROPERTIES
+      Form                #SysLicenseCompareForm
+      AccessLevel         #Read
+      SystemManaged       #No
+      ManagedBy           #Manual
+    ENDPROPERTIES
+    
+  ENDASSOCIATEDFORM
+  
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+  ASSOCIATEDFORM #SysLicenseCompareForm
+    PROPERTIES
+      Form                #SysLicenseCompareForm
+      AccessLevel         #Update
+      SystemManaged       #No
+      ManagedBy           #Manual
+    ENDPROPERTIES
+    
+  ENDASSOCIATEDFORM
+  
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+  ASSOCIATEDFORM #SysLicenseCompareForm
+    PROPERTIES
+      Form                #SysLicenseCompareForm
+      AccessLevel         #Create
+      SystemManaged       #No
+      ManagedBy           #Manual
+    ENDPROPERTIES
+    
+  ENDASSOCIATEDFORM
+  
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+  SERVERMETHOD #SysSetupInstaller.loadAllData
+    PROPERTIES
+      Class               #SysSetupInstaller
+      Method              #loadAllData
+      EffectiveAccess     #Invoke
+      ManagedBy           #Manual
+    ENDPROPERTIES
+    
+  ENDSERVERMETHOD
+  
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+  ASSOCIATEDFORM #SysLicenseCompareForm
+    PROPERTIES
+      Form                #SysLicenseCompareForm
+      AccessLevel         #Delete
+      SystemManaged       #No
+      ManagedBy           #Manual
+    ENDPROPERTIES
+    
+  ENDASSOCIATEDFORM
+  
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: END
