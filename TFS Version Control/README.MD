@@ -1,4 +1,3 @@
-Microsoft Dynamics AX 2012 R3
 Improved TFS Version Control tools
 
 Description available on the DAXRunBase Blog:
