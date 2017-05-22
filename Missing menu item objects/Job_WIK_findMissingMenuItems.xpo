@@ -1,0 +1,65 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_findMissingMenuItems unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_findMissingMenuItems
+    #static void WIK_findMissingMenuItems(Args _args)
+    #{
+    #    #AOT
+    #    #Properties
+    #
+    #    SysModelElement     element;
+    #    SysModelElementData data;
+    #    TreeNode            node;
+    #    TreeNodePath        path;
+    #    UtilElementType     type;
+    #
+    #    while select element
+    #        order by ElementType
+    #        where (element.ElementType == UtilElementType::DisplayTool
+    #            || element.ElementType == UtilElementType::OutputTool
+    #            || element.ElementType == UtilElementType::ActionTool)
+    #        exists join data
+    #            where  data.Layer           >= UtilEntryLevel::isv
+    #                && data.ModelElement    == element.RecId
+    #    {
+    #        node = TreeNode::findNode(SysTreeNode::modelElement2Path(element));
+    #        switch (str2enum(type, node.AOTgetProperty(#PropertyObjectType)))
+    #        {
+    #            case UtilElementType::SSRSReport :
+    #                path = #SSRSReportsPath;
+    #                break;
+    #            case UtilElementType::Report :
+    #                path = #ReportsPath;
+    #                break;
+    #            case UtilElementType::Class :
+    #                path = #ClassesPath;
+    #                break;
+    #            case UtilElementType::Form :
+    #                path = #FormsPath;
+    #                break;
+    #            case UtilElementType::InfoPart :
+    #                path = #InfoPartsPath;
+    #                break;
+    #            default :
+    #                path = '';
+    #        }
+    #        path = path + #AOTDelimiter + node.AOTgetProperty(#PropertyObject);
+    #        if (!TreeNode::findNode(path))
+    #        {
+    #            warning(strFmt('%1 - missing for %2', path, node.treeNodePath()));
+    #        }
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{FD94D1AF-FE63-4671-BE1F-16BC56070B6A}
+  ENDPROPERTIES
+  
+
+***Element: END
