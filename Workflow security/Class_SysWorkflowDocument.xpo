@@ -1,0 +1,551 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysWorkflowDocument unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysWorkflowDocument
+    PROPERTIES
+      Name                #SysWorkflowDocument
+      Origin              #{2D130000-0000-1000-5EB5-1E8BABE2F2D3}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #assertPermission
+        #/// <summary>
+        #/// Microsoft internal use only.
+        #/// </summary>
+        #/// <returns>
+        #/// A Boolean value.
+        #/// </returns>
+        #public boolean assertPermission()
+        #{
+        #    SysWorkflowDocument sysWorkflowDocument;
+        #    container packedDocument;
+        #
+        #    setPrefix(classStr(SysWorkflowDocument) + '-' + methodStr(SysWorkflowDocument, assertPermission));
+        #
+        #    packedDocument = SysWorkflowDocument::assert(this.pack());
+        #    sysWorkflowDocument = SysWorkflowDocument::create(packedDocument);
+        #
+        #    this.parmHasAsserted(sysWorkflowDocument.parmHasAsserted());
+        #    this.parmHasPermission(sysWorkflowDocument.parmHasPermission());
+        #    this.parmDocument(sysWorkflowDocument.parmDocument());
+        #
+        #    return this.parmHasPermission();
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+        #public final class SysWorkflowDocument implements SysPackable
+        #{
+        #    menuItemName actionMenuItem;
+        #    menuItemName displayMenuItem;
+        #    menuItemName webActionMenuItem;
+        #    menuItemName webDisplayMenuItem;
+        #    WorkflowUser user;
+        #    WorkflowContext workflowContext;
+        #    workflowTypeName template;
+        #    container documentContainer;
+        #    Common document;
+        #    boolean hasAsserted;
+        #    boolean hasPermission;
+        #    container workflowContextPacked;
+        #
+        #    #DEFINE.CurrentVersion(1)
+        #    #LOCALMACRO.ParmList
+        #        actionMenuItem,
+        #        displayMenuItem,
+        #        webActionMenuItem,
+        #        webDisplayMenuItem,
+        #        user,
+        #        workflowContext%1,
+        #        template,
+        #        documentContainer,
+        #        hasAsserted,
+        #        hasPermission
+        #    #ENDMACRO
+        #}
+      ENDSOURCE
+      SOURCE #getDocument
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <returns>A <c>Common</c> record.</returns>
+        #public Common getDocument()
+        #{
+        #    setPrefix(classStr(SysWorkflowDocument) + '-' + methodStr(SysWorkflowDocument, getDocument));
+        #
+        #    if (!this.parmHasAsserted())
+        #    {
+        #        this.assertPermission();
+        #    }
+        #
+        #    return this.parmDocument();
+        #}
+      ENDSOURCE
+      SOURCE #getUser
+        #/// <summary>
+        #/// Microsoft internal use only.
+        #/// </summary>
+        #/// <returns>
+        #/// A <c>WorkflowUser</c> value.
+        #/// </returns>
+        #public WorkflowUser getUser()
+        #{
+        #    return this.parmUser();
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #protected void new()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #pack
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <returns>A container</returns>
+        #public container pack()
+        #{
+        #    documentContainer = buf2Con(document);
+        #    return [#CurrentVersion, #ParmList(.pack())];
+        #}
+      ENDSOURCE
+      SOURCE #parmActionMenuItem
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_actionMenuItem">A <c>menuItemName</c> Extended Data Type.</param>
+        #/// <returns>A <c>menuItemName</c> Extended Data Type.</returns>
+        #public menuItemName parmActionMenuItem(menuItemName _actionMenuItem = actionMenuItem)
+        #{
+        #    actionMenuItem = _actionMenuItem;
+        #
+        #    return actionMenuItem;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmDisplayMenuItem
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_displayMenuItem">A <c>menuItemName</c> Extended Data Type.</param>
+        #/// <returns>A <c>menuItemName</c> Extended Data Type.</returns>
+        #public menuItemName parmDisplayMenuItem(menuItemName _displayMenuItem = displayMenuItem)
+        #{
+        #    displayMenuItem = _displayMenuItem;
+        #
+        #    return displayMenuItem;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmDocument
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_document">A <c>Common</c> record.</param>
+        #/// <returns>A <c>Common</c> record.</returns>
+        #private Common parmDocument(Common _document = document)
+        #{
+        #    document = _document;
+        #
+        #    return document;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmHasAsserted
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_hasAsserted">A <c>boolean</c> Enumeration Type.</param>
+        #/// <returns>A <c>boolean</c> Enumeration Type.</returns>
+        #private boolean parmHasAsserted(boolean _hasAsserted = hasAsserted)
+        #{
+        #    hasAsserted = _hasAsserted;
+        #
+        #    return hasAsserted;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmHasPermission
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_hasPermission">A <c>boolean</c> Enumeration Type.</param>
+        #/// <returns>A <c>boolean</c> Enumeration Type.</returns>
+        #private boolean parmHasPermission(boolean _hasPermission = hasPermission)
+        #{
+        #    hasPermission = _hasPermission;
+        #
+        #    return hasPermission;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmTemplate
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_template">A <c>workflowTypeName</c> Extended Data Type.</param>
+        #/// <returns>A <c>workflowTypeName</c> Extended Data Type.</returns>
+        #public workflowTypeName parmTemplate(workflowTypeName _template = template)
+        #{
+        #    template = _template;
+        #
+        #    return template;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmUser
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_user">A <c>WorkflowUser</c> Extended Data Type.</param>
+        #/// <returns>A <c>WorkflowUser</c> Extended Data Type.</returns>
+        #private WorkflowUser parmUser(WorkflowUser _user = user)
+        #{
+        #    user = _user;
+        #
+        #    return user;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmWebActionMenuItem
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_webActionMenuItem">A <c>menuItemName</c> Extended Data Type.</param>
+        #/// <returns>A <c>menuItemName</c> Extended Data Type.</returns>
+        #public menuItemName parmWebActionMenuItem(menuItemName _webActionMenuItem = webActionMenuItem)
+        #{
+        #    webActionMenuItem = _webActionMenuItem;
+        #
+        #    return webActionMenuItem;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmWebDisplayMenuItem
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_webDisplayMenuItem">A <c>menuItemName</c> Extended Data Type.</param>
+        #/// <returns>A <c>menuItemName</c> Extended Data Type.</returns>
+        #public menuItemName parmWebDisplayMenuItem(menuItemName _webDisplayMenuItem = webDisplayMenuItem)
+        #{
+        #    webDisplayMenuItem = _webDisplayMenuItem;
+        #
+        #    return webDisplayMenuItem;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmWorkflowContext
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_workflowContext">An instance of the <c>WorkflowContext</c> class.</param>
+        #/// <returns>An instance of the <c>WorkflowContext</c> class.</returns>
+        #public WorkflowContext parmWorkflowContext(WorkflowContext _workflowContext = workflowContext)
+        #{
+        #    workflowContext = _workflowContext;
+        #
+        #    return workflowContext;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #unpack
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_packedClass">A container</param>
+        #/// <returns>A <c>boolean</c> Enumeration Type.</returns>
+        #boolean unpack(container _packedClass)
+        #{
+        #    int version = RunBase::getVersion(_packedClass);
+        #
+        #    switch (version)
+        #    {
+        #        case #CurrentVersion  :
+        #            [version, #ParmList(Packed)] = _packedClass;
+        #            document = con2Buf(documentContainer);
+        #            break;
+        #        default :
+        #            return false;
+        #    }
+        #
+        #    if (conLen(workflowContextPacked) > 1)
+        #    {
+        #        workflowContext = WorkflowContext::create(workflowContextPacked);
+        #    }
+        #
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #assert
+        #/// <summary>
+        #/// Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_sysWorkflowDocument">
+        #/// A container.
+        #/// </param>
+        #/// <returns>
+        #/// A container.
+        #/// </returns>
+        #private server static container assert(
+        #    container _sysWorkflowDocument)
+        #{
+        #    Common rec;
+        #    UserInfo userInfo;
+        #    container args;
+        #    container result;
+        #    container recContainer;
+        #    WorkflowUser user;
+        #    SysWorkflowDocument sysWorkflowDocument;
+        #    boolean permission = false;
+        #
+        #    setPrefix(classStr(SysWorkflowDocument) + '-' + staticMethodStr(SysWorkflowDocument, assert));
+        #
+        #    sysWorkflowDocument = SysWorkflowDocument::create(_sysWorkflowDocument);
+        #
+        #    rec.clear();
+        #    user = sysWorkflowDocument.parmUser();
+        #
+        #    select firstonly Enable from userInfo where userInfo.Id == user;
+        #    if (userInfo && userInfo.Enable)
+        #    {
+        #        args = [sysWorkflowDocument.pack()];
+        #        // Only perform a RunAs if user is different then current user
+        #        if (user == curUserId())
+        #        {
+        #            result = SysWorkflowDocument::assertAsUser(args);
+        #        }
+        #        else
+        #        {
+        #            new RunAsPermission(user).assert();
+        #            // BP deviation documented
+        #            result = runAs(user, classNum(SysWorkflowDocument), staticMethodStr(SysWorkflowDocument, assertAsUser), args);
+        #            CodeAccessPermission::revertAssert();
+        #        }
+        #        [permission, recContainer] = result;
+        #        rec = con2Buf(recContainer);  // con2Buf() needed to support unpacking buffers participating in SC/sc hierarchies
+        #        sysWorkflowDocument.parmHasAsserted(true);
+        #        sysWorkflowDocument.parmHasPermission(permission);
+        #        sysWorkflowDocument.parmDocument(rec);
+        #    }
+        #    else
+        #    {
+        #        throw error(strFmt("@SYS119264", user));
+        #    }
+        #
+        #    return sysWorkflowDocument.pack();
+        #}
+      ENDSOURCE
+      SOURCE #assertAsUser
+        #/// <summary>
+        #/// Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_args">
+        #/// A container.
+        #/// </param>
+        #/// <returns>
+        #/// A container.
+        #/// </returns>
+        #private server static container assertAsUser(
+        #    container _args)
+        #{
+        #    QueryRun queryRun;
+        #    Common rec;
+        #    container packedWorkflowPermission;
+        #    SysWorkflowDocument workflowPermission;
+        #    boolean permission = false;
+        #
+        #    setPrefix(classStr(SysWorkflowDocument) + '-' + staticMethodStr(SysWorkflowDocument, assertAsUser));
+        #
+        #    [packedWorkflowPermission] = _args;
+        #    workflowPermission = SysWorkflowDocument::create(packedWorkflowPermission);
+        #
+        #    // assert menu items
+        #    if (workflowPermission.parmActionMenuItem())
+        #    {
+        #        permission = SysWorkflowDocument::assertMenuItem(workflowPermission.parmActionMenuItem(), MenuItemType::Action);
+        #        if (!permission)
+        #        {
+        #            error(strFmt('Entry point %1', workflowPermission.parmActionMenuItem()));
+        #            return [permission, buf2Con(rec)]; // buf2Con() needed to support packing buffers participating in SC/sc hierarchies
+        #        }
+        #    }
+        #
+        #    if (workflowPermission.parmWebActionMenuItem())
+        #    {
+        #        permission = SysWorkflowDocument::assertWebMenuItem(workflowPermission.parmWebActionMenuItem(), WebMenuItemType::Action);
+        #        if (!permission)
+        #        {
+        #            error(strFmt('Entry point %1', workflowPermission.parmWebActionMenuItem()));
+        #            return [permission, buf2Con(rec)]; // buf2Con() needed to support packing buffers participating in SC/sc hierarchies
+        #        }
+        #    }
+        #
+        #    if (workflowPermission.parmDisplayMenuItem())
+        #    {
+        #        permission = SysWorkflowDocument::assertMenuItem(workflowPermission.parmDisplayMenuItem(), MenuItemType::Display);
+        #        if (!permission)
+        #        {
+        #            error(strFmt('Entry point %1', workflowPermission.parmDisplayMenuItem()));
+        #            return [permission, buf2Con(rec)]; // buf2Con() needed to support packing buffers participating in SC/sc hierarchies
+        #        }
+        #    }
+        #
+        #    if (workflowPermission.parmWebDisplayMenuItem())
+        #    {
+        #        permission = SysWorkflowDocument::assertWebMenuItem(workflowPermission.parmWebDisplayMenuItem(), WebMenuItemType::Url);
+        #        if (!permission)
+        #        {
+        #            error(strFmt('Entry point %1', workflowPermission.parmWebDisplayMenuItem()));
+        #            return [permission, buf2Con(rec)]; // buf2Con() needed to support packing buffers participating in SC/sc hierarchies
+        #        }
+        #    }
+        #
+        #    // assert document
+        #    permission = false;
+        #    queryRun = SysWorkflowHelper::getDocumentQueryRun(workflowPermission.parmWorkflowContext(), workflowPermission.parmTemplate());
+        #    rec = queryRun.get(workflowPermission.parmWorkflowContext().parmTableId());
+        #
+        #    if (rec)
+        #    {
+        #        permission = true;
+        #    }
+        #    else
+        #    {
+        #        error("@SYS344503");
+        #    }
+        #
+        #    return [permission, buf2Con(rec)]; // buf2Con() needed to support packing buffers participating in SC/sc hierarchies
+        #}
+      ENDSOURCE
+      SOURCE #assertMenuItem
+        #/// <summary>
+        #/// Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_name">
+        #/// A <c>menuName</c> value.
+        #/// </param>
+        #/// <param name="_type">
+        #/// A <c>MenuItemType</c> enumeration value.
+        #/// </param>
+        #/// <returns>
+        #/// A Boolean value.
+        #/// </returns>
+        #private server static boolean assertMenuItem(
+        #    menuName _name,
+        #    MenuItemType _type)
+        #{
+        #    boolean ret = false;
+        #    SecurityRights securityRights;
+        #
+        #    securityRights = SecurityRights::construct();
+        #
+        #    ret = securityRights.menuItemAccessRight(_type == MenuItemType::Display ? SecurableType::MenuItemDisplay : SecurableType::MenuItemAction, _name, '') > AccessRight::NoAccess;
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #assertWebMenuItem
+        #/// <summary>
+        #/// Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_name">
+        #/// A <c>menuName</c> value.
+        #/// </param>
+        #/// <param name="_type">
+        #/// A <c>WebMenuItemType</c> enumeration value.
+        #/// </param>
+        #/// <returns>
+        #/// A <c>boolean</c> enumeration value.
+        #/// </returns>
+        #private server static boolean assertWebMenuItem(
+        #    menuName _name,
+        #    WebMenuItemType _type)
+        #{
+        #    boolean ret = false;
+        #    SecurityRights securityRights;
+        #
+        #    securityRights = SecurityRights::construct();
+        #
+        #    ret = securityRights.menuItemAccessRight(_type == WebMenuItemType::Url ? SecurableType::WebUrlItem : SecurableType::WebActionItem, _name, '') > AccessRight::NoAccess;
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #construct
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <returns>An instance of the <c>SysWorkflowDocument</c> class.</returns>
+        #public static SysWorkflowDocument construct()
+        #{
+        #    return new SysWorkflowDocument();
+        #}
+      ENDSOURCE
+      SOURCE #create
+        #/// <summary>
+        #/// Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_packedClass">
+        #/// A container.
+        #/// </param>
+        #/// <returns>
+        #/// An instance of the <c>SysWorkflowDocument</c> class.
+        #/// </returns>
+        #public static SysWorkflowDocument create(container _packedClass)
+        #{
+        #    SysWorkflowDocument sysWorkflowDocument;
+        #
+        #    sysWorkflowDocument = SysWorkflowDocument::construct();
+        #    if (sysWorkflowDocument.unpack(_packedClass))
+        #    {
+        #        return sysWorkflowDocument;
+        #    }
+        #
+        #    return null;
+        #}
+      ENDSOURCE
+      SOURCE #newDocument
+        #/// <summary>
+        #/// MicrosoftMicrosoft internal use only.
+        #/// </summary>
+        #/// <param name="_workflowContext">
+        #/// An instance of the <c>WorkflowContext</c> class.
+        #/// </param>
+        #/// <param name="_template">
+        #/// A <c>workflowTypeName</c> value.
+        #/// </param>
+        #/// <param name="_user">
+        #/// A <c>WorkflowUser</c> value.
+        #/// </param>
+        #/// <returns>
+        #/// An instance of the <c>SysWorkflowDocument</c> class.
+        #/// </returns>
+        #public static SysWorkflowDocument newDocument(
+        #    WorkflowContext _workflowContext,
+        #    workflowTypeName _template,
+        #    WorkflowUser _user)
+        #{
+        #    SysWorkflowDocument permission;
+        #
+        #    permission =  new SysWorkflowDocument();
+        #    permission.parmWorkflowContext(_workflowContext);
+        #    permission.parmTemplate(_template);
+        #    permission.parmUser(_user);
+        #
+        #    return permission;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

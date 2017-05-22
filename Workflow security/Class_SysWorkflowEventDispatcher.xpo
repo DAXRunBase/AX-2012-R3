@@ -1,0 +1,683 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysWorkflowEventDispatcher unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysWorkflowEventDispatcher
+    PROPERTIES
+      Name                #SysWorkflowEventDispatcher
+      RunOn               #Server
+      Origin              #{2D1A1D95-0000-1000-8A97-B45FE648BDA8}
+      LegacyId            #7573
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// Microsoft internal use only.
+        #/// </summary>
+        #/// <remarks>
+        #/// The methods that begin with "on" simulate a publish or subscribe programming model by an event
+        #/// dispatcher for each workflow event. The dispatchers explicitly invoke the code of the
+        #/// subscriber.The dispatchers execute in the transaction context of the transaction of the caller.
+        #/// Therefore, subscribers execute in the transaction of the caller. If the caller is not in a
+        #/// transaction, the subscribers execute in the context of the transaction of the dispatcher and
+        #/// subscribers can stop the transaction.
+        #/// </remarks>
+        #// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+        #public final class SysWorkflowEventDispatcher
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #onWorkflowFault
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_context">
+        #///    An instance of the <c>WorkflowContext</c> class.
+        #/// </param>
+        #/// <param name="_user">
+        #///    The <c>WorkflowUser</c> value that identifies the workflow user.
+        #/// </param>
+        #/// <param name="_faultMessage">
+        #///    The <c>WorkflowFaultMessage</c> text.
+        #/// </param>
+        #/// <remarks>
+        #///    Faults the workflow graph when either the root or sub-workflow has a fault; the workflow triggering
+        #///    the fault is identified by the <paramref name="_correlation" /> parameter.
+        #/// </remarks>
+        #/// <exception cref="M:Exception::Error">
+        #///    The <paramref name="_correlation" /> parameter cannot be null.
+        #/// </exception>
+        #/// <exception cref="M:Exception::Error">
+        #///    The <paramref name="_activityInstanceKey" /> parameter cannot be null.
+        #/// </exception>
+        #/// <exception cref="M:Exception::Error">
+        #///    Failed to find the root workflow.
+        #/// </exception>
+        #public server static void onWorkflowFault(
+        #    WorkflowContext _context,
+        #    WorkflowUser _user,
+        #    WorkflowFaultMessage _faultMessage)
+        #{
+        #    UserConnection connection;
+        #    SysWorkflowFaultTable faultTable;
+        #    ;
+        #
+        #    setprefix(classstr(SysWorkflowEventDispatcher) + '-' + staticmethodstr(SysWorkflowEventDispatcher, onWorkflowFault));
+        #
+        #    if (_context == null)
+        #    {
+        #        throw error(strfmt("@SYS104836", staticmethodstr(SysWorkflowEventDispatcher, onWorkflowFault), varstr(_context)));
+        #    }
+        #
+        #    changecompany(_context.parmCompanyId())
+        #    {
+        #        if (appl.ttsLevel() == 0)
+        #        {
+        #            SysWorkflowEventDispatcher::workflowFault(_context, _user, _faultMessage);
+        #        }
+        #        else
+        #        {
+        #            // We are in a nested transaction so we want to do the fault even if the outer transaction
+        #            // is rolled back so we do it on a sperate connection.
+        #            connection = new UserConnection();
+        #            faultTable.setConnection(connection);
+        #            if (!SysWorkflowFaultTable::exist(_context.parmRootCorrelationId()))
+        #            {
+        #                connection.ttsbegin();
+        #                faultTable.RootCorrelationId = _context.parmRootCorrelationId();
+        #                faultTable.FaultMessage = _faultMessage;
+        #                faultTable.User = _user;
+        #                faultTable.insert();
+        #                connection.ttscommit();
+        #            }
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #onWorkItemCreate
+        #/// <summary>
+        #/// Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_workItemContext">
+        #/// An instance of the <c>SysWorkflowWorkItemContext</c> class.
+        #/// </param>
+        #/// <param name="_isClaimed">
+        #/// A Boolean value that indicates whether the work item is claimed; optional.
+        #/// </param>
+        #/// <param name="_useAutoDelegatation">
+        #/// A Boolean value that indicates whether the work item should be delegated; optional.
+        #/// </param>
+        #/// <param name="_comment">
+        #/// The <c>WorkflowComment</c> text; optional.
+        #/// </param>
+        #/// <returns>
+        #/// A <c>WorkflowWorkItemInstanceId</c> value identifing the work item.
+        #/// </returns>
+        #/// <remarks>
+        #/// Create a work item; by default all work items are claimed.
+        #/// </remarks>
+        #/// <exception cref="Exception::Error">
+        #/// The <paramref name="_workItemContext"/> parameter cannot be null.
+        #/// </exception>
+        #/// <exception cref="Exception::Error">
+        #/// The <c>SysWorkflowTable</c> record was not found.
+        #/// </exception>
+        #/// <exception cref="Exception::Error">
+        #/// The <c>WorkflowElementTable</c> record was not found.
+        #/// </exception>
+        #/// <exception cref="Exception::Error">
+        #/// The <c>WorkflowStepTable</c> record was not found.
+        #/// </exception>
+        #/// <exception cref="Exception::Error">
+        #/// Failed to create an instance of the  <c>SysDictWorkflowElement</c> class
+        #/// </exception>
+        #/// <exception cref="Exception::Error">
+        #/// The work item could not be created; insufficient rights for the user.
+        #/// </exception>
+        #/// <exception cref="Exception::Error">
+        #/// The work item could not be created; the originator, sole approver and final approver all map to the same user.
+        #/// </exception>
+        #/// <exception cref="Exception::Error">
+        #/// Workflow document not defined.
+        #/// </exception>
+        #/// <exception cref="Exception::Error">
+        #/// Query name must be valid.
+        #/// </exception>
+        #public server static WorkflowWorkItemInstanceId onWorkItemCreate(
+        #    SysWorkflowWorkItemContext _workItemContext,
+        #    WorkflowWorkItemClaimed _isClaimed = NoYes::Yes,
+        #    NoYes _useAutoDelegatation = NoYes::Yes,
+        #    WorkflowComment _comment = '')
+        #{
+        #    WorkflowTrackingMessage trackingMessage;
+        #    SysWorkflowTracking tracking;
+        #    WorkflowWorkItemTable workItem;
+        #    WorkflowStepTable stepTable;
+        #    WorkflowElementTable elementTable;
+        #    WorkflowVersionTable versionTable;
+        #    Map mergeValues = new Map(Types::String, Types::String);
+        #    SysDictWorkflowElement sysDictWorkflowElement;
+        #    WorkflowDocument workflowDocument;
+        #    Query query;
+        #    userId user;
+        #    menuItemName menuItemName;
+        #    EventNotificationWorkflow notification;
+        #    WorkflowWorkItemInstanceId workItemId;
+        #    WorkflowOutcomeName completingOutcome;
+        #    WorkflowStepInstruction stepInstruction;
+        #    WorkflowConfigMessageText subject;
+        #    SysWorkflowTable workflowTable;
+        #    WorkflowElementId elementId;
+        #    WorkflowDateTime emptyDateTime;
+        #    LabelId labelId;
+        #    Struct trackingPropertyBag;
+        #    List trackingMessageArgs;
+        #    WorkflowUserList autoDelegators;
+        #    #Workflow
+        #
+        #    setprefix(classstr(SysWorkflowEventDispatcher) + '-' + staticmethodstr(SysWorkflowEventDispatcher, onWorkItemCreate));
+        #
+        #    if (_workItemContext == null)
+        #    {
+        #        throw error(strfmt("@SYS104836", staticmethodstr(SysWorkflowEventDispatcher, onWorkItemCreate), varstr(_workItemContext)));
+        #    }
+        #
+        #    changecompany(_workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmCompanyId())
+        #    {
+        #        // create the work item
+        #        versionTable = WorkflowVersionTable::find(_workItemContext.parmWorkflowCorrelation().parmWorkflowConfigurationKey().parmConfigurationId());
+        #        workflowTable = SysWorkflowTable::find(_workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmWorkflowCorrelationId());
+        #        if (workflowTable.RecId == 0)
+        #        {
+        #            throw error("@SYS116100");
+        #        }
+        #
+        #        user = _workItemContext.parmAxaptaUser();
+        #        if (_useAutoDelegatation == NoYes::Yes)
+        #        {
+        #            autoDelegators = WorkflowUserList::construct();
+        #            user = SysWorkflowHelper::getDelegate(_workItemContext.parmAxaptaUser(), versionTable);
+        #            if (strcmp(user, _workItemContext.parmAxaptaUser()) != 0)
+        #            {
+        #                autoDelegators.add(_workItemContext.parmAxaptaUser());
+        #            }
+        #        }
+        #        else
+        #        {
+        #            autoDelegators = _workItemContext.parmDelegators();
+        #        }
+        #
+        #        // These system generated work items are configured at the element level i.e. there is not
+        #        // a step associated with them.
+        #        if (_workItemContext.parmWorkItemType() == WorkflowWorkItemType::RequestChange ||
+        #            _workItemContext.parmWorkItemType() == WorkflowWorkItemType::Return ||
+        #            _workItemContext.parmWorkItemType() == WorkflowWorkItemType::FinalApprover)
+        #        {
+        #            elementTable = WorkflowElementTable::find(_workItemContext.parmElementId());
+        #            if (elementTable.RecId == 0)
+        #            {
+        #                throw error("@SYS106828");
+        #            }
+        #
+        #            elementId = elementTable.ElementId;
+        #            select firstonly StepId from stepTable where stepTable.ElementId == elementTable.ElementId && stepTable.Sequence == 1;
+        #            if (!stepTable.StepId)
+        #            {
+        #                throw error("@SYS106826");
+        #            }
+        #
+        #            // Assign the step id of the element's first step to the system
+        #            // created work item i.e.the resubmit work item is always associated
+        #            // with the element's first step. A resubmit always restarts at the
+        #            // element not the individual steps therefore the resubmit work item
+        #            // is always associated with element's first step.
+        #            _workItemContext.parmWorkStepId(stepTable.StepId);
+        #
+        #            // Make sure we clear out the due date for these work item types
+        #            if (_workItemContext.parmWorkItemType() == WorkflowWorkItemType::RequestChange ||
+        #                _workItemContext.parmWorkItemType() == WorkflowWorkItemType::Return)
+        #            {
+        #                _workItemContext.parmDueDate(emptyDateTime);
+        #            }
+        #
+        #            // now that we have set the step id in the context we can get the delegate user
+        #            sysDictWorkflowElement = new SysDictWorkflowElement(elementTable.ElementType, elementTable.ElementName);
+        #            if (!sysDictWorkflowElement)
+        #            {
+        #                throw error (strfmt("@SYS110280", elementTable.ElementType, elementTable.ElementName));
+        #            }
+        #
+        #            if (_workItemContext.parmWorkItemType() == WorkflowWorkItemType::FinalApprover)
+        #            {
+        #                stepInstruction = SysWorkflowHelper::getLocalizedLabelText(literalstr("@SYS124600"), user);
+        #                subject = SysWorkflowHelper::getLocalizedLabelText(literalstr("@SYS124601"), user);
+        #            }
+        #            else
+        #            {
+        #                stepInstruction = SysWorkflowHelper::getLocalizedLabelText(literalstr("@SYS110261"), user);
+        #                subject = _workItemContext.parmWorkItemType() == WorkflowWorkItemType::RequestChange ?
+        #                    SysWorkflowHelper::getLocalizedLabelText(literalstr("@SYS113435"), user) :
+        #                    SysWorkflowHelper::getLocalizedLabelText(literalstr("@SYS112540"), user);
+        #            }
+        #
+        #            menuItemName = sysDictWorkflowElement.documentMenuItem();
+        #
+        #            if (!SysWorkflowHelper::userHasPermission(
+        #                _workItemContext.parmWorkflowCorrelation().parmWorkflowContext(),
+        #                elementTable.workflowVersionTable().workflowTable().TemplateName,
+        #                sysDictWorkflowElement.resubmitMenuItem(),
+        #                menuItemName,
+        #                user))
+        #            {
+        #                error(strFmt('Entry point %1 / Menu item action %2', menuItemName, sysDictWorkflowElement.resubmitMenuItem()));
+        #                throw error(strfmt("@SYS109561", user));
+        #            }
+        #        }
+        #        else
+        #        {
+        #            stepTable = WorkflowStepTable::find(_workItemContext.parmWorkStepId());
+        #            if (!stepTable)
+        #            {
+        #                throw error("@SYS106826");
+        #            }
+        #
+        #            sysDictWorkflowElement = new SysDictWorkflowElement(stepTable.workflowElementTable().ElementType, stepTable.workflowElementTable().ElementName);
+        #            if (!sysDictWorkflowElement)
+        #            {
+        #                throw error (strfmt("@SYS110280", stepTable.workflowElementTable().ElementType, stepTable.workflowElementTable().ElementName));
+        #            }
+        #
+        #            // the getXXXX methods do the language conversion
+        #            stepInstruction = stepTable.getInstruction(user);
+        #            subject = stepTable.getDescription(user);
+        #
+        #            menuItemName = sysDictWorkflowElement.documentMenuItem();
+        #            completingOutcome = sysDictWorkflowElement.getCompletingOutcome();
+        #
+        #            if (!SysWorkflowHelper::userHasPermission(
+        #                _workItemContext.parmWorkflowCorrelation().parmWorkflowContext(),
+        #                stepTable.workflowElementTable().workflowVersionTable().workflowTable().TemplateName,
+        #                sysDictWorkflowElement.actionMenuItem(completingOutcome),
+        #                menuItemName,
+        #                user))
+        #            {
+        #                error(strFmt('Entry point %1 / Menu item action %2', menuItemName, sysDictWorkflowElement.actionMenuItem(completingOutcome)));
+        #                throw error(strfmt("@SYS109561", user));
+        #            }
+        #        }
+        #
+        #        ttsbegin;
+        #        workItem.Id                 = newguid();
+        #        workItem.ActivityId         = _workItemContext.parmWorkflowActivityInstanceKey().parmWorkflowActivityInstanceId();
+        #        workItem.ConfigurationId    = _workItemContext.parmWorkflowCorrelation().parmWorkflowConfigurationKey().parmConfigurationId();
+        #        workItem.DueDateTime        = _workItemContext.parmDueDate();
+        #        workItem.CorrelationId      = _workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmWorkflowCorrelationId();
+        #        workItem.ElementId          = _workItemContext.parmElementId();
+        #        workItem.StepId             = _workItemContext.parmWorkStepId();
+        #        workItem.RefTableId         = _workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmTableId();
+        #        workItem.RefRecId           = _workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmRecId();
+        #        workItem.CompanyId          = _workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmCompanyId();
+        #        workItem.Type               = _workItemContext.parmWorkItemType();
+        #        // approvals are always claimed, single task work items are always claimed.
+        #        // When there is more than one work item for a task then all the work items are unclaimed - this is determined by the caller
+        #        workItem.IsClaimed          = stepTable.workflowElementTable().ElementType == WorkflowElementType::Approval ? NoYes::Yes : _isClaimed;
+        #        workItem.IsRead             = NoYes::No;
+        #        workItem.Status             = WorkflowWorkItemStatus::Pending;
+        #        workItem.SubWorkflowId      = _workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmSubWorkflowId();
+        #        workItem.RootCorrelationId  = _workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmRootCorrelationId();
+        #        workItem.ParentCorrelationId = _workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmParentCorrelationId();
+        #        workItem.EscalationLevel = 0;
+        #        workItem.UserId = user;
+        #
+        #        // verify that final approver is not the originator
+        #        if (_workItemContext.parmWorkItemType() == WorkflowWorkItemType::FinalApprover &&
+        #            sysDictWorkflowElement.type() == WorkflowElementType::Approval)
+        #        {
+        #            if (strcmp(workItem.UserId, workflowTable.Originator) == 0)
+        #            {
+        #                throw error(strfmt("@SYS119362", workflowTable.Originator));
+        #            }
+        #
+        #            if (strcmp(workItem.UserId, workflowTable.Submitter) == 0)
+        #            {
+        #                throw error(strfmt("@SYS126948", workflowTable.Submitter));
+        #            }
+        #
+        #            // Final approver: %1
+        #            trackingMessage = strfmt("@SYS108731", workItem.UserId);
+        #            labelId = literalstr("@SYS108731");
+        #            trackingMessageArgs = new List(Types::Class);
+        #            trackingPropertyBag = new Struct (#WorkflowTrackingArgumentStruct);
+        #            trackingPropertyBag.value(#WorkflowTrackingArgumentDataType, extendedtypestr(WorkflowUser));
+        #            trackingPropertyBag.value(#WorkflowTrackingArgumentValue, workItem.UserId);
+        #            trackingMessageArgs.addEnd(trackingPropertyBag);
+        #
+        #            tracking = SysWorkflowTracking::newSysWorkflowTracking(
+        #                _workItemContext.parmWorkflowCorrelation(),
+        #                workItem.UserId,
+        #                WorkflowTrackingContext::Approval,
+        #                WorkflowTrackingType::FinalApproverRequired);
+        #            tracking.parmTrackingMessage(trackingMessage);
+        #            tracking.parmElementId(elementId);
+        #            tracking.parmName(elementTable.Name);
+        #            tracking.parmMessageLabelId(labelId);
+        #            tracking.parmMessageArgs(trackingMessageArgs);
+        #            WorkflowTrackingTable::saveTracking(tracking);
+        #        }
+        #
+        #        workItem.Subject = WorkflowDocumentField::substitutePlaceholderAsUser(
+        #            workItem.UserId,
+        #            workItem.CompanyId,
+        #            workItem.RefTableId,
+        #            workItem.RefRecId,
+        #            versionTable.workflowTable().TemplateName,
+        #            versionTable.Owner,
+        #            workflowTable.Originator,
+        #            workItem.UserId,
+        #            subject,
+        #            _workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmWorkflowCorrelationId());
+        #
+        #        workItem.Description = WorkflowDocumentField::substitutePlaceholderAsUser(
+        #            workItem.UserId,
+        #            workItem.CompanyId,
+        #            workItem.RefTableId,
+        #            workItem.RefRecId,
+        #            versionTable.workflowTable().TemplateName,
+        #            versionTable.Owner,
+        #            workflowTable.Originator,
+        #            workItem.UserId,
+        #            stepInstruction,
+        #            _workItemContext.parmWorkflowCorrelation().parmWorkflowContext().parmWorkflowCorrelationId());
+        #
+        #        if (!workItem.Description)
+        #        {
+        #            // if no descripton use the subject
+        #            workItem.Description = subject;
+        #        }
+        #
+        #        workItem.DocumentClassId = className2Id(sysDictWorkflowElement.document());
+        #        workItem.MenuItemName = menuItemName;
+        #        workflowDocument = SysWorkflowHelper::getClassFactory().createClass(className2Id(sysDictWorkflowElement.document()));
+        #        if (!workflowDocument)
+        #        {
+        #            throw error("@SYS108554");
+        #        }
+        #
+        #        query = workflowDocument.getQuery();
+        #        if (!query)
+        #        {
+        #            throw error("@SYS96001");
+        #        }
+        #
+        #        workItem.DataSourceName = sysDictWorkflowElement.documentFormDatasourceName();
+        #
+        #        // notify the assignee
+        #        notification = EventNotificationWorkflow::newAction(
+        #            workItem.UserId,
+        #            workItem.Subject,
+        #            DateTimeUtil::date(workItem.DueDateTime),
+        #            workItem.getMenuFunction(),
+        #            workItem.getRecord(),
+        #            WorkflowParameters::find().WorkItemEmailId,
+        #            mergeValues,
+        #            workItem.Description,
+        #            workItem.DataSourceName);
+        #
+        #        workItem.NotificationId = notification.create();
+        #        workItem.insert();
+        #
+        #        // Assigned to: %1. Due date %2
+        #        trackingMessage = strfmt("@SYS108739", workItem.UserId, _workItemContext.parmDueDate());
+        #        labelId = literalstr("@SYS108739");
+        #        trackingMessageArgs = new List(Types::Class);
+        #        // add user arg
+        #        trackingPropertyBag = new Struct (#WorkflowTrackingArgumentStruct);
+        #        trackingPropertyBag.value(#WorkflowTrackingArgumentDataType, extendedtypestr(WorkflowUser));
+        #        trackingPropertyBag.value(#WorkflowTrackingArgumentValue, workItem.UserId);
+        #        trackingMessageArgs.addEnd(trackingPropertyBag);
+        #        // add due date arg
+        #        trackingPropertyBag = new Struct (#WorkflowTrackingArgumentStruct);
+        #        trackingPropertyBag.value(#WorkflowTrackingArgumentDataType, extendedtypestr(WorkflowDueDate));
+        #        if (_workItemContext.parmWorkItemType() == WorkflowWorkItemType::FinalApprover &&
+        #            sysDictWorkflowElement.type() == WorkflowElementType::Approval)
+        #        {
+        #            trackingPropertyBag.value(#WorkflowTrackingArgumentValue, DateTimeUtil::toStr(DateTimeUtil::minValue()));
+        #            trackingPropertyBag.value(#WorkflowTrackingArgumentDate, DateTimeUtil::minValue());
+        #        }
+        #        else
+        #        {
+        #            trackingPropertyBag.value(#WorkflowTrackingArgumentValue, DateTimeUtil::toStr(_workItemContext.parmDueDate()));
+        #            trackingPropertyBag.value(#WorkflowTrackingArgumentDate, _workItemContext.parmDueDate());
+        #        }
+        #        trackingMessageArgs.addEnd(trackingPropertyBag);
+        #
+        #        tracking = SysWorkflowTracking::newSysWorkflowTracking(
+        #            _workItemContext.parmWorkflowCorrelation(),
+        #            workItem.UserId,
+        #            WorkflowTrackingContext::WorkItem,
+        #            WorkflowTrackingType::Creation);
+        #
+        #        tracking.parmTrackingMessage(trackingMessage);
+        #        tracking.parmTrackingComment(_comment);
+        #        tracking.parmWorkItemId(workItem.Id);
+        #        tracking.parmWorkItemActivityInstanceId(workItem.ActivityId);
+        #        tracking.parmElementId(workItem.ElementId);
+        #        tracking.parmStepId(workItem.StepId);
+        #        tracking.parmDueDate(workItem.DueDateTime);
+        #        tracking.parmMessageLabelId(labelId);
+        #        tracking.parmMessageArgs(trackingMessageArgs);
+        #        WorkflowTrackingTable::saveTracking(tracking);
+        #
+        #        SysWorkflowEventDispatcher::trackWorkItemDelegation(_workItemContext, workItem, autoDelegators);
+        #        ttscommit;
+        #        workItemId = workItem.Id;
+        #    }
+        #
+        #    return workItemId;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #trackWorkItemDelegation
+        #/// <summary>
+        #///    Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_workItemContext">An instance of the <c>SysWorkflowWorkItemContext</c> class.</param>
+        #/// <param name="_workItemTable">A <c>WorkflowWorkItemTable</c> record.</param>
+        #/// <param name="_delegators">An instance of the <c>WorkflowUserList</c> class.</param>
+        #private static void trackWorkItemDelegation(
+        #    SysWorkflowWorkItemContext _workItemContext,
+        #    WorkflowWorkItemTable _workItemTable,
+        #    WorkflowUserList _delegators)
+        #{
+        #    SysWorkflowTracking tracking;
+        #    WorkflowTrackingMessage trackingMessage;
+        #    LabelId labelId;
+        #    Struct trackingPropertyBag;
+        #    List trackingMessageArgs = new List(Types::Class);
+        #    int i;
+        #    #Workflow
+        #    ;
+        #
+        #    for (i = 1; i <= _delegators.getCount(); i++)
+        #    {
+        #        // Automatically delegated from: %1 to %2
+        #        trackingMessage = strfmt("@SYS108737", _delegators.get(i), _workItemTable.UserId);
+        #        labelId = literalstr("@SYS108737");
+        #        // add from user arg
+        #        trackingMessageArgs = new List(Types::Class);
+        #        trackingPropertyBag = new Struct (#WorkflowTrackingArgumentStruct);
+        #        trackingPropertyBag.value(#WorkflowTrackingArgumentDataType, extendedtypestr(WorkflowUser));
+        #        trackingPropertyBag.value(#WorkflowTrackingArgumentValue, _delegators.get(i));
+        #        trackingMessageArgs.addEnd(trackingPropertyBag);
+        #        // add autoDelegateUser arg
+        #        trackingPropertyBag = new Struct (#WorkflowTrackingArgumentStruct);
+        #        trackingPropertyBag.value(#WorkflowTrackingArgumentDataType, extendedtypestr(WorkflowUser));
+        #        trackingPropertyBag.value(#WorkflowTrackingArgumentValue, _workItemTable.UserId);
+        #        trackingMessageArgs.addEnd(trackingPropertyBag);
+        #
+        #        tracking = SysWorkflowTracking::newSysWorkflowTracking(
+        #            _workItemContext.parmWorkflowCorrelation(),
+        #            _delegators.get(i), // from user
+        #            WorkflowTrackingContext::WorkItem,
+        #            WorkflowTrackingType::AutomaticDelegation);
+        #
+        #        tracking.parmTrackingMessage(trackingMessage);
+        #        tracking.parmWorkItemId(_workItemTable.Id);
+        #        tracking.parmWorkItemActivityInstanceId(_workItemTable.ActivityId);
+        #        tracking.parmElementId(_workItemTable.ElementId);
+        #        tracking.parmStepId(_workItemTable.StepId);
+        #        tracking.parmDueDate(_workItemTable.DueDateTime);
+        #        tracking.parmToWorkflowUser(_workItemTable.UserId);
+        #        tracking.parmMessageLabelId(labelId);
+        #        tracking.parmMessageArgs(trackingMessageArgs);
+        #        WorkflowTrackingTable::saveTracking(tracking);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #workflowFault
+        #/// <summary>
+        #/// Microsoft internal use only.
+        #/// </summary>
+        #/// <param name="_context">
+        #/// An instance of the <c>WorkflowContext</c> class.
+        #/// </param>
+        #/// <param name="_user">
+        #/// A <c>WorkflowUser</c> value.
+        #/// </param>
+        #/// <param name="_faultMessage">
+        #/// A <c>WorkflowFaultMessage</c> value.
+        #/// </param>
+        #/// <remarks>
+        #/// Faults the workflow graph when either the root or sub-workflow is faulted; the workflow triggering
+        #/// the fault is identified by the <paramref name="_correlation" /> parameter.
+        #/// </remarks>
+        #/// <exception cref="M:Exception::Error">
+        #/// The <paramref name="_correlation" /> parameter cannot be null.
+        #/// </exception>
+        #/// <exception cref="M:Exception::Error">
+        #/// The <paramref name="_activityInstanceKey" /> parameter cannot be null.
+        #/// </exception>
+        #/// <exception cref="M:Exception::Error">
+        #/// Failed to find the root workflow.
+        #/// </exception>
+        #private server static void workflowFault(
+        #    WorkflowContext _context,
+        #    WorkflowUser _user,
+        #    WorkflowFaultMessage _faultMessage)
+        #{
+        #    WorkflowTrackingMessage trackingMessage;
+        #    SysWorkflowTracking tracking;
+        #    SysWorkflowMessageTable messageTable;
+        #    WorkflowWorkItemTable workItemTable;
+        #    SysWorkflowTable workflowTable;
+        #    SysWorkflowCorrelation correlation;
+        #    WorkflowContext workflowContext;
+        #    SysWorkflowConfigurationKey configKey;
+        #    LabelId labelId;
+        #    Struct trackingPropertyBag;
+        #    List trackingMessageArgs = new List(Types::Class);
+        #    SysWorkflowNotificationContext notificationContext;
+        #    List notifications = new List(Types::Class);
+        #    ListEnumerator notificationsEnumerator;
+        #    #Workflow
+        #
+        #    changecompany(_context.parmCompanyId())
+        #    {
+        #        ttsbegin;
+        #        // fault all dependent sub-workflows
+        #        while select forupdate workflowTable
+        #        order by workflowTable.RecId desc
+        #        where
+        #            workflowTable.RootCorrelationId == _context.parmRootCorrelationId()
+        #        {
+        #
+        #            if (workflowTable.ParentCorrelationId == str2guid(''))
+        #            {
+        #                configKey = SysWorkflowConfigurationKey::newWorkflowConfigurationKey(workflowTable.TemplateName, workflowTable.ConfigurationId);
+        #                correlation = SysWorkflowCorrelation::newWorkflowCorrelation(workflowContext ? workflowContext : _context, configKey);
+        #            }
+        #
+        #            select forupdate messageTable
+        #            where
+        #                messageTable.MessageLifeCycleState == WorkflowMessageLifeCycleState::Queued &&
+        #                messageTable.WorkflowCorrelationId == workflowTable.WorkflowCorrelationId;
+        #            if (messageTable.RecId != 0)
+        #            {
+        #                messageTable.MessageLifeCycleState = WorkflowMessageLifeCycleState::Faulted;
+        #                messageTable.update();
+        #            }
+        #
+        #            // fail the pending work item - these are reset to pending on resume
+        #            update_recordset
+        #                workItemTable
+        #            setting
+        #                Status = WorkflowWorkItemStatus::Failed
+        #            where
+        #                workItemTable.CorrelationId == workflowTable.WorkflowCorrelationId &&
+        #                workItemTable.Status == WorkflowWorkItemStatus::Pending;
+        #
+        #            workflowContext = WorkflowContext::newSubWorkflowContext(
+        #                workflowTable.ContextCompanyId,
+        #                workflowTable.ContextTableId,
+        #                workflowTable.ContextRecId,
+        #                workflowTable.RootCorrelationId,
+        #                workflowTable.ParentCorrelationId,
+        #                workflowTable.WorkflowCorrelationId,
+        #                workflowTable.SubWorkflowId);
+        #
+        #            notificationContext = new SysWorkflowNotificationContext();
+        #            notificationContext.parmWorkflowContext(workflowContext);
+        #            notificationContext.parmNotificationId(workflowTable.ConfigurationId);
+        #            notificationContext.parmWorkflowInstanceNumber(workflowTable.InstanceNumber);
+        #            notificationContext.parmOriginator(workflowTable.Originator);
+        #            notificationContext.parmAction(enum2Symbol(enumnum(WorkflowConfigNotificationActionType), WorkflowConfigNotificationActionType::Stopped));
+        #            notificationContext.parmNotificationLevel(WorkflowNotificationLevel::Workflow);
+        #            notificationContext.parmNotificationType(WorkflowNotificationType::Error);
+        #            notifications.addEnd(notificationContext);
+        #
+        #            workflowTable.Affinity = str2guid('');
+        #            workflowTable.LockStatus = WorkflowLockStatus::UnlockedBySystem;
+        #            workflowTable.LockCount = 0;
+        #            workflowTable.update();
+        #        }
+        #
+        #        // Stopped (error): %1 only track the root
+        #        trackingMessage = strfmt("@SYS108726", _faultMessage);
+        #        labelId = literalstr("@SYS108726");
+        #        trackingPropertyBag = new Struct (#WorkflowTrackingArgumentStruct);
+        #        trackingPropertyBag.value(#WorkflowTrackingArgumentDataType, extendedtypestr(WorkflowFaultMessage));
+        #        trackingPropertyBag.value(#WorkflowTrackingArgumentValue, _faultMessage);
+        #        trackingMessageArgs.addEnd(trackingPropertyBag);
+        #
+        #        tracking = SysWorkflowTracking::newSysWorkflowTracking(
+        #            correlation,
+        #            _user,
+        #            WorkflowTrackingContext::Workflow,
+        #            WorkflowTrackingType::Fault);
+        #        tracking.parmTrackingMessage(trackingMessage);
+        #        tracking.parmMessageLabelId(labelId);
+        #        tracking.parmMessageArgs(trackingMessageArgs);
+        #        WorkflowTrackingTable::saveTracking(tracking);
+        #        ttscommit;
+        #
+        #        // send the notifications
+        #        notificationsEnumerator = notifications.getEnumerator();
+        #        while(notificationsEnumerator.moveNext())
+        #        {
+        #            notificationContext = notificationsEnumerator.current();
+        #            SysWorkflowHelper::sendNotifications(notificationContext);
+        #        }
+        #    }
+        #}
+        #
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END
