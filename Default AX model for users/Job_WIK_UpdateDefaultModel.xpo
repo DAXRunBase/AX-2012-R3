@@ -1,0 +1,63 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_UpdateDefaultModel unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_UpdateDefaultModel
+    #static void WIK_UpdateDefaultModel(Args _args)
+    #{
+    #    UserInfo                userInfo;
+    #    UserInfoStartupModel    userInfoStartupModel;
+    #    UserInfoStartupModel    userInfoStartupModelDB;
+    #    UtilEntryLevel          layer = UtilEntryLevel::cus;
+    #    ModelId                 modelId = any2int((select firstOnly Model from SysModelManifest where SysModelManifest.Name == 'MyModel').Model);
+    #
+    #    ttsBegin;
+    #
+    #    while select userInfo
+    #        where userInfo.accountType  == UserAccountType::ADUser
+    #        notexists join userInfoStartupModel
+    #            where  userInfoStartupModel.UserId  == userInfo.id
+    #                && userInfoStartupModel.Layer   == layer
+    #                && userInfoStartupModel.ModelId == modelId
+    #    {
+    #        userInfoStartupModelDB.clear();
+    #        userInfoStartupModelDB.initValue();
+    #        userInfoStartupModelDB.Layer            = layer;
+    #        userInfoStartupModelDB.UserId           = userInfo.id;
+    #        userInfoStartupModelDB.ModelId          = modelId;
+    #
+    #        try
+    #        {
+    #            if (userInfoStartupModelDB.validateWrite())
+    #            {
+    #                userInfoStartupModelDB.insert();
+    #            }
+    #            else
+    #            {
+    #                throw error('We have a problem');
+    #            }
+    #        }
+    #        catch
+    #        {
+    #            exceptionTextFallThrough();
+    #        }
+    #    }
+    #
+    #    update_recordset userInfoStartupModel
+    #        setting ModelId = modelId
+    #        where userInfoStartupModel.Layer    == layer;
+    #
+    #    ttsCommit;
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{6847E670-4422-4943-9A10-5EA3D03931BA}
+  ENDPROPERTIES
+  
+
+***Element: END
