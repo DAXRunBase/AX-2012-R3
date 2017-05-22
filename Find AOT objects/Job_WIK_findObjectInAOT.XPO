@@ -1,0 +1,41 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_findObjectInAOT unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_findObjectInAOT
+    #static void WIK_findObjectInAOT(Args _args)
+    #{
+    #    // Check the AOT macro for the path names
+    #    #AOT
+    #
+    #    SysModelElement         sysModelElement;
+    #
+    #    // If you know what is the object you are looking for then use TreeNode
+    #    TreeNode::findNode(#TablesPath + #AOTDelimiter + identifierStr(CustTable))
+    #        .AOTnewWindow();
+    #
+    #    // You can fall back to TreeNode from the SysDict* objects
+    #    new SysDictTable(tablenum(SalesTable))
+    #        .treeNode().AOTnewWindow();
+    #
+    #    // If you do want to do a wildcard search you could just use the SysModelElement view
+    #    while select sysModelElement
+    #        where sysModelElement.Name like '*SalesId*'
+    #    {
+    #        info(strFmt('(%1) - %2',
+    #            enum2Symbol(enumNum(UtilElementType), any2int(sysModelElement.ElementType)),
+    #            SysTreeNode::modelElement2Path(sysModelElement)));
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{6DA81FEF-A657-4272-81F5-9A3A4551AEC4}
+  ENDPROPERTIES
+  
+
+***Element: END

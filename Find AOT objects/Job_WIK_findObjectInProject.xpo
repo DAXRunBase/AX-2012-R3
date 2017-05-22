@@ -1,0 +1,95 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_findObjectInProject unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_findObjectInProject
+    #static void WIK_findObjectInProject(Args _args)
+    #{
+    #    str                     findObjectName;
+    #    Dialog                  dialog;
+    #    DialogField             dialogField;
+    #
+    #    boolean                 found           = false;
+    #    TreeNodeIterator        iterator        = SysTreeNode::getSharedProject().AOTiterator();
+    #    TreeNodeTraverser       tnt;
+    #    ProjectNode             projectNode;
+    #    TreeNode                treeNode;
+    #    SysOperationProgress    progress        = new SysOperationProgress();
+    #    int                     projCount       = 0;
+    #
+    #    dialog = new Dialog();
+    #    dialogField = dialog.addField(identifierStr(SysAotControlName));
+    #    dialogField.control().mandatory(true);
+    #
+    #    if (dialog.run() && dialogField.value() != '')
+    #    {
+    #        findObjectName = dialogField.value();
+    #    }
+    #    else
+    #    {
+    #        return;
+    #    }
+    #
+    #    while (iterator.next())
+    #    {
+    #        projCount++;
+    #    }
+    #
+    #    iterator.reset();
+    #    progress.setTotal(projCount);
+    #
+    #    setPrefix('Find object in project');
+    #    setPrefix(findObjectName);
+    #
+    #    try
+    #    {
+    #        projectNode = iterator ? iterator.next() : null;
+    #
+    #        while (projectNode)
+    #        {
+    #            progress.incCount();
+    #            progress.setText(projectNode.AOTname());
+    #            tnt = new TreeNodeTraverser(projectNode.loadForInspection());
+    #
+    #            while (tnt.next())
+    #            {
+    #                treeNode = tnt.currentNode();
+    #                // Stop on first hit
+    #                if (treeNode && strupr(treeNode.AOTname()) == strupr(findObjectName))
+    #                {
+    #                    found = true;
+    #                    break;
+    #                }
+    #                treeNode.treeNodeRelease();
+    #            }
+    #
+    #            if (found)
+    #            {
+    #                info(strFmt('Project: %1 - First hit: %2', projectNode.AOTname(), tnt.currentNode().treeNodePath()));
+    #                treeNode.treeNodeRelease();
+    #                found = false;
+    #            }
+    #
+    #            projectNode = iterator.next();
+    #            //projectNode.treeNodeRelease();
+    #        }
+    #    }
+    #    catch
+    #    {
+    #        throw error(strfmt("Error during project iteration on node %1", projectNode.AOTname()));
+    #    }
+    #
+    #    progress.kill();
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{B44435DA-5427-4EA1-8E47-79BA2029F269}
+  ENDPROPERTIES
+  
+
+***Element: END
