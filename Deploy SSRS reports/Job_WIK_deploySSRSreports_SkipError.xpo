@@ -1,0 +1,45 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_deploySSRSreports_SkipError unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_deploySSRSreports_SkipError
+    #static void WIK_deploySSRSreports_SkipError(Args _args)
+    #{
+    #    #AOT
+    #
+    #    TreeNodeIterator        reportIterator = TreeNode::findNode(#SSRSReportsPath).AOTiterator();
+    #    SRSReportManager        srsReportManager = new SRSReportManager();
+    #    SSRSReportConceptNode   ssrsReportConceptNode;
+    #
+    #    if (!reportIterator)
+    #        return;
+    #
+    #    ssrsReportConceptNode = reportIterator.next();
+    #    while (ssrsReportConceptNode)
+    #    {
+    #        try
+    #        {
+    #            srsReportManager.deploymentStart();
+    #            srsReportManager.deployReport(ssrsReportConceptNode);
+    #            srsReportManager.deploymentEnd();
+    #        }
+    #        catch
+    #        {
+    #            exceptionTextFallThrough();
+    #        }
+    #
+    #        ssrsReportConceptNode = reportIterator.next();
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{AF9116C8-29AF-4219-8628-7F1EB3FF2B45}
+  ENDPROPERTIES
+  
+
+***Element: END
