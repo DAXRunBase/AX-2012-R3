@@ -1,0 +1,2603 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysCompare unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysCompare
+    PROPERTIES
+      Name                #SysCompare
+      RunOn               #Client
+      Origin              #{2D0A0403-0000-1000-598A-F2526F6D7061}
+      LegacyId            #1027
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #allowDeleteEntireNode
+        #protected boolean allowDeleteEntireNode(
+        #    SysMergeable _parentOfNodeToRemove,
+        #    SysComparable _nodeToRemovesTopNode,
+        #    SysComparableTmpText _text
+        #)
+        #{
+        #    if (_parentOfNodeToRemove && _parentOfNodeToRemove.canMergeDeleteSubnodes(_nodeToRemovesTopNode, context))
+        #    {
+        #        if (_text.IsSubNodes)
+        #            return _text.SupportPartialInsert;
+        #        return _text.SupportCompleteInsert;
+        #    }
+        #
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #allowInsertEntireNode
+        #protected boolean allowInsertEntireNode(
+        #    SysComparable _parentOfNodeToInsert,
+        #    SysComparable _receivingNodesTopNode,
+        #    SysMergeable _receivingNode,
+        #    SysComparableTmpText _text
+        #)
+        #{
+        #    if (_parentOfNodeToInsert &&
+        #        _receivingNode &&
+        #        _receivingNode.canMergeInsertSubnodes(_receivingNodesTopNode, context))
+        #    {
+        #        if (_text.IsSubNodes)
+        #            return _text.SupportPartialInsert;
+        #
+        #        return _text.SupportCompleteInsert;
+        #    }
+        #
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #buildBitmaps
+        #protected  boolean buildBitmaps(
+        #    int             _parent,
+        #    SysComparable   _comparable1,
+        #    SysComparable   _comparable2,
+        #    boolean         _quick = false)
+        #{
+        #    int             bitmap;
+        #    TmpTree         localRef;
+        #    SysComparable   tmpComparable1, tmpComparable2;
+        #
+        #    void adjustBranch(int id)
+        #    {
+        #        TmpTree ref;
+        #        ref.setTmpData(tableTree);
+        #
+        #        while (id)
+        #        {
+        #            select firstonly ref
+        #                where ref.Id == id;
+        #
+        #            if (ref.Image == #IMG_CHECK_ALL)
+        #            {
+        #                ref.Image = #IMG_CHECK_SOME;
+        #                ref.update();
+        #                id        = ref.Parent;
+        #            }
+        #            else
+        #                break;
+        #        }
+        #    }
+        #
+        #    localRef.setTmpData(tableTree);
+        #
+        #    while select localRef
+        #        where localRef.Parent == _parent
+        #    {
+        #
+        #        if (_comparable1 && childMap.exists(strfmt('%1,%2,%3',_parent,1,localRef.Name)))
+        #            tmpComparable1 = childMap.lookup(strfmt('%1,%2,%3',_parent,1,localRef.Name));
+        #        else
+        #            tmpComparable1 = null;
+        #
+        #        if (_comparable2 && childMap.exists(strfmt('%1,%2,%3',_parent,2,localRef.Name)))
+        #            tmpComparable2 = childMap.lookup(strfmt('%1,%2,%3',_parent,2,localRef.Name));
+        #        else
+        #            tmpComparable2 = null;
+        #
+        #        bitmap = -1;
+        #        if (themeProvider)
+        #        {
+        #            bitmap = themeProvider.bitmap(tmpComparable1, tmpComparable2);
+        #        }
+        #
+        #        if (bitmap == -1)
+        #        {
+        #            bitmap = #IMG_CHECK_ALL;
+        #
+        #            if (tmpComparable1 && tmpComparable2)
+        #            {
+        #                if (!this.nodeCompare(tmpComparable1, tmpComparable2))
+        #                {
+        #                    if (_quick)
+        #                        return false;
+        #
+        #                    bitmap = #IMG_DIFFERENCE;
+        #                    adjustBranch(localRef.Parent);
+        #                }
+        #            }
+        #            else
+        #            {
+        #                if (tmpComparable1)
+        #                {
+        #                    if (_quick)
+        #                        return false;
+        #
+        #                    bitmap = #IMG_CHECK_RED;
+        #                    adjustBranch(localRef.Parent);
+        #                }
+        #                else if (tmpComparable2)
+        #                {
+        #                    if (_quick)
+        #                        return false;
+        #
+        #                    bitmap = #IMG_CHECK_BLUE;
+        #                    adjustBranch(localRef.Parent);
+        #                }
+        #            }
+        #        }
+        #        localRef.Image = bitmap;
+        #        localRef.update();
+        #
+        #        if (!this.buildBitmaps(localRef.Id, tmpComparable1, tmpComparable2, _quick))
+        #            return false;
+        #    }
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #buildBranch
+        #protected boolean buildBranch(
+        #    int             _parent,
+        #    int             _parentTree,
+        #    SysComparable   _comparable1,
+        #    SysComparable   _comparable2,
+        #    SysCompareItem  _defaultData = null)
+        #{
+        #    int             id;
+        #    FormTreeItem    item;
+        #    TmpTree         localRef, localref2;
+        #    SysComparable   tmpComparable1, tmpComparable2;
+        #    boolean         result;
+        #    SysCompareItem  data;
+        #    str             name2;
+        #
+        #    startLengthyOperation();
+        #    tree.lockWindowUpdate(true);
+        #
+        #    localRef.setTmpData(tableTree);
+        #    localref2.setTmpData(tableTree);
+        #
+        #    while select localRef
+        #        order by Id
+        #        where localRef.Parent == _parent
+        #    {
+        #        if (_comparable1 && childMap.exists(strfmt('%1,%2,%3',_parent,1,localRef.Name)))
+        #            tmpComparable1 = childMap.lookup(strfmt('%1,%2,%3',_parent,1,localRef.Name));
+        #        else
+        #            tmpComparable1 = null;
+        #
+        #        if (_comparable2 && childMap.exists(strfmt('%1,%2,%3',_parent,2,localRef.Name)))
+        #            tmpComparable2 = childMap.lookup(strfmt('%1,%2,%3',_parent,2,localRef.Name));
+        #        else
+        #            tmpComparable2 = null;
+        #
+        #        if (prmisdefault(_defaultData))
+        #        {
+        #            data = new SysCompareItem();
+        #            data.id(localRef.Id);
+        #
+        #            if (tmpComparable1)
+        #                data.parmComparable1(tmpComparable1);
+        #
+        #            if (tmpComparable2)
+        #                data.parmComparable2(tmpComparable2);
+        #        }
+        #        else
+        #            data = _defaultData;
+        #
+        #        if (tmpComparable2)
+        #            name2 = tmpComparable2.name();
+        #        else
+        #            name2 = localRef.Name;
+        #
+        #        //BP deviation documented
+        #        item = new FormTreeItem(localRef.Name == name2 ? localRef.Name : strfmt('%1 / %2', localRef.Name, name2), localRef.Image);
+        #
+        #        item.data(data);
+        #
+        #        select firstonly localref2
+        #            where localref2.Parent == localRef.Id;
+        #
+        #        item.children(localref2?1:0);
+        #
+        #        id   = tree.addItem(_parentTree,0,item);
+        #        result = true;
+        #
+        #//        buildtree(localRef.id, id, tmpnode1, tmpnode2);
+        #    }
+        #
+        #    if (!result)
+        #    {
+        #        item = tree.getItem(_parentTree);
+        #        if (item)
+        #        {
+        #            item.children(0);
+        #            tree.setItem(item);
+        #        }
+        #    }
+        #
+        #    tree.lockWindowUpdate(false);
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #buildRef1
+        #protected void buildRef1(SysComparable _comparable, int _parent)
+        #{
+        #    SysComparableEnumerator enum = _comparable?_comparable.getEnumerator():null;
+        #    SysComparable child;
+        #    SysTreeNode childTreeNode;
+        #    TreeNodeTxt name;
+        #
+        #    boolean needLayerForCompare = this.needLayerAwareComparison();
+        #
+        #    while (enum && enum.moveNext())
+        #    {
+        #        child = enum.current();
+        #
+        #        if (child is SysTreeNode)
+        #        {
+        #            childTreeNode = child as SysTreeNode;
+        #            if (!childTreeNode.parmTreeNode().AOTIncludeInCompare())
+        #            {
+        #                continue;
+        #            }
+        #
+        #            if (needLayerForCompare && !SysTreeNode::existsInLayer(childTreeNode.parmTreeNode(), curAotLayer))
+        #            {
+        #                continue;
+        #            }
+        #        }
+        #
+        #        name = child.name();
+        #
+        #        childMap.insert(strfmt('%1,%2,%3',_parent,1,name),child);
+        #
+        #        nodeCount++;
+        #        tableTree.Name    = name;
+        #        tableTree.Id      = nodeCount;
+        #        tableTree.Parent  = _parent;
+        #        tableTree.insert();
+        #        this.buildRef1(child, nodeCount);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #buildRef2
+        #protected void buildRef2(   SysComparable _comparable,
+        #                            int           _parent,
+        #                            SysComparable _matchingComparable = null)
+        #{
+        #    SysComparableEnumerator enum = _comparable?_comparable.getEnumerator():null;
+        #    SysComparable child;
+        #    SysTreeNode childTreeNode;
+        #    SysComparable matchingChild;
+        #    TreeNodeTxt name;
+        #    TmpTree tmpTree;
+        #
+        #    boolean needLayerForCompare = this.needLayerAwareComparison();
+        #
+        #    while (enum && enum.moveNext())
+        #    {
+        #        child = enum.current();
+        #
+        #        if (child is SysTreeNode)
+        #        {
+        #            childTreeNode = child as SysTreeNode;
+        #            if (!childTreeNode.parmTreeNode().AOTIncludeInCompare())
+        #            {
+        #                continue;
+        #            }
+        #
+        #            if (needLayerForCompare && !SysTreeNode::existsInLayer(childTreeNode.parmTreeNode(), curAotLayer))
+        #            {
+        #                continue;
+        #            }
+        #        }
+        #
+        #        if (_matchingComparable)
+        #            matchingChild = _matchingComparable.findMatchingComparable(child);
+        #
+        #        if (matchingChild)
+        #            name = matchingChild.name();
+        #        else
+        #            name = child.name();
+        #
+        #        //
+        #        // nodeData() builds cache of data, which requires matchingChild
+        #        //
+        #        this.nodeData(child, topComparable2, matchingChild);
+        #
+        #        childMap.insert(strfmt('%1,%2,%3',_parent,2,name),child);
+        #
+        #        // Use name 1
+        #        while select Parent, Name, Id from tableTree
+        #            where tableTree.Parent == _parent &&
+        #                  tableTree.Name   == name
+        #        {
+        #            //
+        #            // This is needed to solve situations
+        #            // Where two siblings have the same name
+        #            //
+        #            if (!ref2Set.in(tableTree.Id))
+        #            {
+        #                tmpTree = tableTree;
+        #                break;
+        #            }
+        #        }
+        #
+        #        if (!tmpTree)
+        #        {
+        #            nodeCount++;
+        #            tableTree.Name    = name;
+        #            tableTree.Id      = nodeCount;
+        #            tableTree.Parent  = _parent;
+        #            tableTree.insert();
+        #            tmpTree.Id        = nodeCount;
+        #        }
+        #        ref2Set.add(tmpTree.Id);
+        #        this.buildRef2(child, tmpTree.Id, matchingChild);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #buildTree
+        #protected boolean buildTree()
+        #{
+        #    SysCompareItem data;
+        #    int i;
+        #
+        #    nodecount = 1;
+        #
+        #    tableTree = null;
+        #
+        #    i = strfind(description[1],'\\',strlen(description[1])-1,-strlen(description[1])+1);
+        #    tableTree.Name   = substr(description[1], i+1,strlen(description[1])-i);
+        #
+        #    i = strfind(description[2],'\\',strlen(description[2])-1,-strlen(description[2])+1);
+        #    tableTree.Name   += '/'+substr(description[2], i+1,strlen(description[2])-i);
+        #
+        #    setprefix("@SYS53419");
+        #    setprefix(tableTree.Name);
+        #    if (this.strCompare(this.nodeData(topComparable1, topComparable1, topComparable2),
+        #                        this.nodeData(topComparable2, topComparable2, topComparable1)))
+        #    {
+        #        tableTree.Image   = #IMG_CHECK_ALL;
+        #    }
+        #    else
+        #    {
+        #        tableTree.Image   = #IMG_DIFFERENCE;
+        #    }
+        #    tableTree.Id     = nodecount;
+        #    tableTree.Parent = 0;
+        #    tableTree.insert();
+        #
+        #    this.buildRef1(topComparable1, 1);
+        #    this.buildRef2(topComparable2, 1, topComparable1);
+        #
+        #    this.removeRefs  (1, topComparable1, topComparable2);
+        #
+        #    this.buildBitmaps(1, topComparable1, topComparable2);
+        #
+        #    if (showDifferencesOnly)
+        #    {
+        #        this.removeEqual();
+        #
+        #        //
+        #        // Only remove nodes that exists in 1 or 2
+        #        // When the user has decided to not "show all".
+        #        //
+        #        if (context.parmSuppressNodesOnlyIn1())
+        #        {
+        #            this.removeNodesOnlyIn1();
+        #        }
+        #        if (context.parmSuppressNodesOnlyIn2())
+        #        {
+        #            this.removeNodesOnlyIn2();
+        #        }
+        #    }
+        #    data = new SysCompareItem();
+        #    data.parmComparable1(topComparable1);
+        #    data.parmComparable2(topComparable2);
+        #    data.id(1);
+        #    if (this.buildBranch(0, 0, topComparable1, topComparable2, data))
+        #    {
+        #        tree.setFocus();
+        #        tree.expand(tree.getRoot());
+        #        tree.select(tree.getRoot());
+        #        return true;
+        #    }
+        #
+        #    this.noDifferenceFound();
+        #
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+        #//AOSRunMode::Client
+        #public class SysCompare
+        #{
+        #//
+        #    FormRun                    formRun;
+        #    FormDesign                 formDesign;
+        #    FormActiveXControl         html;
+        #    FormCheckBoxControl        includeEmptyControl;
+        #    FormCheckBoxControl        suppressWhiteSpaceControl;
+        #    FormCheckBoxControl        showDifferencesOnlyControl;
+        #    FormCheckBoxControl        caseSensitiveControl;
+        #    FormCheckBoxControl        lineNumbersControl;
+        #    FormComboBoxControl        comboBox1;
+        #    FormComboBoxControl        comboBox2;
+        #    FormTreeControl            tree;
+        #    FormGroupControl           dataGroup;
+        #
+        #    str                        htmltext;
+        #    SysComparable              topComparable1, topComparable2;
+        #
+        #    SysComparable              currentComparable1, currentComparable2;
+        #    SysCompareItem             currentItem;
+        #    boolean                    suppressWhiteSpace;
+        #    boolean                    showDifferencesOnly;
+        #    boolean                    caseSensitive;
+        #    boolean                    showLineNumbers;
+        #    TmpTree                    tableTree;
+        #    str                        description[2];
+        #    int                        nodeCount;
+        #    SysCompareContextProvider  context;
+        #    Map                        comparableMap1, comparableMap2;
+        #    Map                        childMap;
+        #    Map                        insertMap1;
+        #    Map                        insertMap2;
+        #    Map                        removeMap1;
+        #    Map                        removeMap2;
+        #    Map                        moveMap1;
+        #    Map                        moveMap2;
+        #    SysMergeDirection          mergeDirection;
+        #    Set                        ref2Set;
+        #    SysCompareThemeProvider    themeProvider;
+        #    str                        colorSame;
+        #    str                        colorOriginal;
+        #    str                        colorText1;
+        #    str                        colorText2;
+        #    UtilEntryLevel             curAotLayer;
+        #
+        ##define.IMG_CHECK_ALL(0)
+        ##define.IMG_DIFFERENCE(1)
+        ##define.IMG_CHECK_RED(2)
+        ##define.IMG_CHECK_BLUE(3)
+        ##define.IMG_CHECK_SOME(4)
+        #
+        ##define.MergeInsert('insert')  //Must be 6 characters
+        ##define.MergeRemove('remove')  //Must be 6 characters
+        ##define.MergeMoveIn('movein')  //Must be 6 characters
+        ##define.MergeMoveOut('movout') //Must be 6 characters
+        ##define.MergeDeleteTop('deltop') //Must be 6 characters
+        #
+        ##define.StyleHeaderText('headerText')
+        ##define.StyleDiffText('diffText')
+        #
+        ##define.SpecialMarkupStart('·')
+        ##define.SpecialMarkupEnd('°')
+        #}
+        #
+      ENDSOURCE
+      SOURCE #compare
+        #protected void compare(
+        #    SysComparableTmpText    _tmpText1         = null,
+        #    SysComparableTmpText    _tmpText2         = null,
+        #    str                     _extMerge         = '',
+        #    str                     _extNotMerge      = '',
+        #    boolean                 _linenumbers      = false,
+        #    boolean                 _singleLine       = false,
+        #    boolean                 _allowMergeIn     = false,
+        #    boolean                 _allowMergeOut    = false,
+        #    boolean                 _alternateLines   = false,
+        #    boolean                 _supportHighlight = true
+        #    )
+        #{
+        #    container result;
+        #    str s1 = SysCompare::formatHtml(_tmpText1.Text);
+        #    str s2 = SysCompare::formatHtml(_tmpText2.Text);
+        #
+        #    result = SysCompareText::run(s1,
+        #                                 s2,
+        #                                 caseSensitive,
+        #                                 suppressWhiteSpace,
+        #                                 _alternateLines ? false : _linenumbers, //Linenumbers are meaningless when lines alternate.
+        #                                 _singleLine,
+        #                                 _alternateLines
+        #                                 );
+        #
+        #    result = context.manipulateResult(result, _tmpText1, _tmpText2, currentComparable1, currentComparable2);
+        #
+        #    htmlText += this.con2Html(
+        #                        result,
+        #                        mergeDirection,
+        #                        _tmpText1,
+        #                        _tmpText2,
+        #                        _extMerge,
+        #                        _extNotMerge,
+        #                        _allowMergeOut,
+        #                        _allowMergeIn,
+        #                        insertMap1,
+        #                        insertMap2,
+        #                        removeMap1,
+        #                        removeMap2,
+        #                        moveMap1,
+        #                        moveMap2,
+        #                        _supportHighlight);
+        #}
+      ENDSOURCE
+      SOURCE #compareComparables
+        #public boolean compareComparables(SysComparable _comparable1, SysComparable _comparable2)
+        #{
+        #    tableTree = null;
+        #    nodeCount = 0;
+        #
+        #    topComparable1 = _comparable1;
+        #    topComparable2 = _comparable2;
+        #
+        #    childMap = new Map(Types::String, Types::Class);
+        #    ref2Set  = new Set(Types::Integer);
+        #
+        #    if (!this.strCompare(this.nodeData(_comparable1, _comparable1, _comparable2),
+        #                         this.nodeData(_comparable2, _comparable2, _comparable1)))
+        #    {
+        #        return false;
+        #    }
+        #
+        #    this.buildRef1(_comparable1, 0);
+        #    this.buildRef2(_comparable2, 0);
+        #
+        #    this.removeRefs(0, _comparable1, _comparable2);
+        #    return this.buildBitmaps(0, _comparable1, _comparable2, true);
+        #}
+      ENDSOURCE
+      SOURCE #con2Html
+        #protected str con2Html(
+        #    container               _compareResult,
+        #    SysMergeDirection       _mergeDirection   = SysMergeDirection::None,
+        #    SysComparableTmpText    _tmpText1         = null,
+        #    SysComparableTmpText    _tmpText2         = null,
+        #    str                     _extMerge         = '',
+        #    str                     _extNotMerge      = '',
+        #    boolean                 _allowRemove      = true,
+        #    boolean                 _allowInsert      = true,
+        #    Map                     _insertMap1       = null,
+        #    Map                     _insertMap2       = null,
+        #    Map                     _removeMap1       = null,
+        #    Map                     _removeMap2       = null,
+        #    Map                     _moveMap1         = null,
+        #    Map                     _moveMap2         = null,
+        #    boolean                 _supportHighlight = true)
+        #{
+        #    #resappl
+        #
+        #    #WinApi
+        #    str spacer = '<div style="height=15px; padding-top:4; width:27px; overflow:hidden; min-width:27px; max-width:27px">%1</div>';
+        #    str preTag = '<pre style="margin:0"><font color="#%1">%2</font></pre>';
+        #    str cellstyle = 'valign=top width=27px style="border-color:#FFFFFF; border-width:0px; border-top-width:2px; border-style:solid;"';
+        #    str localHtmlText;
+        #    int i, idx;
+        #    boolean highlight;
+        #    SysCompareType type;
+        #    SysCompareType type2;
+        #    str text, text2, lineColor, iconText, moveIconText, styleClass, dummyText;
+        #
+        #    str iconRemove      = SysCompare::res2filename(#ImageArrowLeft, SysPictureAlignment::AlignTop);
+        #    str iconInsert      = SysCompare::res2filename(#ImageArrowRight, SysPictureAlignment::AlignTop);
+        #    str iconMoveInUp    = SysCompare::res2filename(#ImageArrowDownRight, SysPictureAlignment::AlignTop);
+        #    str iconMoveInDown  = SysCompare::res2filename(#ImageArrowUpRight, SysPictureAlignment::AlignTop);
+        #    str iconMoveOutUp   = SysCompare::res2filename(#ImageArrowLeftUp, SysPictureAlignment::AlignTop);
+        #    str iconMoveOutDown = SysCompare::res2filename(#ImageArrowLeftDown, SysPictureAlignment::AlignTop);
+        #
+        #    container highLightResult;
+        #    boolean hasIconRemove, hasIconInsert, hasIconMoveUp, hasIconMoveDown;
+        #    int     iconNumInsert, iconNumRemove, iconNumMove;
+        #    int     resultLen = conlen(_compareResult);
+        #
+        #    if (_mergeDirection == SysMergeDirection::None)
+        #        _allowRemove = false;
+        #
+        #    for (i=1; i<= resultLen; i++)
+        #    {
+        #        [type,  text, idx] = conpeek(_compareResult, i);
+        #        if (_supportHighlight)
+        #        {
+        #            if (highlight)
+        #            {
+        #                text = text2;
+        #                highlight = false;
+        #
+        #                [type2, text2] = conpeek(_compareResult, i+1);
+        #
+        #                if ( ((type == SysCompareType::Text1 && type2 == SysCompareType::TextOriginal) ||
+        #                      (type == SysCompareType::Text2 && type2 == SysCompareType::TextOriginal)) &&
+        #                    strlen(strkeep(text2,'\n')) <= 1)
+        #                {
+        #                    highLightResult = SysCompare::highlightText(text, text2);
+        #                    [dummyText, text2]   = highLightResult;
+        #                    highlight = true;
+        #                }
+        #            }
+        #            else if ((type == SysCompareType::Text1 ||
+        #                      type == SysCompareType::Text2 ||
+        #                      type == SysCompareType::Identical) &&
+        #                     i<resultLen &&
+        #                     strlen(strkeep(text,'\n')) <= 1)
+        #            {
+        #                [type2, text2]     = conpeek(_compareResult, i+1);
+        #                if ( ((type == SysCompareType::Text1 && type2 == SysCompareType::Text2) ||
+        #                      (type == SysCompareType::Text2 && type2 == SysCompareType::Text1) ||
+        #                      (type == SysCompareType::Identical && type2 == SysCompareType::TextOriginal)) &&
+        #                    strlen(strkeep(text2,'\n')) <= 1)
+        #                {
+        #                    highLightResult = SysCompare::highlightText(text, text2);
+        #                    [text, text2]   = highLightResult;
+        #                    highlight = true;
+        #                }
+        #            }
+        #        }
+        #        text = strReplace(text, #SpecialMarkupStart , '<');
+        #        text = strReplace(text, #SpecialMarkupEnd , '>');
+        #        hasIconRemove   = false;
+        #        hasIconInsert   = false;
+        #        hasIconMoveUp   = false;
+        #        hasIconMoveDown = false;
+        #        iconText        = '';
+        #        moveIconText    = '';
+        #        if (text == '<br>')
+        #        {
+        #            localHtmlText += '\n';
+        #        }
+        #        else
+        #        {
+        #            switch (type)
+        #            {
+        #                case SysCompareType::Identical:
+        #                    lineColor = colorSame;
+        #                    break;
+        #
+        #                case SysCompareType::Text1:
+        #                    styleClass = #StyleDiffText;          //no break
+        #
+        #                case SysCompareType::Move1:
+        #                    if (type == SysCompareType::Move1)
+        #                    {
+        #                        styleClass = #StyleDiffText;
+        #                        if (i > idx)
+        #                            hasIconMoveUp   = true;
+        #                        if (i < idx)
+        #                            hasIconMoveDown = true; //no break
+        #                    }
+        #                case SysCompareType::Text1:
+        #                    lineColor = colorText1;
+        #                    if (_mergeDirection == SysMergeDirection::TextA)
+        #                        hasIconRemove  = true;
+        #                    if (_mergeDirection == SysMergeDirection::TextB)
+        #                        hasIconInsert   = true;
+        #                    break;
+        #
+        #                case SysCompareType::Text2:
+        #                    styleClass = #StyleDiffText;          //no break
+        #
+        #                case SysCompareType::Move2:
+        #                    if (type == SysCompareType::Move2)
+        #                    {
+        #                        styleClass = #StyleDiffText;
+        #                        if (i > idx)
+        #                            hasIconMoveUp   = true;
+        #                        if (i < idx)
+        #                            hasIconMoveDown = true; //no break
+        #                    }
+        #                case SysCompareType::Text2:
+        #                    lineColor = colorText2;
+        #                    if (_mergeDirection == SysMergeDirection::TextA)
+        #                        hasIconInsert  = true;
+        #                    if (_mergeDirection == SysMergeDirection::TextB)
+        #                        hasIconRemove  = true;
+        #                    break;
+        #
+        #                case SysCompareType::TextOriginal:
+        #                    styleClass = #StyleDiffText;          //no break
+        #                    lineColor = colorOriginal;
+        #                    break;
+        #
+        #            }
+        #        }
+        #        if (hasIconInsert && _allowInsert && _insertMap1 && _insertMap2)
+        #        {
+        #            iconNumInsert = _insertMap1.elements() + 1;
+        #            _insertMap1.insert(iconNumInsert, _tmpText1);
+        #            _insertMap2.insert(iconNumInsert, _tmpText2);
+        #
+        #            icontext = '<A HREF="#'+#MergeInsert+int2str(iconNumInsert)+'" title="'+strfmt("@SYS67132",_extMerge)+'">'+iconInsert+'</A>';
+        #        }
+        #        if (hasIconRemove && _allowRemove && _removeMap1 && _removeMap2)
+        #        {
+        #            iconNumRemove = _removeMap1.elements() + 1;
+        #            _removeMap1.insert(iconNumRemove, _tmpText1);
+        #            _removeMap2.insert(iconNumRemove, _tmpText2);
+        #
+        #            icontext = '<A HREF="#'+#MergeRemove+int2str(iconNumRemove)+'" title="'+strfmt("@SYS67131",_extMerge)+'">'+iconRemove+'</A>';
+        #        }
+        #        if (hasIconMoveUp && _allowRemove && _moveMap1 && _moveMap2)
+        #        {
+        #            iconNumMove = _moveMap1.elements() + 1;
+        #            _moveMap1.insert(iconNumMove, _tmpText1);
+        #            _moveMap2.insert(iconNumMove, _tmpText2);
+        #
+        #            if ((type == SysCompareType::Move2 && _mergeDirection == SysMergeDirection::TextA) ||
+        #                (type == SysCompareType::Move1 && _mergeDirection == SysMergeDirection::TextB))
+        #                moveIconText = '<A HREF="#'+#MergeMoveIn+int2str(iconNumMove)+':'+int2str(idx)+'" title="'+strfmt("@SYS67189",_extNotMerge)+'">'+iconMoveInUp+'</A>';
+        #            else
+        #                moveIconText = '<A HREF="#'+#MergeMoveOut+int2str(iconNumMove)+':'+int2str(idx)+'" title="'+strfmt("@SYS67189",_extNotMerge)+'">'+iconMoveOutUp+'</A>';
+        #        }
+        #        if (hasIconMoveDown && _allowRemove && _moveMap1 && _moveMap2)
+        #        {
+        #            iconNumMove = _moveMap1.elements() + 1;
+        #            _moveMap1.insert(iconNumMove, _tmpText1);
+        #            _moveMap2.insert(iconNumMove, _tmpText2);
+        #
+        #            if ((type == SysCompareType::Move2 && _mergeDirection == SysMergeDirection::TextA) ||
+        #                (type == SysCompareType::Move1 && _mergeDirection == SysMergeDirection::TextB))
+        #                moveIconText = '<A HREF="#'+#MergeMoveIn+int2str(iconNumMove)+':'+int2str(idx)+'" title="'+strfmt("@SYS67189",_extNotMerge)+'">'+iconMoveInDown+'</A>';
+        #            else
+        #                moveIconText = '<A HREF="#'+#MergeMoveOut+int2str(iconNumMove)+':'+int2str(idx)+'" title="'+strfmt("@SYS67189",_extNotMerge)+'">'+iconMoveOutDown+'</A>';
+        #        }
+        #        if (!strfind(text, '\n',1,strlen(text)))
+        #            text += '\n';
+        #
+        #        if (type == SysCompareType::Identical)
+        #        {
+        #            localHtmlText += '<tr><td '+cellstyle+'>'+strfmt(spacer,'')+'</td>' +
+        #                             '<td>'+strfmt(preTag, lineColor, text)+'</td></tr>\n';
+        #        }
+        #        else
+        #        {
+        #            //
+        #            // Insert table with difference using style as defined in SysCompare::style()
+        #            //
+        #            localHtmlText += '<tr><td bgcolor=#EDECE9 '+cellstyle+'>'+strfmt(spacer, iconText+'<span style="width:6px;"></span>'+moveiconText)+'</td>' +
+        #                             '<td class="'+styleClass+'">\n'+strfmt(preTag, lineColor, text)+'</td></tr>\n';
+        #        }
+        #    }
+        #    localhtmltext = '<table style="position:relative; z-index:-2;" width=100% cellspacing="0" cellpadding="0">' +localhtmltext+'</table>';
+        #    return localhtmltext;
+        #}
+      ENDSOURCE
+      SOURCE #contextTree
+        #void contextTree()
+        #{
+        #    FormTreeItem     treeItem = tree.getItem(tree.getSelection());
+        #    SysCompareItem   item = treeItem.data();
+        #
+        #    context.onContextMenu(tree.hWnd(), item.parmComparable1(), item.parmComparable2(), topComparable1, topComparable2);
+        #}
+      ENDSOURCE
+      SOURCE #expanding
+        #void expanding(int _idx)
+        #{
+        #    SysCompareItem data = tree.getItem(_idx).data();
+        #
+        #    if (!tree.getItem(_idx).stateExpandedOnce())
+        #        this.buildBranch(data.id(), _idx, data.parmComparable1(), data.parmComparable2());
+        #}
+      ENDSOURCE
+      SOURCE #finalize
+        #void finalize()
+        #{
+        #    /* This breaks silent compare.
+        #    void traverse(int _idx)
+        #    {
+        #        FormTreeItem   item    = tree.getItem(_idx);
+        #        SysCompareItem cmpItem = item.data();
+        #        int            child   = tree.getChild(_idx);
+        #
+        #        cmpItem.parmComparable1(null);
+        #        cmpItem.parmComparable2(null);
+        #
+        #        while (child)
+        #        {
+        #            traverse(child);
+        #            child = tree.getNextSibling(child);
+        #        }
+        #    }
+        #
+        #    traverse(tree.getRoot());
+        #    */
+        #    topComparable1     = null;
+        #    topComparable2     = null;
+        #    currentComparable1 = null;
+        #    currentComparable2 = null;
+        #}
+      ENDSOURCE
+      SOURCE #findChild
+        #protected SysComparable findChild(SysComparable _comparable, str _name)
+        #{
+        #    SysComparableEnumerator enum = _comparable.getEnumerator();
+        #    SysComparable node;
+        #
+        #    while (enum.moveNext())
+        #    {
+        #        node = enum.current();
+        #        if (node.name() == _name)
+        #            return node;
+        #    }
+        #    return null;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #findTreeItem
+        #FormTreeItem findTreeItem(int _parentIdx, str _name)
+        #{
+        #    FormTreeItem item = tree.getItem(tree.getChild(_parentidx));
+        #    while (item && item.text() != _name)
+        #    {
+        #        item = tree.getItem(tree.getNextSibling(item.idx()));
+        #    }
+        #    return item;
+        #}
+      ENDSOURCE
+      SOURCE #getCombo
+        #protected SysComparable getCombo(SysCompareType _type)
+        #{
+        #    SysComparable comparable;
+        #
+        #    if (_type == SysCompareType::Text1)
+        #    {
+        #        description[1] = comboBox1.getText(comboBox1.selection());
+        #        comparable = comparableMap1.lookup(description[1]);
+        #    }
+        #    else
+        #    {
+        #        description[2] = comboBox2.getText(comboBox2.selection());
+        #        comparable = comparableMap2.lookup(description[2]);
+        #    }
+        #    comparable.onComparableSelected();
+        #    return comparable;
+        #}
+      ENDSOURCE
+      SOURCE #getMergedAlternatingLineText
+        #protected str getMergedAlternatingLineText(str _s1, str _s2, int _num)
+        #{
+        #    // Return the _num'th Text1 (the line with the actionIcon the user clicked on)
+        #
+        #    container       result;
+        #    int             i;
+        #    int             resultNum;
+        #    SysCompareType  type;
+        #    str             text;
+        #
+        #
+        #
+        #    result = SysCompareText::run(_s2, _s1, caseSensitive, suppressWhiteSpace, false, true, false);
+        #    for (i=1; i<= conlen(result); i++)
+        #    {
+        #        [type, text] = conpeek(result, i);
+        #        if (type == SysCompareType::Text1)
+        #        {
+        #            resultNum++;
+        #            if (resultNum == _num)
+        #            {
+        #                return text;
+        #            }
+        #        }
+        #    }
+        #    return '';
+        #}
+      ENDSOURCE
+      SOURCE #init
+        #protected void init(boolean silent = false)
+        #{
+        #    #resource
+        #    #define.black  ('000000')
+        #    #define.blue   ('0000ff')
+        #    #define.red    ('ff0000')
+        #    #define.green  ('00dd00')
+        #
+        #    Args args;
+        #    Imagelist equalList;
+        #
+        #    if (context)
+        #    {
+        #        themeProvider = context as SysCompareThemeProvider;
+        #    }
+        #
+        #    if (silent)
+        #    {
+        #        suppressWhiteSpace = true;
+        #        showDifferencesOnly = true;
+        #        caseSensitive = false;
+        #        showLineNumbers = false;
+        #
+        #    }
+        #    else
+        #    {
+        #        args = new Args(formstr(SysCompareForm));
+        #        args.caller(this);
+        #        formRun                    = classfactory.formRunClass(args);
+        #        formRun.init();
+        #        formDesign                 = formRun.design();
+        #
+        #        html                       = formDesign.controlName('HTML');
+        #        comboBox1                  = formDesign.controlName('ComboBox1');
+        #        comboBox2                  = formDesign.controlName('ComboBox2');
+        #        tree                       = formDesign.controlName('Tree');
+        #        includeEmptyControl        = formDesign.controlName('IncludeEmpty');
+        #        suppressWhiteSpaceControl  = formDesign.controlName('SuppressWhiteSpace');
+        #        showDifferencesOnlyControl = formDesign.controlName('SuppressEqual');
+        #        caseSensitiveControl       = formDesign.controlName('CaseSensitive');
+        #        lineNumbersControl         = formDesign.controlName('LineNumbers');
+        #        dataGroup                  = formDesign.controlName('Data');
+        #
+        #        equalList = new Imagelist(Imagelist::smallIconWidth(), Imagelist::smallIconHeight());
+        #
+        #        // default images
+        #        equalList.add(new Image(#RES_CHECK_ALL));
+        #        equalList.add(new Image(#RES_DIFFERENCE));
+        #        equalList.add(new Image(#RES_CHECK_RED));
+        #        equalList.add(new Image(#RES_CHECK_BLUE));
+        #        equalList.add(new Image(#RES_CHECK_SOME));
+        #
+        #        if (themeProvider)
+        #        {
+        #            // theme provider may replace or add to imagelist
+        #            equalList = themeProvider.imageList(equalList);
+        #            [colorOriginal, colorSame, colorText1, colorText2] = themeProvider.colorList();
+        #            themeProvider.customizeFormDesign(formDesign);
+        #        }
+        #        else
+        #        {
+        #            [colorOriginal, colorSame, colorText1, colorText2] = [#green, #black, #red, #blue];
+        #        }
+        #
+        #        tree.setImagelist(equalList);
+        #        formRun.run();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #initContext
+        #protected void initContext(SysCompareContextProvider _context)
+        #{
+        #    context = _context;
+        #
+        #    formDesign.caption(context.caption());
+        #    caseSensitiveControl.value(context.parmCaseSensitive());
+        #    suppressWhiteSpaceControl.value(context.parmSuppressWhitespace());
+        #    lineNumbersControl.value(context.parmShowLineNumbers());
+        #    showDifferencesOnlyControl.value(context.parmShowDifferencesOnly());
+        #
+        #    comparableMap1 = new Map(Types::String, Types::Class);
+        #    comparableMap2 = new Map(Types::String, Types::Class);
+        #
+        #    this.setCombo(comboBox1, _context.comparableList(SysCompareType::Text1), comparableMap1, _context.comparableItemDefault(SysCompareType::Text1));
+        #    this.setCombo(comboBox2, _context.comparableList(SysCompareType::Text2), comparableMap2, _context.comparableItemDefault(SysCompareType::Text2));
+        #
+        #    if (comboBox1.getText(comboBox1.selection()) == comboBox2.getText(comboBox2.selection()))
+        #    {
+        #        if (comboBox2.selection()+1 >= comboBox2.items() )
+        #        {
+        #            comboBox2.selection(0);
+        #        }
+        #        else
+        #        {
+        #            comboBox2.selection(comboBox2.selection()+1);
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #insertHeading
+        #protected void insertHeading(str _heading, boolean _insertPreBreak)
+        #{
+        #    if (_insertPreBreak)
+        #        htmlText += '<BR>\n<BR>';
+        #
+        #    //
+        #    // Insert heading using style as defined in SysCompare::style()
+        #    //
+        #
+        #    htmlText += '<div class="'+#StyleHeaderText+'">'+_heading+'</div>';
+        #}
+      ENDSOURCE
+      SOURCE #merge
+        #protected void merge(str _action, int _num, int _moveNum)
+        #{
+        #    SysMergeable mergeToNode, mergeParent;
+        #    SysComparable mergeFromNode, topNode;
+        #    int parentIdx;
+        #    SysCompareItem parentItem;
+        #    SysComparableTmpText text1, text2, mergeToText, mergeFromText;
+        #
+        #    if (currentComparable1 && currentComparable2)
+        #    {
+        #        switch (_action)
+        #        {
+        #            case #MergeInsert:
+        #                if (insertMap1.exists(_num))
+        #                {
+        #                    text1 = insertMap1.lookup(_num);
+        #                }
+        #                else
+        #                {
+        #                    text1 = null;
+        #                }
+        #
+        #                if (insertMap2.exists(_num))
+        #                {
+        #                    text2 = insertMap2.lookup(_num);
+        #                }
+        #                else
+        #                {
+        #                    text2 = null;
+        #                }
+        #
+        #                if (text1.Type)
+        #                    _num -= this.offsetInMap(insertMap1, text1.Type );
+        #                else
+        #                    _num -= this.offsetInMap(insertMap2, text2.Type );
+        #                break;
+        #
+        #            case #MergeRemove:
+        #                if (removeMap1.exists(_num))
+        #                {
+        #                    text1 = removeMap1.lookup(_num);
+        #                }
+        #                else
+        #                {
+        #                    text1 = null;
+        #                }
+        #
+        #                if (removeMap2.exists(_num))
+        #                {
+        #                    text2 = removeMap2.lookup(_num);
+        #                }
+        #                else
+        #                {
+        #                    text2 = null;
+        #                }
+        #
+        #                if (text1.Type)
+        #                    _num -= this.offsetInMap(removeMap1, text1.Type);
+        #                else
+        #                    _num -= this.offsetInMap(removeMap2, text2.Type);
+        #                break;
+        #
+        #            case #MergeMoveIn:
+        #            case #MergeMoveOut:
+        #                if (moveMap1.exists(_num))
+        #                {
+        #                    text1 = moveMap1.lookup(_num);
+        #                }
+        #                else
+        #                {
+        #                    text1 = null;
+        #                }
+        #
+        #                if (moveMap2.exists(_num))
+        #                {
+        #                    text2 = moveMap2.lookup(_num);
+        #                }
+        #                else
+        #                {
+        #                    text2 = null;
+        #                }
+        #
+        #                if (text1.Type)
+        #                    _num -= this.offsetInMap(moveMap1, text1.Type);
+        #                else
+        #                    _num -= this.offsetInMap(moveMap2, text2.Type);
+        #                break;
+        #
+        #        }
+        #
+        #        switch (mergeDirection)
+        #        {
+        #            case SysMergeDirection::TextA:
+        #                mergeToNode     = currentComparable1 as SysMergeable;
+        #                mergeFromNode   = currentComparable2;
+        #                topNode         = topComparable1;
+        #                mergeToText     = text1;
+        #                mergeFromText   = text2;
+        #                break;
+        #
+        #            case SysMergeDirection::TextB:
+        #                mergeToNode     = currentComparable2 as SysMergeable;
+        #                mergeFromNode   = currentComparable1;
+        #                topNode         = topComparable2;
+        #                mergeToText     = text2;
+        #                mergeFromText   = text1;
+        #                break;
+        #        }
+        #
+        #        this.mergeText(_action, _num, _moveNum, mergeToNode, mergeFromNode, topNode, mergeToText, mergeFromText);
+        #    }
+        #    else
+        #    {
+        #        parentIdx = tree.getParent(tree.getSelection());
+        #        parentItem = tree.getItem(parentIdx).data();
+        #
+        #        switch (_action)
+        #        {
+        #            case #MergeRemove:
+        #                switch (mergeDirection)
+        #                {
+        #                    case SysMergeDirection::TextA:
+        #                        mergeParent = parentItem.parmComparable1() as SysMergeable;
+        #                        this.mergeSubNodeDelete(mergeParent, currentComparable1, topComparable1, parentIdx);
+        #                        tree.select(parentIdx);
+        #                        break;
+        #
+        #                    case SysMergeDirection::TextB:
+        #                        mergeParent = parentItem.parmComparable2() as SysMergeable;
+        #                        this.mergeSubNodeDelete(mergeParent, currentComparable2, topComparable2, parentIdx);
+        #                        tree.select(parentIdx);
+        #                        break;
+        #                }
+        #
+        #            case #MergeInsert:
+        #                switch (mergeDirection)
+        #                {
+        #                    case SysMergeDirection::TextA:
+        #                        mergeParent = parentItem.parmComparable1() as SysMergeable;
+        #                        this.mergeSubNodeInsert(mergeParent, currentComparable2, topComparable1, parentIdx);
+        #                        break;
+        #
+        #                    case SysMergeDirection::TextB:
+        #                        mergeParent = parentItem.parmComparable2() as SysMergeable;
+        #                        this.mergeSubNodeInsert(mergeParent, currentComparable1, topComparable2, parentIdx);
+        #                        break;
+        #                }
+        #                break;
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #mergeClicked
+        #protected void mergeClicked(str _action, int _num, int _moveNum)
+        #{
+        #    SysComparable topNode;
+        #
+        #    if (_action == #MergeDeleteTop)
+        #    {
+        #        switch (mergeDirection)
+        #        {
+        #            case SysMergeDirection::TextA:
+        #                topNode = topComparable1;
+        #                break;
+        #
+        #            case SysMergeDirection::TextB:
+        #                topNode = topComparable2;
+        #                break;
+        #        }
+        #
+        #        if (topNode)
+        #        {
+        #            context.onDeleteTopNode(topNode);
+        #            formRun.close();
+        #        }
+        #    }
+        #    else
+        #    {
+        #        this.merge(_action, _num, _moveNum);
+        #        this.selectionChanged(tree.getItem(tree.getSelection()));
+        #        this.updateBitmaps(tree.getSelection());
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #mergeMultiLineText
+        #protected str mergeMultiLineText(str _s1, str _s2, str _action, int _num, int _moveNum)
+        #{
+        #    str             mergeSource;
+        #    container       result;
+        #    int             i;
+        #    int             resultNum;
+        #    SysCompareType  type;
+        #    str             text;
+        #
+        #    //
+        #    // Loop over all parts from the comparison
+        #    // concatenate the right parts onto the result
+        #    //
+        #    // _s1 is the original
+        #    // _s2 contains the text to merge with
+        #    //
+        #
+        #    result = SysCompareText::run(_s1, _s2, caseSensitive, suppressWhiteSpace, false, false, false);
+        #    for (i=1; i<= conlen(result); i++)
+        #    {
+        #        [type, text] = conpeek(result, i);
+        #
+        #        switch (_action)
+        #        {
+        #            case #MergeInsert:
+        #                //
+        #                // A text is being inserted
+        #                //
+        #                switch (type)
+        #                {
+        #                    case SysCompareType::Identical:
+        #                    case SysCompareType::Text1:
+        #                    case SysCompareType::Move1:
+        #                        //
+        #                        // From the original
+        #                        //
+        #                        mergeSource += text;
+        #                        break;
+        #
+        #                    case SysCompareType::Move2:
+        #                    case SysCompareType::Text2:
+        #                        //
+        #                        // From the text containing the text to merge in
+        #                        //
+        #                        resultNum++;
+        #                        if (resultNum == _num)
+        #                        {
+        #                            //
+        #                            // The text to merge in
+        #                            //
+        #                            mergeSource += text;
+        #                        }
+        #                        break;
+        #                }
+        #                break;
+        #
+        #            case #MergeRemove:
+        #                //
+        #                // A text is being removed
+        #                //
+        #                switch (type)
+        #                {
+        #                    case SysCompareType::Identical:
+        #                        //
+        #                        // Identical texts can't be removed
+        #                        //
+        #                        mergeSource += text;
+        #                        break;
+        #
+        #                    case SysCompareType::Move1:
+        #                    case SysCompareType::Text1:
+        #                        //
+        #                        // From the original
+        #                        //
+        #                        resultNum++;
+        #                        if (resultNum != _num)
+        #                        {
+        #                            //
+        #                            // This is not the text, that should be removed
+        #                            //
+        #                            mergeSource += text;
+        #                        }
+        #                        break;
+        #
+        #                    case SysCompareType::Move2:
+        #                    case SysCompareType::Text2:
+        #                        //
+        #                        // Skip all parts from the merge-with text
+        #                        //
+        #                        break;
+        #                }
+        #                break;
+        #
+        #            case #MergeMoveIn:
+        #                //
+        #                // A text is being moved (Removed from Move1 and inserted at Move2)
+        #                // This movement is based on a move in the original text
+        #                //
+        #                switch (type)
+        #                {
+        #                    case SysCompareType::Identical:
+        #                    case SysCompareType::Text1:
+        #                        //
+        #                        // From the original
+        #                        //
+        #                        mergeSource += text;
+        #                        break;
+        #
+        #                    case SysCompareType::Move1:
+        #                        //
+        #                        // The source place
+        #                        //
+        #                        resultNum++;
+        #                        if (i != _moveNum)
+        #                        {
+        #                            //
+        #                            // Not the one to (re)move
+        #                            //
+        #                            mergeSource += text;
+        #                        }
+        #                        break;
+        #
+        #                    case SysCompareType::Move2:
+        #                        //
+        #                        // The destination place
+        #                        //
+        #                        resultNum++;
+        #                        if (resultNum == _num)
+        #                        {
+        #                            //
+        #                            // The one to insert
+        #                            //
+        #                            mergeSource += text;
+        #                        }
+        #                        break;
+        #
+        #                    case SysCompareType::Text2:
+        #                        //
+        #                        // Skip all parts from the merge-with text
+        #                        //
+        #                        break;
+        #                }
+        #                break;
+        #
+        #            case #MergeMoveOut:
+        #                //
+        #                // A text is being moved (Removed from Move1 and inserted at Move2)
+        #                // This movement is based on a move in the merge-with text
+        #                //
+        #                switch (type)
+        #                {
+        #                    case SysCompareType::Identical:
+        #                    case SysCompareType::Text1:
+        #                        //
+        #                        // From the original
+        #                        //
+        #                        mergeSource += text;
+        #                        break;
+        #
+        #                    case SysCompareType::Move1:
+        #                        //
+        #                        // The source place
+        #                        //
+        #                        resultNum++;
+        #                        if (resultNum != _num)
+        #                        {
+        #                            //
+        #                            // Not the one to (re)move
+        #                            //
+        #                            mergeSource += text;
+        #                        }
+        #                        break;
+        #
+        #                    case SysCompareType::Move2:
+        #                        //
+        #                        // The destination place
+        #                        //
+        #                        resultNum++;
+        #                        if (i == _moveNum)
+        #                        {
+        #                            //
+        #                            // The one to insert
+        #                            //
+        #                            mergeSource += text;
+        #                        }
+        #                        break;
+        #
+        #                    case SysCompareType::Text2:
+        #                        //
+        #                        // Skip all parts from the merge-with text
+        #                        //
+        #                        break;
+        #                }
+        #                break;
+        #        }
+        #    }
+        #
+        #    return mergeSource;
+        #}
+      ENDSOURCE
+      SOURCE #mergeSubNodeDelete
+        #protected void mergeSubNodeDelete(
+        #    SysMergeable  _nodeToDeleteParent,
+        #    SysComparable _nodeToDelete,
+        #    SysComparable _topNode,
+        #    int           _parentIdx)
+        #{
+        #    if (_nodeToDeleteParent && _nodeToDelete)
+        #    {
+        #        _nodeToDeleteParent.mergeDeleteSubnode(_topNode, context, _nodeToDelete);
+        #        this.rebuildTree(_parentIdx);
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #mergeSubNodeInsert
+        #protected void mergeSubNodeInsert(
+        #    SysMergeable  _mergeTargetParent,
+        #    SysComparable _nodeToInsert,
+        #    SysComparable _topNode,
+        #    int           _parentIdx)
+        #{
+        #    if (_mergeTargetParent && _nodeToInsert)
+        #    {
+        #        if (this.findChild(_mergeTargetParent, _nodeToInsert.name()))
+        #        {
+        #            error("@SYS75627");
+        #        }
+        #        else
+        #        {
+        #            _mergeTargetParent.mergeInsertSubnode(_topNode, context, _nodeToInsert);
+        #            this.rebuildTree(_parentIdx, _nodeToInsert);
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #mergeSubNodes
+        #protected void mergeSubNodes(
+        #    str           _s1,
+        #    str           _s2,
+        #    str           _action,
+        #    int           _num,
+        #    int           _moveNum,
+        #    SysMergeable  _mergeNode,
+        #    SysComparable _mergeFrom,
+        #    SysComparable _topNode)
+        #{
+        #    container       result;
+        #    int             i;
+        #    int             resultNum;
+        #    SysCompareType  type;
+        #    str             tmpName, nodename;
+        #    SysComparable   node;
+        #    SysMergeable    nodeToRemove;
+        #
+        #    //_mergeFrom is text2
+        #    result = SysCompareText::run(_s1, _s2, caseSensitive, suppressWhiteSpace, false, true, false);
+        #    for (i=1; i<= conlen(result); i++)
+        #    {
+        #        [type, tmpName] = conpeek(result, i);
+        #        tmpName = strrem(tmpName,'\n');
+        #        tmpName  = strltrim(tmpName);
+        #        nodeName = strrtrim(tmpName);
+        #
+        #        switch (_action)
+        #        {
+        #            case #MergeInsert:
+        #                switch (type)
+        #                {
+        #                    case SysCompareType::Text2:
+        #                        resultNum++;
+        #                        if (resultNum == _num)
+        #                        {
+        #                            node = this.findChild(_mergeFrom, nodeName);
+        #                            if (node)
+        #                            {
+        #                                this.mergeSubNodeInsert(_mergeNode, node, _topNode, tree.getSelection());
+        #                            }
+        #                        }
+        #                        break;
+        #                }
+        #                break;
+        #
+        #            case #MergeRemove:
+        #                switch (type)
+        #                {
+        #                    case SysCompareType::Text1:
+        #                        resultNum++;
+        #                        if (resultNum == _num)
+        #                        {
+        #                            nodeToRemove = this.findChild(_mergeNode, nodeName) as SysMergeable;
+        #                            if (nodeToRemove)
+        #                            {
+        #                                this.mergeSubNodeDelete(_mergeNode, nodeToRemove, _topNode, tree.getSelection());
+        #                            }
+        #                        }
+        #                        break;
+        #                }
+        #                break;
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #mergeText
+        #protected void mergeText(
+        #    str action,
+        #    int num,
+        #    int moveNum,
+        #    SysMergeable          mergeToNode,
+        #    SysComparable         mergeFromNode,
+        #    SysComparable         topNode,
+        #    SysComparableTmpText  mergeToText,
+        #    SysComparableTmpText  mergeFromText)
+        #{
+        #    str             s1, s2;
+        #    str             mergeText;
+        #
+        #    s1 = mergeToText.Text;
+        #    s2 = mergeFromText.Text;
+        #
+        #    if (s1 || s2)
+        #    {
+        #        Debug::assert(mergeToText.IsSubNodes == mergeFromText.IsSubNodes);
+        #        Debug::assert(mergeToText.Heading == mergeFromText.Heading);
+        #
+        #        if (mergeToText.IsSubNodes)
+        #        {
+        #            //
+        #            // The text is a list of sub nodes, merge should remove / insert nodes
+        #            //
+        #            this.mergeSubNodes(s1, s2, action, num, movenum, mergeToNode, mergeFromNode, topNode);
+        #        }
+        #        else
+        #        {
+        #            if (mergeToText.AlternatingLines && !mergeToText.SupportPartialDelete)
+        #            {
+        #                //
+        #                // Propertysheet style merge.
+        #                // Only the changed line is inserted in mergeText
+        #                //
+        #                mergeText = this.getMergedAlternatingLineText(s1, s2, num);
+        #            }
+        #            else
+        #            {
+        #                //
+        #                // Normal text merge.
+        #                //
+        #                mergeText = this.mergeMultiLineText(s1, s2, action, num, moveNum);
+        #            }
+        #
+        #            mergeToNode.mergeText(mergeText, mergeToText);
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #needLayerAwareComparison
+        #private boolean needLayerAwareComparison()
+        #{
+        #    SysTreenodeCompareContext nodeCompareContext = context as SysTreenodeCompareContext;
+        #
+        #    if (nodeCompareContext != null)
+        #    {
+        #        return nodeCompareContext.parmCurrentLayerOnly();
+        #    }
+        #
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #protected void new()
+        #{
+        #    curAotLayer = currentAOLayer();
+        #}
+      ENDSOURCE
+      SOURCE #noData
+        #protected boolean noData(SysComparable _node, SysComparable _parent)
+        #{
+        #    List                 list;
+        #
+        #    if (_node)
+        #    {
+        #        list = _node.comparableTextList(_parent, context, null);
+        #
+        #        if (list)
+        #            return list.elements() == 0;
+        #    }
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #nodeCompare
+        #protected boolean nodeCompare(SysComparable node1, SysComparable node2)
+        #{
+        #    List                  list1 = node1 ? node1.comparableTextList(topComparable1, context, null) : null;
+        #    ListEnumerator        enum1 = list1 ? list1.getEnumerator() : null;
+        #    SysComparableTmpText  text1;
+        #
+        #    List                  list2 = node2 ? node2.comparableTextList(topComparable2, context, null) : null;
+        #    ListEnumerator        enum2 = list2 ? list2.getEnumerator() : null;
+        #    SysComparableTmpText  text2;
+        #
+        #    boolean n1, n2;
+        #
+        #    if (!list1 && !list2)
+        #        return true; //They are equal
+        #
+        #    if ((!list1 && list2) || (list1 && !list2))
+        #        return false; //They are different - as one of them exists.
+        #
+        #    if (list1.elements() != list2.elements())
+        #    {
+        #        return false;
+        #    }
+        #
+        #    if (enum1 && enum2)
+        #    {
+        #        while (enum1.moveNext())
+        #        {
+        #            enum2.moveNext();
+        #            text1 = enum1.current();
+        #            text2 = enum2.current();
+        #
+        #            n1 = text1.Text != '';
+        #            n2 = text2.Text != '';
+        #
+        #            if (n1 != n2)
+        #                return false;
+        #
+        #            if (n1 && (!this.strCompare(text1.Text, text2.Text, text1.SupportWhiteSpace)))
+        #                return false;
+        #        }
+        #    }
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #nodeData
+        #protected str nodeData( SysComparable _node,
+        #                        SysComparable _top,
+        #                        SysComparable _matchingComparable )
+        #{
+        #    List                  list = _node.comparableTextList(_top, context, _matchingComparable);
+        #    ListEnumerator        enum = list ? list.getEnumerator() : null;
+        #    SysComparableTmpText  text;
+        #    str                   s;
+        #
+        #    if (enum)
+        #    {
+        #        while (enum.moveNext())
+        #        {
+        #            text = enum.current();
+        #            s += text.Text;
+        #        }
+        #    }
+        #    return s;
+        #}
+      ENDSOURCE
+      SOURCE #noDifferenceFound
+        #protected void noDifferenceFound()
+        #{
+        #    SysComparable mergeFromTopNode;
+        #
+        #    // inline function to determine whether the deletion of the higher layer artifact would occur in the current layer
+        #    boolean isDeletionInCurrentLayer(SysComparable _topComparable1, SysComparable _topComparable2)
+        #    {
+        #        UtilEntryLevel highestLayer, currentWorkingLayer;
+        #        UtilEntryLevel layer1, layer2;
+        #        SysTreeNode treeNode1, treeNode2;
+        #
+        #        treeNode1 = _topComparable1 as SysTreeNode;
+        #        treeNode2 = _topComparable2 as SysTreeNode;
+        #        if ((treeNode1 == null) || (treeNode2 == null))
+        #        {
+        #            return true;
+        #        }
+        #
+        #        layer1 = treeNode1.parmTreeNode().AOTLayer();
+        #        layer2 = treeNode2.parmTreeNode().AOTLayer();
+        #        highestLayer = layer1 >= layer2 ? layer1 : layer2;
+        #        currentWorkingLayer = Global::currentAOLayer();
+        #
+        #        if (highestLayer != currentWorkingLayer)
+        #        {
+        #            return false;
+        #        }
+        #
+        #        return true;
+        #    }
+        #
+        #    tree.deleteAll();
+        #    htmlText = '<html><body><font face=arial size=2>';
+        #    htmlText += strfmt("@SYS86128");
+        #
+        #    switch (mergeDirection)
+        #    {
+        #        case SysMergeDirection::TextA:
+        #            mergeFromTopNode = topComparable1;
+        #            break;
+        #
+        #        case SysMergeDirection::TextB:
+        #            mergeFromTopNode = topComparable2;
+        #            break;
+        #    }
+        #
+        #    if (mergeFromTopNode && context.supportDeleteWhenIdentical() && isDeletionInCurrentLayer(topComparable1, topComparable2))
+        #    {
+        #        htmlText += '<p><a href="#'+#MergeDeleteTop+'">'+strfmt("@SYS114179", mergeFromTopNode.comparableName())+'</a></p>';
+        #    }
+        #    htmlText += '</font></body></html>';
+        #
+        #    SysHelp::showHelp(html, htmlText);
+        #}
+      ENDSOURCE
+      SOURCE #offsetInMap
+        #// In cases with actions in several types (typically Properties and Subnodes),
+        #// then return the action offset into the desired type.
+        #protected int offsetInMap(Map map, int type)
+        #{
+        #    int offset = 1;
+        #    SysComparableTmpText text;
+        #
+        #    while (map.exists(offset))
+        #    {
+        #        text = map.lookup(offset);
+        #
+        #        if (text.Type == type)
+        #            return offset-1;
+        #
+        #        offset++;
+        #    }
+        #
+        #    return 0;
+        #}
+      ENDSOURCE
+      SOURCE #onEvent_onclick
+        #boolean onEvent_onclick(FormActiveXControl _doc)
+        #{
+        #    int x,y;
+        #    COM activeElement;
+        #    int scrolltop, scrollleft;
+        #    COM body;
+        #    str numstr;
+        #    int num, moveNum, i;
+        #
+        #    [x,y] = WinAPI::getCursorPos();
+        #    [x,y] = WinAPI::screenToClient(_doc.hWnd(),x,y);
+        #    activeElement = _doc.elementFromPoint(x,y);
+        #
+        #    if (activeElement)
+        #    {
+        #        do
+        #        {
+        #            if (activeElement.tagname() == 'A')  //Anchor
+        #            {
+        #                if (activeElement.hash()) //bookmark
+        #                {
+        #                    _doc.lockWindowUpdate(true);
+        #                    body = _doc.body();
+        #                    scrollTop  = body.scrollTop();
+        #                    scrollLeft = body.scrollLeft();
+        #
+        #                    numStr = substr(activeElement.hash(), 8, strlen(activeElement.hash())-7);
+        #                    i = strfind(numStr,':',1, strlen(numStr));
+        #                    if (i)
+        #                    {
+        #                        num     = str2int(substr(numstr,1,i-1));
+        #                        moveNum = str2int(substr(numstr,i+1,strlen(numstr)));
+        #                    }
+        #                    else
+        #                    {
+        #                        num = str2int(numstr);
+        #                        moveNum = 0;
+        #                    }
+        #
+        #                    try
+        #                    {
+        #                        this.mergeClicked(substr(activeElement.hash(),2,6), num, moveNum);
+        #                    }
+        #                    catch
+        #                    {
+        #                        // Catch all errors to ensure the html event gets properly handled.
+        #                        // Not doing this will result in about:blank messages appearing in IE.
+        #                        exceptionTextFallThrough();
+        #                    }
+        #
+        #                    body = _doc.body();      //must be done again, since body has changed
+        #                    body.scrollTop(scrolltop);
+        #                    body.scrollLeft(scrollLeft);
+        #                    _doc.lockWindowUpdate(false);
+        #                }
+        #                break;
+        #            }
+        #            else
+        #            {
+        #                activeElement = activeElement.parentElement();
+        #            }
+        #        } while (activeElement);
+        #    }
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #parmContext
+        #public SysCompareContextProvider parmContext(SysCompareContextProvider _context = context)
+        #{
+        #    context = _context;
+        #
+        #    return context;
+        #}
+      ENDSOURCE
+      SOURCE #rebuildTree
+        #protected void rebuildTree(int _idx, SysComparable _nodeInserted = null)
+        #{
+        #    int childIdx, nextSibling;
+        #    FormTreeItem treeItem = tree.getItem(_idx);
+        #    SysCompareItem item = treeItem.data();
+        #    str selectionText;
+        #    FormTreeItem child;
+        #
+        #    if (_idx != tree.getSelection())
+        #    {
+        #        // a child that is about to be deleted is selected
+        #        selectionText = tree.getItem(tree.getSelection()).text();
+        #    }
+        #
+        #    // Remove nodes in the tree
+        #    tree.lockWindowUpdate(true);
+        #    childIdx = tree.getChild(_idx);
+        #    while (childIdx)
+        #    {
+        #        nextSibling = tree.getNextSibling(childIdx);
+        #        tree.delete(childIdx);
+        #        childIdx = nextSibling;
+        #    }
+        #
+        #    // Remove old data from tmp table
+        #    delete_from tableTree
+        #        where tableTree.Parent == item.id();
+        #
+        #    this.buildRef1(item.parmComparable1(), item.id());
+        #    this.buildRef2(item.parmComparable2(), item.id());
+        #
+        #    this.buildBitmaps(item.id(), item.parmComparable1(), item.parmComparable2());
+        #
+        #    if (showDifferencesOnly)
+        #    {
+        #        //
+        #        // These deletes will delete too much: Second time a branch is rebuild
+        #        // any equal records from the first rebuild will be deleted!
+        #        //
+        #        // However, these records are only used to rebuild the branches, and as
+        #        // there are no actions on equal nodes, they are not required anymore.
+        #        //
+        #
+        #        if (_nodeInserted)
+        #        {
+        #            //If a node has been inserted, then do not remove it from the list
+        #            delete_from tableTree
+        #                where tableTree.Image == #IMG_CHECK_ALL &&
+        #                      tableTree.Parent == item.id() &&
+        #                      tableTree.Name != _nodeInserted.name();
+        #        }
+        #        else
+        #        {
+        #            this.removeEqual();
+        #        }
+        #    }
+        #
+        #    if (treeItem.stateExpandedOnce())
+        #        this.buildBranch(item.id(), _idx, item.parmComparable1(), item.parmComparable2());
+        #
+        #    if (selectionText)
+        #    {
+        #        //reselect the child
+        #        child = this.findTreeItem(_idx, selectionText);
+        #        if (child)
+        #        {
+        #            tree.select(child.idx());
+        #        }
+        #        else
+        #        {
+        #            tree.select(_idx);
+        #        }
+        #    }
+        #    tree.lockWindowUpdate(false);
+        #}
+      ENDSOURCE
+      SOURCE #removeEqual
+        #protected void removeEqual()
+        #{
+        #    delete_from tableTree
+        #        where tableTree.Image == #IMG_CHECK_ALL;
+        #}
+      ENDSOURCE
+      SOURCE #removeNodesOnlyIn1
+        #protected void removeNodesOnlyIn1()
+        #{
+        #    delete_from tableTree
+        #        where tableTree.Image == #IMG_CHECK_RED;
+        #}
+      ENDSOURCE
+      SOURCE #removeNodesOnlyIn2
+        #protected void removeNodesOnlyIn2()
+        #{
+        #    delete_from tableTree
+        #        where tableTree.Image == #IMG_CHECK_BLUE;
+        #}
+      ENDSOURCE
+      SOURCE #removeRefs
+        #protected boolean removeRefs(int _parent, SysComparable node1, SysComparable node2)
+        #{
+        #    TmpTree  localRef;
+        #    SysComparable tmpNode1, tmpNode2;
+        #    boolean  result = false;
+        #
+        #    localRef.setTmpData(tableTree);
+        #
+        #    while select Parent, Name, Id from localRef
+        #        where localRef.Parent == _parent
+        #    {
+        #        if (node1 && childMap.exists(strfmt('%1,%2,%3',_parent,1,localRef.Name)))
+        #            tmpNode1 = childMap.lookup(strfmt('%1,%2,%3',_parent,1,localRef.Name));
+        #        else
+        #            tmpNode1 = null;
+        #
+        #        if (node2 && childMap.exists(strfmt('%1,%2,%3',_parent,2,localRef.Name)))
+        #            tmpNode2 = childMap.lookup(strfmt('%1,%2,%3',_parent,2,localRef.Name));
+        #        else
+        #            tmpNode2 = null;
+        #
+        #        if ((!this.removeRefs(localRef.Id, tmpNode1, tmpNode2)) &&  //has children
+        #            ((this.noData(tmpNode1, topComparable1) &&
+        #              this.noData(tmpNode2, topComparable2)) ||
+        #             (tmpNode1 &&
+        #              tmpNode2 &&
+        #              showDifferencesOnly &&
+        #              this.strCompare(
+        #                this.nodeData(tmpNode1, topComparable1, tmpNode2),
+        #                this.nodeData(tmpNode2, topComparable2, tmpNode1)))))
+        #        {
+        #            localRef.delete();
+        #        }
+        #        else
+        #        {
+        #            result = true;
+        #        }
+        #    }
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #run
+        #void run()
+        #{
+        #
+        #    startLengthyOperation();
+        #    tree.deleteAll();
+        #    html.clear();
+        #    formRun.detach();
+        #}
+      ENDSOURCE
+      SOURCE #selectionChanged
+        #void selectionChanged(FormTreeItem _formTreeItem)
+        #{
+        #    SysMergeable mergeFromNode;
+        #    SysMergeable mergeToNode;
+        #    SysComparable mergeFromTopNode;
+        #    SysComparable mergeToTopNode;
+        #    SysComparable mergeToParentNode;
+        #    SysComparable mergeFromParentNode;
+        #
+        #    FormTreeItem    parentTreeItem;
+        #    SysCompareItem  parentItem;
+        #
+        #    boolean allowRemove;
+        #    boolean allowInsert;
+        #    boolean singleLines;
+        #    boolean alternatingLines;
+        #    boolean supportHighlight;
+        #    boolean showLineNumbersHere = showLineNumbers;
+        #
+        #    boolean first = true;
+        #    boolean more;
+        #
+        #    List                   list1, list2;
+        #    ListEnumerator         enum1, enum2;
+        #    SysComparableTmpText   text1, text2, text;
+        #
+        #    startLengthyOperation();
+        #
+        #    moveMap1   = new Map(Types::Integer, Types::Record);
+        #    moveMap2   = new Map(Types::Integer, Types::Record);
+        #    removeMap1 = new Map(Types::Integer, Types::Record);
+        #    removeMap2 = new Map(Types::Integer, Types::Record);
+        #    insertMap1 = new Map(Types::Integer, Types::Record);
+        #    insertMap2 = new Map(Types::Integer, Types::Record);
+        #
+        #    html.clear();
+        #    htmlText = SysCompare::style();
+        #    htmlText += '<html><body SCROLL="auto" TOPMARGIN="1" BOTTOMMARGIN="1" LEFTMARGIN="1" RIGHTMARGIN="1"><PRE STYLE="FONT-FAMILY: '+
+        #                   '\'COURIER NEW\'">\n';
+        #
+        #    currentItem = _formTreeItem.data();
+        #
+        #    // find currentItem's parent
+        #    if (_formTreeItem)
+        #    {
+        #        parentTreeItem = tree.getItem(tree.getParent(_formTreeItem.idx()));
+        #        if (parentTreeItem)
+        #            parentItem = parentTreeItem.data();
+        #    }
+        #
+        #    currentComparable1 = currentItem.parmComparable1();
+        #    currentComparable2 = currentItem.parmComparable2();
+        #
+        #    if (currentComparable1)
+        #    {
+        #        currentComparable1.onComparableFocus();
+        #        list1 = currentComparable1.comparableTextList(topComparable1, context);
+        #        enum1 = list1.getEnumerator();
+        #    }
+        #
+        #    if (currentComparable2)
+        #    {
+        #        currentComparable2.onComparableFocus();
+        #        list2 = currentComparable2.comparableTextList(topComparable2, context);
+        #        enum2 = list2.getEnumerator();
+        #    }
+        #
+        #    switch (mergeDirection)
+        #    {
+        #        case SysMergeDirection::TextA:
+        #            mergeFromNode       = currentComparable2 as SysMergeable;
+        #            mergeToNode         = currentComparable1 as SysMergeable;
+        #            mergeFromTopNode    = topComparable2;
+        #            mergeToTopNode      = topComparable1;
+        #            mergeToParentNode   = parentItem ? parentItem.parmComparable1(): null;
+        #            mergeFromParentNode = parentItem ? parentItem.parmComparable2(): null;
+        #            break;
+        #
+        #        case SysMergeDirection::TextB:
+        #            mergeFromNode       = currentComparable1 as SysMergeable;
+        #            mergeToNode         = currentComparable2 as SysMergeable;
+        #            mergeFromTopNode    = topComparable1;
+        #            mergeToTopNode      = topComparable2;
+        #            mergeToParentNode   = parentItem ? parentItem.parmComparable2(): null;
+        #            mergeFromParentNode = parentItem ? parentItem.parmComparable1(): null;
+        #            break;
+        #    }
+        #
+        #    more  = true;
+        #    while (more)
+        #    {
+        #        more = false;
+        #        if (enum1 && enum1.moveNext())
+        #        {
+        #            text1 = enum1.current();
+        #            text  = text1;
+        #            more  = true;
+        #        }
+        #        else
+        #        {
+        #            text1 = null;
+        #        }
+        #
+        #        if (enum2 && enum2.moveNext())
+        #        {
+        #            text2 = enum2.current();
+        #            text  = text2;
+        #            more  = true;
+        #        }
+        #        else
+        #        {
+        #            text2 = null;
+        #        }
+        #
+        #        if (text1.Text || text2.Text)
+        #        {
+        #            if (text.Heading)
+        #                this.insertHeading(text.Heading, !first);
+        #
+        #            allowRemove = false;
+        #            allowInsert = false;
+        #            singleLines = text.AlternatingLines;
+        #            alternatingLines = text.AlternatingLines;
+        #            supportHighlight = true;
+        #
+        #            if ( text.IsSubNodes )
+        #            {
+        #                // Subnodes are always entire node
+        #                allowInsert = this.allowInsertEntireNode(mergeFromNode, mergeToTopNode, mergeToNode, text);
+        #                allowRemove = this.allowDeleteEntireNode(mergeToNode, mergeToTopNode, text);
+        #                singleLines = true;
+        #                alternatingLines = false;
+        #                supportHighlight = false;
+        #                showLineNumbersHere = false;
+        #            }
+        #            else
+        #            {
+        #                if (mergeToNode && mergeFromNode)
+        #                {
+        #                    // Both nodes are available - it is partial
+        #                    allowInsert = text.SupportPartialInsert;
+        #                    allowRemove = text.SupportPartialDelete;
+        #                }
+        #                else if (!mergeToNode && !mergeFromNode)
+        #                {
+        #                    // No nodes are available - No merge supported
+        #                    allowInsert = false;
+        #                    allowRemove = false;
+        #                }
+        #                else
+        #                {
+        #                    // One is missing - it is entire nodes.
+        #                    allowInsert = this.allowInsertEntireNode(mergeFromParentNode, mergeToTopNode, mergeToParentNode, text);
+        #                    allowRemove = this.allowDeleteEntireNode(mergeToParentNode, mergeToTopNode, text);
+        #                    singleLines = false;
+        #                    alternatingLines = false;
+        #                    supportHighlight = false;
+        #                }
+        #            }
+        #
+        #            allowInsert = true;
+        #
+        #            this.compare(text1,
+        #                         text2,
+        #                         mergeToTopNode   ? mergeToTopNode.comparableName()   : '', // ext
+        #                         mergeFromTopNode ? mergeFromTopNode.comparableName() : '', // ext
+        #                         showLineNumbersHere,
+        #                         singleLines,
+        #                         allowInsert,
+        #                         allowRemove,
+        #                         alternatingLines,
+        #                         supportHighlight);
+        #
+        #            first = false;
+        #        }
+        #    }
+        #    htmltext += '<table id="line" style="z-index:-1; '+
+        #    'border-color:#555555; border-width:0px; border-right-width:1px; border-style:dotted; width:2px; position:absolute; left:25px; top:2px; height:100%" cellspacing="0" cellpadding="0"><tr><td></td></tr></table>';
+        #    htmlText += '</pre></body></html>';
+        #
+        #    SysHelp::showHelp(html, htmlText);
+        #    tree.setFocus();
+        #}
+      ENDSOURCE
+      SOURCE #setCombo
+        #protected void setCombo(
+        #    FormComboBoxControl     _combo,
+        #    List                    _list,
+        #    Map                     _map,
+        #    str                     _defaultItem)
+        #{
+        #    ListEnumerator enum;
+        #    SysComparable  comparable;
+        #    int i;
+        #    int sel = 0;
+        #
+        #
+        #    _combo.clear();
+        #
+        #    if (_list)
+        #    {
+        #        enum = _list.getEnumerator();
+        #        while (enum.moveNext())
+        #        {
+        #            comparable = enum.current();
+        #
+        #            _combo.add(comparable.comparableName());
+        #            _map.insert(comparable.comparableName(), comparable);
+        #            if (comparable.comparableName() == _defaultItem)
+        #            {
+        #                sel = i;
+        #            }
+        #            i++;
+        #        }
+        #
+        #        _combo.setDropSize(_list.elements()+1);
+        #        _combo.selection(sel);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #startCompare
+        #void startCompare()
+        #{
+        #    SysTreeNode sysTreeNode1, sysTreeNode2;
+        #    TreeNode treeNode1 , treeNode2;
+        #
+        #    startLengthyOperation();
+        #
+        #    suppressWhiteSpace  = suppressWhiteSpaceControl.value();
+        #    showDifferencesOnly = showDifferencesOnlyControl.value();
+        #    caseSensitive       = caseSensitiveControl.value();
+        #    showLineNumbers     = lineNumbersControl.value();
+        #
+        #    context.parmCaseSensitive(caseSensitive);
+        #    context.parmSuppressWhitespace(suppressWhiteSpace);
+        #    context.parmShowLineNumbers(showLineNumbers);
+        #    context.parmShowDifferencesOnly(showDifferencesOnly);
+        #
+        #    tree.deleteAll();
+        #    html.clear();
+        #
+        #    currentItem = null;
+        #    currentComparable1 = null;
+        #    currentComparable2 = null;
+        #
+        #    childMap = new Map(Types::String, Types::Class);
+        #    ref2Set  = new Set(Types::Integer);
+        #
+        #    topComparable1 = this.getCombo(SysCompareType::Text1);
+        #    topComparable2 = this.getCombo(SysCompareType::Text2);
+        #
+        #    sysTreeNode1 = topComparable1 as SysTreeNode;
+        #    sysTreeNode2 = topComparable2 as SysTreeNode;
+        #
+        #    if(sysTreeNode1 != null && sysTreeNode2 != null)
+        #    {
+        #        treeNode1 = sysTreeNode1.parmTreeNode();
+        #        treeNode2 = sysTreeNode2.parmTreeNode();
+        #    }
+        #
+        #    // Do custom compare if we are comparing SSRS reports
+        #    if (treeNode1 != null && treeNode1.treeNodeType().isUtilElement() &&
+        #            treeNode1.utilElement().RecordType == UtilElementType::SSRSReport &&
+        #            treeNode2 != null && treeNode2.treeNodeType().isUtilElement() &&
+        #            treeNode2.utilElement().RecordType == UtilElementType::SSRSReport)
+        #    {
+        #        topComparable1 = SrsSysComparableReport::getComparableReport(treeNode1 as SSRSReportConceptNode);
+        #        topComparable2 = SrsSysComparableReport::getComparableReport(treeNode2 as SSRSReportConceptNode);
+        #        context = SrsSysCompareReportContext::newMergeables(topComparable1 as SrsSysComparableReport, topComparable2 as SrsSysComparableReport);
+        #    }
+        #
+        #    context.onCompareStart(topComparable1, topComparable2);
+        #    mergeDirection = context.mergeDirection(topComparable1, topComparable2);
+        #
+        #    this.buildTree();
+        #
+        #    formRun.lock();
+        #    dataGroup.visible(true);
+        #    tree.visible(context.showTreePane());
+        #    formRun.resetSize();
+        #    formRun.unLock();
+        #
+        #}
+      ENDSOURCE
+      SOURCE #strCompare
+        #protected boolean strCompare(str _s1, str _s2, boolean _supportWhiteSpace = true)
+        #{
+        #    str s1 = _s1;
+        #    str s2 = _s2;
+        #
+        #    if (suppressWhiteSpace && _supportWhiteSpace)
+        #    {
+        #        s1 = SysCompareText::suppressWhiteSpace(s1);
+        #        s2 = SysCompareText::suppressWhiteSpace(s2);
+        #    }
+        #
+        #    if (caseSensitive)
+        #        return strcmp(s1, s2) == 0;
+        #
+        #    return s1 == s2;
+        #}
+      ENDSOURCE
+      SOURCE #updateBitmaps
+        #protected void updateBitmaps(int _idx)
+        #{
+        #    FormTreeItem    item    = tree.getItem(_idx);
+        #    SysCompareItem  cmpItem = item.data();
+        #    SysComparable   node1   = cmpItem.parmComparable1();
+        #    SysComparable   node2   = cmpItem.parmComparable2();
+        #    boolean         equal;
+        #    FormTreeItem    child   = tree.getItem(tree.getChild(_idx));
+        #    int             bitmap  = item.image();
+        #    TmpTree         localRef;
+        #
+        #    equal   = this.nodeCompare(node1,node2);
+        #
+        #    if (equal)
+        #    {
+        #        if (item.stateExpandedOnce())
+        #        {
+        #            while (child && child.image() == #IMG_CHECK_ALL)
+        #            {
+        #                child = tree.getItem(tree.getNextSibling(child.idx()));
+        #            }
+        #            if (child)
+        #                bitmap = #IMG_CHECK_SOME;
+        #            else
+        #                bitmap = #IMG_CHECK_ALL;
+        #        }
+        #        else
+        #        {
+        #            localRef.setTmpData(tableTree);
+        #            select firstonly localRef
+        #                where localRef.Parent == cmpItem.id() &&
+        #                      localRef.Image  != #IMG_CHECK_ALL;
+        #            if (localRef)
+        #                bitmap = #IMG_CHECK_SOME;
+        #            else
+        #                bitmap = #IMG_CHECK_ALL;
+        #        }
+        #    }
+        #    else
+        #    {
+        #        if (node1)
+        #            bitmap = #IMG_CHECK_RED;
+        #        if (node2)
+        #            bitmap = #IMG_CHECK_BLUE;
+        #        if (node1 && node2)
+        #            bitmap = #IMG_DIFFERENCE;
+        #    }
+        #    item.selectedImage(bitmap);
+        #    item.image(bitmap);
+        #    tree.setItem(item);
+        #
+        #    if (tree.getParent(_idx))
+        #        this.updateBitmaps(tree.getParent(_idx));
+        #}
+      ENDSOURCE
+      SOURCE #construct
+        #public static SysCompare construct()
+        #{
+        #    return new SysCompare();
+        #}
+        #
+      ENDSOURCE
+      SOURCE #formatHtml
+        #static str formatHtml(str s)
+        #{
+        #    System.String clrStr = s;
+        #    clrStr = clrStr.Replace('&', '&amp;');
+        #    clrStr = clrStr.Replace('<', '&lt;');
+        #
+        #    return clrStr;
+        #}
+      ENDSOURCE
+      SOURCE #highlightText
+        #static container highlightText(str _t1, str _t2)
+        #{
+        #
+        #    int resultLen;
+        #    #define.black  ('000000')
+        #    container result;
+        #    SysCompareType type;
+        #    str cmpText;
+        #    str t1, t2;
+        #
+        #str formatText(str text)
+        #{
+        #    str tmpText = '';
+        #    int i, len;
+        #    char char;
+        #    boolean cr;
+        #    boolean specialMarkup;
+        #    text = strrem(text,'\n');
+        #    len  = strlen(text);
+        #
+        #    for (i=1; i<=len; i++)
+        #    {
+        #        char = substr(text,i,1);
+        #        //
+        #        // The text can already be highlighted and
+        #        // contain html tags like "<font>" (= #SpecialMarkupStart+"font"+#SpecialMarkupEnd)
+        #        // Treat these as words = do not break them.
+        #        //
+        #        if (char == #SpecialMarkupStart)
+        #        {
+        #            specialMarkup = true;
+        #        }
+        #        if (specialMarkup ||
+        #            (char >= '0' && char <= '9') ||
+        #            (char >= 'a' && char <= 'z') ||
+        #            (char >= 'A' && char <= 'Z'))
+        #        {
+        #            tmpText += char;
+        #            cr = true;
+        #        }
+        #        else
+        #        {
+        #            if (cr)
+        #            {
+        #                tmpText += '\n';
+        #                cr = false;
+        #            }
+        #            tmpText += char+'\n';
+        #        }
+        #        if (char == #SpecialMarkupEnd)
+        #        {
+        #            specialMarkup = false;
+        #        }
+        #    }
+        #    return tmpText+'\n';
+        #}
+        #
+        #str getResult(int desiredresult)
+        #{
+        #    str tmp = '';
+        #    int k;
+        #    boolean fontStarted = false;
+        #
+        #    for (k=1; k<=resultLen; k++)
+        #    {
+        #        [type, cmpText] = conpeek(result, k);
+        #
+        #        switch (type)
+        #        {
+        #            case SysCompareType::Identical:
+        #                if (!fontStarted)
+        #                {
+        #                    tmp+= #SpecialMarkupStart+'font color='+#black+#SpecialMarkupEnd;
+        #                    fontStarted = true;
+        #                }
+        #                tmp += strrem(cmpText, '\n');
+        #                break;
+        #
+        #            case SysCompareType::Text1:
+        #            case SysCompareType::Move1:
+        #                if (desiredResult == 1)
+        #                {
+        #                    if (fontStarted)
+        #                    {
+        #                        tmp+= #SpecialMarkupStart+'/font'+#SpecialMarkupEnd;
+        #                        fontStarted = false;
+        #                    }
+        #                    tmp += strrem(cmpText, '\n');
+        #                }
+        #                break;
+        #
+        #            case SysCompareType::Text2:
+        #            case SysCompareType::Move2:
+        #                if (desiredResult == 2)
+        #                {
+        #                    if (fontStarted)
+        #                    {
+        #                        tmp+= #SpecialMarkupStart+'/font'+#SpecialMarkupEnd;
+        #                        fontStarted = false;
+        #                    }
+        #                    tmp += strrem(cmpText, '\n');
+        #                }
+        #                break;
+        #        }
+        #    }
+        #    if (fontStarted)
+        #        tmp+= #SpecialMarkupStart+'/font color'+#SpecialMarkupEnd;
+        #
+        #    return tmp;
+        #
+        #}
+        #    t1        = formattext(_t1);
+        #    t2        = formattext(_t2);
+        #    result    = SysCompareText::run(t1,t2, true, false,false, false, false);
+        #    resultLen = conlen(result);
+        #
+        #    return [getResult(1), getResult(2)];
+        #}
+      ENDSOURCE
+      SOURCE #res2filename
+        ##Winapi
+        #client static str res2filename(int resource, SysPictureAlignment align = SysPictureAlignment::AlignDefault)
+        #{
+        #    Filename filename = WinAPI::getFolderPath(#CSIDL_INTERNET_CACHE)+'\\AxaptaResourceImage_'+int2str(resource)+'.BMP';
+        #    str props;
+        #
+        #    Image resourceimage;
+        #    if (!WinAPI::fileExists(fileName))
+        #    {
+        #        resourceimage = new Image(resource);
+        #        resourceimage.saveImage(filename, ImageSaveType::BMP);
+        #    }
+        #    if (align != SysPictureAlignment::AlignDefault)
+        #        props = ' ALIGN="'+enum2str(align)+'"';
+        #
+        #    return '<IMG border=0 SRC="'+filename+'" '+props+'>';
+        #}
+      ENDSOURCE
+      SOURCE #silentCompare
+        #static public boolean silentCompare(SysComparable _comparable1, SysComparable _comparable2)
+        #{
+        #    SysCompare compare = SysCompare::construct();
+        #    boolean result;
+        #
+        #    compare.init(true);
+        #
+        #    result = compare.compareComparables(_comparable1, _comparable2);
+        #    compare.finalize();
+        #    compare = null;
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #startCompareOfContextProvider
+        #static public SysCompare startCompareOfContextProvider(SysCompareContextProvider _context)
+        #{
+        #    SysCompare compare = SysCompare::construct();
+        #
+        #    compare.parmContext(_context);
+        #    compare.init(false);
+        #    compare.initContext(_context);
+        #    compare.run();
+        #
+        #    return compare;
+        #}
+      ENDSOURCE
+      SOURCE #style
+        #public static client str style()
+        #{
+        #    #WinApi
+        #
+        #    //
+        #    // Get style from cache
+        #    //
+        #    str style = infolog.globalCache().get(funcname(), 0, '');
+        #    str activeCaption;
+        #    str gradientActiveCaption;
+        #
+        #    //
+        #    // Converts a container with red, grene, blue components
+        #    // to a string of hex-values
+        #    //
+        #    str color2Hex(container _rgb)
+        #    {
+        #        int r, g, b;
+        #        [r,g,b] = _rgb;
+        #        return int2Hex(r,2)+int2Hex(g,2)+int2Hex(b,2);
+        #    }
+        #
+        #    //
+        #    // Was style in the cache?
+        #    //
+        #    if (!style)
+        #    {
+        #        //Query Windows for Display settings
+        #        activeCaption = color2Hex(WinAPI::getSysColor(#COLOR_ACTIVECAPTION));
+        #        gradientActiveCaption = color2Hex(WinAPI::getSysColor(#COLOR_GRADIENTACTIVECAPTION));
+        #
+        #        //
+        #        // Build style + script
+        #        //
+        #        style = @'
+        #
+        #        <SCRIPT LANGUAGE="VBScript">
+        #            Sub resize
+        #                if document.body.clientHeight > 2 then
+        #                  document.all("line").style.height=document.body.clientHeight-2
+        #                end if
+        #
+        #                if document.body.scrolltop > -2 then
+        #                  document.all("line").style.top=document.body.scrolltop+2
+        #                end if
+        #            End Sub
+        #
+        #            Sub Window_OnScroll
+        #                resize
+        #            End Sub
+        #
+        #            Sub Window_OnResize
+        #                resize
+        #            End Sub
+        #        </SCRIPT>
+        #
+        #
+        #        <STYLE>
+        #        .'+#StyleHeaderText+@"
+        #        {
+        #            width:100%;
+        #            z-index:2;
+        #            filter:progid:DXImageTransform.Microsoft.Gradient(
+        #                startColorstr=#"+activeCaption+@",
+        #                endColorstr=#"+gradientActiveCaption+@",
+        #                gradientType=1);
+        #            padding-right:0px;
+        #            padding-left:32px;
+        #            font-weight: bolder;
+        #            font-family: 'Verdana';
+        #            color: White;
+        #            margin-bottom: 0px;
+        #        }
+        #
+        #        ."+#StyleDiffText+@"
+        #        {
+        #            border-width: 0px;
+        #            border-top-width: 2px;
+        #            border-style: solid;
+        #            border-color: #FFFFFF;
+        #            filter:progid:DXImageTransform.Microsoft.Gradient(
+        #                startColorstr= #EDECE9,
+        #                endColorstr= #E0DED8,
+        #                gradientType=1);
+        #        }
+        #        </STYLE>";
+        #
+        #        //
+        #        // save style in cache
+        #        //
+        #        infolog.globalCache().set(funcname(), 0, style);
+        #    }
+        #    return style;
+        #}
+        #
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END
