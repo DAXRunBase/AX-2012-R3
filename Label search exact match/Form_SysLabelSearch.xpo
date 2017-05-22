@@ -1,0 +1,2420 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #SysLabelSearch
+  PROPERTIES
+    Name                #SysLabelSearch
+    Origin              #{0B0E0000-0000-1000-14CE-28334B8B577C}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #class FormRun extends ObjectRun
+      #{
+      #    #FormListControl
+      #    #ResAppl
+      #
+      #    SysLabelEdit            sysLabelEdit;
+      #
+      #    QueryBuildRange         mainLanguageRange;
+      #    QueryBuildRange         otherLanguagesRange;
+      #
+      #    Map                     languageMap;
+      #
+      #    Range                   languageRange;
+      #    str                     returnString;
+      #
+      #    int                     time;
+      #    boolean                 timeOutMode;
+      #
+      #    LanguageId              oldLanguageId;
+      #
+      #    ImageListAppl_checkbox  imageListAppl_checkbox;
+      #
+      #    boolean                 pasteLabel;
+      #
+      #    boolean                 lookup;
+      #    FormRun                 formRun;
+      #
+      #    int                     startTime;                  // for timing of the search process
+      #
+      #    SysFormSplitter_Y       formSplitter;
+      #    int                     currentHeight;
+      #
+      #    #define.FOCUS_CHECKBOX(64)
+      #    #define.FOCUS_FIELD(4)
+      #    #define.SearchHitsThreshold(1000)
+      #}
+    ENDSOURCE
+    SOURCE #buildLanguageRange
+      #public void buildLanguageRange()
+      #{
+      #    #define.comma(', ')
+      #    #define.languageRangeNone('none') //This range will not match any languages
+      #    MapIterator     mapIterator = new MapIterator(languageMap);
+      #    Set             visibleLanguageSet;
+      #
+      #    visibleLanguageSet  = new Set(Types::String);
+      #    visibleLanguageSet.add(selectLanguage.text());
+      #
+      #    languageRange       = '';
+      #
+      #    mapIterator.begin();
+      #    while (mapIterator.more())
+      #    {
+      #        if (mapIterator.value() == FormTreeItemStatus::Selected)
+      #        {
+      #            visibleLanguageSet.add(mapIterator.key());
+      #            if (languageRange)
+      #            {
+      #                languageRange += #comma;
+      #            }
+      #            languageRange += mapIterator.key();
+      #        }
+      #        mapIterator.next();
+      #    }
+      #    //
+      #    // No languages selected
+      #    //
+      #    if (!languageRange)
+      #    {
+      #        languageRange = #languageRangeNone; //This range will not match any languages
+      #    }
+      #
+      #    sysLabelEdit.parmLanguageSet(visibleLanguageSet);
+      #}
+    ENDSOURCE
+    SOURCE #buildOtherLanguagesGrid
+      #public void buildOtherLanguagesGrid()
+      #{
+      #    Set             set;
+      #
+      #    element.lockWindowUpdate(true);
+      #
+      #    set = languageMap.valueSet();
+      #
+      #    if (set.in(FormTreeItemStatus::Selected))
+      #    {
+      #        groupSplitter.visible(true);
+      #        otherLanguageGrid.visible(true);
+      #        mainLanguageGrid.heightMode(-1); //Precision mode
+      #    }
+      #    else
+      #    {
+      #        groupSplitter.visible(false);
+      #        otherLanguageGrid.visible(false);
+      #        mainLanguageGrid.heightMode(FormHeight::ColumnHeight);
+      #    }
+      #    element.redraw();
+      #    element.lockWindowUpdate(false);
+      #
+      #}
+    ENDSOURCE
+    SOURCE #changeLanguage
+      #public void changeLanguage()
+      #{
+      #    if (selectLanguage.text() &&
+      #        oldLanguageId != selectLanguage.text() &&
+      #        languageMap.exists(selectLanguage.text()))
+      #    {
+      #        element.lockWindowUpdate(true);
+      #
+      #        if (oldLanguageId)
+      #        {
+      #            languageMap.insert(oldLanguageId, languageMap.lookup(selectLanguage.text()));
+      #        }
+      #        languageMap.insert(selectLanguage.text(), FormTreeItemStatus::NotVisible);
+      #        LanguageTable::buildSelectLanguageTree(selectLanguagesTree, languageMap);
+      #        oldLanguageId = selectLanguage.text();
+      #        element.buildLanguageRange();
+      #        element.setAllowEdit();
+      #
+      #        element.lockWindowUpdate(false);
+      #
+      #        mainLanguage_ds.executeQuery();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #changeMode
+      #public void changeMode(boolean _mode)
+      #{
+      #    timeOutMode = _mode;
+      #
+      #    element.lock();
+      #
+      #    findNow.defaultButton(_mode);
+      #    findNow.visible(_mode);
+      #
+      #    newSearch.visible(!_mode);
+      #    newSearch.defaultButton(!_mode);
+      #
+      #    element.unLock();
+      #}
+    ENDSOURCE
+    SOURCE #close
+      #void close()
+      #{
+      #    if (!lookup)
+      #    {
+      #        xSysLastValue::saveLast(element);
+      #        super();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #closeCancel
+      #public void closeCancel()
+      #{
+      #    xSysLastValue::saveLast(element);
+      #    super();
+      #}
+      #
+    ENDSOURCE
+    SOURCE #closeSelect
+      #public void closeSelect(str _p1)
+      #{
+      #    if (pasteLabel)
+      #    {
+      #        super(_p1);
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #defineLabel
+      #//Kernel entry point
+      #public void defineLabel(str _searchString = '')
+      #{
+      #    str         text;
+      #    SysLabel    sysLabel = new SysLabel(selectLanguage.text());
+      #
+      #    returnString = _searchString;
+      #
+      #    pastLabelGrp.visible(true);
+      #
+      #    if (SysLabel::isLabelId(_searchString))
+      #    {
+      #        if (sysLabel.exists(_searchString))
+      #        {
+      #            text = sysLabel.extractString(_searchString);
+      #
+      #            if (!text)
+      #            {
+      #                text = _searchString;
+      #            }
+      #        }
+      #    }
+      #    else
+      #    {
+      #        text = _searchString;
+      #    }
+      #
+      #    searchString.text(text);
+      #
+      #    if (autoSearch.value() && searchString.text())
+      #    {
+      #        element.labelSearch(_searchString, true);
+      #    }
+      #}
+      #
+      #
+    ENDSOURCE
+    SOURCE #enableToolbar
+      #void enableToolbar(boolean _enableAll)
+      #{
+      #    if (_enableAll)
+      #    {
+      #        if (mainLanguage.RecId)
+      #        {
+      #            newLabel.enabled(mainLanguage_ds.allowEdit());
+      #            deleteLabel.enabled(mainLanguage_ds.allowEdit());
+      #            usedBy.enabled(true);
+      #            sysLabelHistory.enabled(true);
+      #        }
+      #        else
+      #        {
+      #            newLabel.enabled(mainLanguage_ds.allowEdit());
+      #            deleteLabel.enabled(mainLanguage_ds.allowEdit());
+      #            usedBy.enabled(false);
+      #            sysLabelHistory.enabled(false);
+      #        }
+      #    }
+      #    else
+      #    {
+      #        newLabel.enabled(false);
+      #        deleteLabel.enabled(false);
+      #        usedBy.enabled(false);
+      #        sysLabelHistory.enabled(false);
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #endSearch
+      #private void endSearch()
+      #{
+      #    element.lockWindowUpdate(true);
+      #    element.changeMode(false);
+      #
+      #    mainLanguageGrid.setFocus();
+      #
+      #    element.updateDataSources();
+      #    element.lockWindowUpdate(false);
+      #    element.redraw();
+      #    time = 0;
+      #
+      #    hitsText.text(strFmt("@SYS53184", strFmt("@SYS58565", int2str(sysLabelEdit.findHits())), strFmt("@SYS60806", time2StrHMS(timeNow() - startTime))));
+      #}
+    ENDSOURCE
+    SOURCE #findNextLabel
+      #private void findNextLabel()
+      #{
+      #    LabelId     labelId;
+      #
+      #    if (!timeOutMode)
+      #    {
+      #        labelId = sysLabelEdit.findNextLabel();
+      #
+      #        if (!time)
+      #        {
+      #            element.updateDataSources();
+      #            time = timeNow();
+      #        }
+      #        hitsText.text(strFmt("@SYS58565", int2str(sysLabelEdit.findHits())));
+      #
+      #        //Stop search execution when search result exceed search hits threshold
+      #        if (sysLabelEdit.findHits() > #SearchHitsThreshold)
+      #        {
+      #            timeOutMode = true;
+      #            Box::stop(strFmt("@SYS4000520", int2str(#SearchHitsThreshold)), "@SYS4000519");
+      #        }
+      #
+      #        if (labelId)
+      #        {
+      #            element.setTimeOut(identifierStr(findNextLabel), 1, true);
+      #        }
+      #        else
+      #        {
+      #            element.endSearch();
+      #        }
+      #    }
+      #    else
+      #    {
+      #        element.endSearch();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #void init()
+      #{
+      #    Object caller = element.args().caller();
+      #
+      #    if (caller)
+      #    {
+      #        element.form().design().windowType(FormWindowType::PopUp);
+      #    }
+      #
+      #    super();
+      #
+      #    if (caller is SysSetupFormRun)
+      #    {
+      #        formRun = caller;
+      #    }
+      #    sysLabelEdit                = new SysLabelEdit();
+      #    languageMap                 = new Map(Types::String, Types::Enum);
+      #    returnString                = '';
+      #    imageListAppl_checkbox      = new ImageListAppl_checkbox();
+      #
+      #    selectLanguagesTree.setStateImagelist(imageListAppl_checkbox.imageList());
+      #
+      #    if (caller)
+      #    {
+      #        pastLabelGrp.visible(true);
+      #    }
+      #
+      #    hitsText.text("@SYS14432");
+      #    element.enableToolbar(true);
+      #    vcsActionPane.visible(versioncontrol.ideIntegration());
+      #    formSplitter = new SysFormSplitter_Y(groupSplitter, mainLanguageGrid, element);
+      #
+      #}
+    ENDSOURCE
+    SOURCE #initParmDefault
+      #// AOSRunMode::client
+      #/*MAN
+      #This method is called when no SysLastValue record can be found in xSysLastValue.GetLast()
+      #*/
+      #public void initParmDefault()
+      #{
+      #
+      #}
+    ENDSOURCE
+    SOURCE #labelSearch
+      #public void labelSearch(str _text = searchString.text(), boolean _findExactPhrase = false)
+      #{
+      #    #define.height(500)
+      #    str         specialCharsText;
+      #    LabelId     labelId;
+      #
+      #    element.lockWindowUpdate(true);
+      #
+      #    startTime = timeNow();
+      #
+      #    if (!SysLabel::isLabelId(_text) && _text)
+      #    {
+      #        if (SysLabel::searchStringHasSpecialChars(_text))
+      #        {
+      #            specialCharsText = SysLabel::searchStringBuildSpecialCharString(_text);
+      #        }
+      #
+      #        if (_findExactPhrase)
+      #        {
+      #            _text            = SysLabel::seachStringBuildExactStr(_text);
+      #
+      #            if (specialCharsText)
+      #            {
+      #                specialCharsText = SysLabel::seachStringBuildExactStr(specialCharsText);
+      #            }
+      #        }
+      #    }
+      #
+      #    element.buildLanguageRange();
+      #    element.validateLanguageId();
+      #
+      #    if (!searchResultGroup.visible())
+      #    {
+      #        searchResultGroup.visible(true);
+      #        element.design().height(#height);
+      #    }
+      #
+      #    element.changeMode(false);
+      #
+      #    element.lockWindowUpdate(false);
+      #    element.redraw();
+      #
+      #    if (!SysLabel::searchStringHasOnlySpecialChars(_text))
+      #    {
+      #        labelId = sysLabelEdit.findLabel(selectLanguage.text(), _text);
+      #    }
+      #
+      #    if (labelId)
+      #    {
+      #        element.findNextLabel();
+      #    }
+      #    else
+      #    {
+      #        if (specialCharsText)
+      #        {
+      #            labelId = sysLabelEdit.findLabel(selectLanguage.text(), specialCharsText);
+      #
+      #            if (labelId)
+      #            {
+      #                element.findNextLabel();
+      #            }
+      #            else
+      #            {
+      #                element.endSearch();
+      #            }
+      #        }
+      #        else
+      #        {
+      #            element.endSearch();
+      #        }
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #labelString
+      #public str labelString()
+      #{
+      #    return returnString;
+      #}
+    ENDSOURCE
+    SOURCE #lastValueDataAreaId
+      #// AOSRunMode::client
+      #public DataAreaId lastValueDataAreaId()
+      #{
+      #    return SysLabelEdit::lastValueDataAreaId();
+      #}
+    ENDSOURCE
+    SOURCE #lastValueDesignName
+      #private IdentifierName lastValueDesignName()
+      #{
+      #    return SysLabelEdit::lastValueDesignName();
+      #}
+    ENDSOURCE
+    SOURCE #lastValueElementName
+      #private IdentifierName lastValueElementName()
+      #{
+      #    return  SysLabelEdit::lastValueElementName();
+      #}
+    ENDSOURCE
+    SOURCE #lastValueType
+      #private UtilElementType lastValueType()
+      #{
+      #    return  SysLabelEdit::lastValueType();
+      #}
+    ENDSOURCE
+    SOURCE #lastValueUserId
+      #private UserId lastValueUserId()
+      #{
+      #    return SysLabelEdit::lastValueUserId();
+      #}
+    ENDSOURCE
+    SOURCE #mouseClick
+      #void mouseClick(FormTreeItem _formTreeItem)
+      #{
+      #    if (_formTreeItem)
+      #    {
+      #        SysFormTreeControl::changeStateImage_CheckBox(selectLanguagesTree, _formTreeItem.idx());
+      #        element.updateLanguageMap();
+      #        element.buildLanguageRange();
+      #        element.buildOtherLanguagesGrid();
+      #        otherLanguages_ds.executeQuery();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #pack
+      #// AOSRunMode::client
+      #public container pack()
+      #{
+      #    return [SysLabelEdit::lastValueVersion(),
+      #            selectLanguage.text(),
+      #            0,
+      #            conNull(),
+      #            autoSearch.value(),
+      #            0,
+      #            moduleId.text(),
+      #            languageMap.pack()];
+      #}
+    ENDSOURCE
+    SOURCE #pasteLabel
+      #public void pasteLabel()
+      #{
+      #    pasteLabel = true;
+      #
+      #    element.saveLabel();
+      #
+      #    if (formRun)
+      #    {
+      #        element.closeSelect(returnString);
+      #    }
+      #    else
+      #    {
+      #        element.closeOk();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #reset
+      #public void reset()
+      #{
+      #    Common      common2, common3;
+      #
+      #    //element.lockWindowUpdate(true);
+      #
+      #    mainLanguage.setTmpData(common2);
+      #    otherLanguages.setTmpData(common3);
+      #
+      #    mainLanguage_ds.executeQuery();
+      #    hitsText.text("@SYS14432");
+      #    this.enableToolbar(true);
+      #
+      #    //element.redraw();
+      #    //element.lockWindowUpdate(false);
+      #    this.changeMode(true);
+      #}
+    ENDSOURCE
+    SOURCE #resize
+      #public void resize(int _width, int _height)
+      #{
+      #    if (currentHeight)
+      #    {
+      #        element.lockWindowUpdate(true);
+      #        mainLanguageGrid.heightValue(mainLanguageGrid.heightValue() + (_height-currentHeight));
+      #        otherLanguageGrid.heightValue(otherLanguageGrid.heightValue() - (_height-currentHeight));
+      #        element.lockWindowUpdate(false);
+      #    }
+      #
+      #    super(_width, _height);
+      #    currentHeight = element.design().heightValue();
+      #}
+    ENDSOURCE
+    SOURCE #run
+      #void run()
+      #{
+      #    FormStringControl   formStringControl;
+      #    MapIterator         mapIterator = new MapIterator(Map::create(LanguageTable::installedLanguages()));
+      #    Object              objFormRun;
+      #
+      #    mapIterator.begin();
+      #    while (mapIterator.more())
+      #    {
+      #        languageMap.insert(mapIterator.value(), FormTreeItemStatus::NotSelected);
+      #        mapIterator.next();
+      #    }
+      #
+      #    xSysLastValue::getLast(element);
+      #
+      #    this.validateLanguageId();
+      #    this.changeLanguage();
+      #
+      #    if (!SysLabelEdit::validateModuleId(moduleId.text()))
+      #    {
+      #        moduleId.text(SysLabel::defaultModuleId());
+      #    }
+      #
+      #    this.buildOtherLanguagesGrid();
+      #    this.buildLanguageRange();
+      #
+      #    if (formRun)
+      #    {
+      #        if (formRun.name() == formStr(SysLabelLookup))
+      #        {
+      #            objFormRun = formRun;
+      #            if (objFormRun.initialText())
+      #                this.defineLabel(objFormRun.initialText());
+      #        }
+      #        else if (formRun.name() != formStr(SysInetHTMLEditor))
+      #        {
+      #            formStringControl = formRun.selectedControl();
+      #
+      #            if (formStringControl)
+      #            {
+      #                this.defineLabel(formStringControl.text());
+      #            }
+      #        }
+      #        usedBy.enabled(false);
+      #        sysLabelHistory.enabled(false);
+      #    }
+      #    this.setAllowEdit();
+      #    super();
+      #
+      #    searchString.setFocus();
+      #}
+    ENDSOURCE
+    SOURCE #saveLabel
+      #private void saveLabel()
+      #{
+      #    if (mainLanguage.Language)
+      #    {
+      #        mainLanguage_ds.write();
+      #
+      #        if (pasteLabel)
+      #        {
+      #            returnString = mainLanguage.LabelId;
+      #        }
+      #
+      #        if (otherLanguages.LabelId)
+      #        {
+      #            otherLanguages_ds.write();
+      #        }
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #setAllowEdit
+      #void setAllowEdit()
+      #{
+      #    SysLabelFile            labelFile;
+      #    SysVersionControlSystem vcs         = versioncontrol.parmSysVersionControlSystem();
+      #    boolean                 allowEdit   = true;
+      #    boolean                 allowCreate = true;
+      #
+      #    if (vcs &&
+      #        selectLanguage.text() &&
+      #        moduleId.text())
+      #    {
+      #        labelFile   = SysLabelFile::newLanguageModule(selectLanguage.text(), moduleId.text());
+      #
+      #        allowCreate = vcs.allowCreate(labelFile);
+      #        allowEdit   = vcs.allowEdit(labelFile);
+      #
+      #        vcsButton.enabled(true);
+      #
+      #        if (allowCreate)
+      #        {
+      #            allowEdit = true;
+      #            checkOutButton.enabled(false);
+      #            undoCheckOutButton.enabled(false);
+      #            checkInButton.enabled(false);
+      #            syncButton.enabled(false);
+      #            addToVersionControlButton.enabled(true);
+      #        }
+      #        else
+      #        {
+      #            checkOutButton.enabled(!allowEdit);
+      #            undoCheckOutButton.enabled(allowEdit);
+      #            checkInButton.enabled(allowEdit);
+      #            syncButton.enabled(!allowEdit);
+      #            addToVersionControlButton.enabled(false);
+      #        }
+      #    }
+      #    else
+      #    {
+      #        vcsButton.enabled(false);
+      #    }
+      #    mainLanguage_ds.allowCreate(allowEdit);
+      #    mainLanguage_ds.allowEdit(allowEdit);
+      #    mainLanguage_ds.allowDelete(allowEdit);
+      #
+      #    this.enableToolbar(allowEdit);
+      #}
+    ENDSOURCE
+    SOURCE #unpack
+      #// AOSRunMode::client
+      #public boolean unpack(container packed)
+      #{
+      #    LanguageId          languageId;
+      #    LabelModuleId       labelModuleId;
+      #    boolean             autoSearchValue;
+      #    container           languagePack;
+      #    int                 version = conPeek(packed, 1);
+      #    Map                 tmpMap;
+      #    Set                 packedLanguage  = new Set(Types::String);
+      #    Set                 systemLanguage  = new Set(Types::String);
+      #    Set                 intersection    = new Set(Types::String);
+      #    SetIterator         setIterator;
+      #    boolean             ok;
+      #    FormTreeItemStatus  formTreeItemStatus;
+      #    int                 notUsed_1, notUsed_3;
+      #    container           notUsed_2;
+      #
+      #    if (version == SysLabelEdit::lastValueVersion())
+      #    {
+      #        [version, languageId, notUsed_1, notUsed_2, autoSearchValue, notUsed_3, labelModuleId, languagePack] = packed;
+      #
+      #        if (languagePack)
+      #        {
+      #            tmpMap = Map::create(languagePack);
+      #
+      #            if (tmpMap)
+      #            {
+      #                packedLanguage      = tmpMap.keySet();
+      #                systemLanguage      = languageMap.keySet();
+      #
+      #                intersection   = Set::intersection(packedLanguage, systemLanguage);
+      #
+      #                setIterator    = new SetIterator(intersection);
+      #                setIterator.begin();
+      #                while (setIterator.more())
+      #                {
+      #                    formTreeItemStatus = tmpMap.lookup(setIterator.value());
+      #                    if (formTreeItemStatus == FormTreeItemStatus::NotVisible)
+      #                    {
+      #                        formTreeItemStatus = FormTreeItemStatus::Selected;
+      #                    }
+      #                    languageMap.insert(setIterator.value(), formTreeItemStatus);
+      #                    setIterator.next();
+      #                }
+      #            }
+      #        }
+      #
+      #        element.validateLanguageId(languageId);
+      #
+      #        if (SysLabelEdit::validateModuleId(labelModuleId))
+      #        {
+      #            moduleId.text(labelModuleId);
+      #        }
+      #        autoSearch.value(autoSearchValue);
+      #
+      #        ok = true;
+      #    }
+      #    else
+      #    {
+      #        xSysLastValue::deleteLast(element);
+      #    }
+      #    return ok;
+      #}
+    ENDSOURCE
+    SOURCE #updateDataSources
+      #public void updateDataSources()
+      #{
+      #    mainLanguage.setTmpData(sysLabelEdit.findResults());
+      #    otherLanguages.setTmpData(sysLabelEdit.findResults());
+      #    mainLanguage_ds.executeQuery();
+      #}
+    ENDSOURCE
+    SOURCE #updateLanguageMap
+      #void updateLanguageMap()
+      #{
+      #    FormTreeItem    formTreeItem;
+      #    TreeItemIdx     treeItemIdx  = selectLanguagesTree.getChild(selectLanguagesTree.getRoot());
+      #
+      #    while (treeItemIdx)
+      #    {
+      #        formTreeItem = selectLanguagesTree.getItem(treeItemIdx);
+      #
+      #        if (formTreeItem.data())
+      #        {
+      #            if (formTreeItem.stateImage() == imageListAppl_checkbox.image(#ImageCheckAll))
+      #            {
+      #                languageMap.insert(formTreeItem.data(), FormTreeItemStatus::Selected);
+      #            }
+      #            else
+      #            {
+      #                languageMap.insert(formTreeItem.data(), FormTreeItemStatus::NotSelected);
+      #            }
+      #        }
+      #        treeItemIdx = selectLanguagesTree.getNextSibling(treeItemIdx);
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #validateLanguageId
+      #void validateLanguageId(LanguageId _languageId = selectLanguage.text())
+      #{
+      #    if (languageMap.exists(_languageId))
+      #    {
+      #        selectLanguage.text(_languageId);
+      #    }
+      #    else
+      #    {
+      #        selectLanguage.text(LanguageTable::defaultLanguage());
+      #    }
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #MainLanguage
+          Table               #TmpSysLabel
+          Index               #LabelTextIdx
+          LinkType            #Passive
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #active
+          #public int active()
+          #{
+          #    int ret;
+          #
+          #    ret = super();
+          #    element.enableToolbar(true);
+          #
+          #    pasteLabelBtn.enabled(SysLabel::isLabelId(mainLanguage.LabelId));
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #leave
+          #public boolean leave()
+          #{
+          #    boolean ret;
+          #
+          #    if (!mainLanguage.LabelId)
+          #    {
+          #        mainLanguage_ds.forceWrite(true);
+          #    }
+          #
+          #    ret = super();
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #executeQuery
+          #public void executeQuery()
+          #{
+          #    mainLanguageRange.value(selectLanguage.text());
+          #
+          #    super();
+          #}
+        ENDSOURCE
+        SOURCE #validateWrite
+          #public boolean validateWrite()
+          #{
+          #    boolean ret;
+          #
+          #    ret = super();
+          #
+          #    if (ret &&
+          #        !sysLabelEdit.validateWrite(mainLanguage.Label, mainLanguage.Description))
+          #    {
+          #        ret = false;
+          #    }
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #delete
+          #void delete()
+          #{
+          #    if (mainLanguage.LabelId)
+          #    {
+          #        if (sysLabelEdit.labelDelete(mainLanguage.LabelId))
+          #        {
+          #            element.updateDataSources();
+          #        }
+          #    }
+          #    else
+          #    {
+          #        super();
+          #    }
+          #}
+        ENDSOURCE
+        SOURCE #write
+          #void write()
+          #{
+          #    LabelType text;
+          #
+          #    mainLanguage.Label = Global::strLRTrim(mainLanguage.Label);
+          #
+          #    if (mainLanguage.LabelId)
+          #    {
+          #        try
+          #        {
+          #            sysLabelEdit.labelModify(mainLanguage.Language, mainLanguage.LabelId, mainLanguage.Label, mainLanguage.Description,  mainLanguage.SysLabelApplModule);
+          #            super();
+          #        }
+          #        catch
+          #        {
+          #            exceptionTextFallThrough();
+          #        }
+          #    }
+          #    else
+          #    {
+          #        try
+          #        {
+          #            mainLanguage.LabelId = sysLabelEdit.labelInsert(mainLanguage.Language, mainLanguage.Label, mainLanguage.Description, mainLanguage.SysLabelApplModule, moduleId.text());
+          #        }
+          #        catch (Exception::Error)
+          #        {
+          #            return;
+          #        }
+          #
+          #
+          #        if (mainLanguage.LabelId)
+          #        {
+          #            super();
+          #        }
+          #        else
+          #        {
+          #            text = mainLanguage.Label;
+          #            if (Box::yesNoCancel("@SYS76550" + '\n' +
+          #                                 "@SYS76548", DialogButton::Yes) == DialogButton::Yes)
+          #            {
+          #                mainLanguage_ds.delete();
+          #                element.labelSearch(text, true);
+          #                throw Exception::Error;
+          #            }
+          #            else
+          #            {
+          #                mainLanguage_ds.delete();
+          #            }
+          #        }
+          #    }
+          #}
+        ENDSOURCE
+        SOURCE #create
+          #void create(boolean append = false)
+          #{
+          #    if (searchResultGroup.visible())
+          #    {
+          #        super(append);
+          #    }
+          #
+          #    mainLanguageDataSource_Label.setFocus();
+          #}
+        ENDSOURCE
+        SOURCE #initValue
+          #void initValue()
+          #{
+          #    if (SysLabel::defaultModuleId())
+          #    {
+          #        super();
+          #        mainLanguage.Language     = selectLanguage.text();
+          #        mainLanguage.Label        = Global::strLRTrim(searchString.text());
+          #    }
+          #    else
+          #    {
+          #        throw error("@SYS69764" + ' ' + "@SYS69765");
+          #    }
+          #
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #void init()
+          #{
+          #    super();
+          #    mainLanguageRange = this.query().dataSourceTable(tableNum(TmpSysLabel)).addRange(fieldNum(TmpSysLabel, Language));
+          #    mainLanguageRange.status(RangeStatus::Hidden);
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #OtherLanguages
+          Table               #TmpSysLabel
+          Index               #LabelIdx
+          AllowCreate         #No
+          AllowDelete         #No
+          OnlyFetchActive     #Yes
+          JoinSource          #MainLanguage
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #hasChanged
+          #boolean hasChanged()
+          #{
+          #    TmpSysLabel original = otherLanguages.orig();
+          #
+          #    if (original.Label == otherLanguages.Label &&
+          #        original.Description == otherLanguages.Description)
+          #    {
+          #        return false;
+          #    }
+          #    return true;
+          #}
+        ENDSOURCE
+        SOURCE #delete
+          #void delete()
+          #{
+          #    if (otherLanguages.LabelId)
+          #    {
+          #        if (!this.allowEditLabelFile())
+          #        {
+          #            throw error(strFmt("@SYS88309", this.sysLabelFile().name()));
+          #        }
+          #
+          #        if (sysLabelEdit.labelDelete(otherLanguages.LabelId))
+          #        {
+          #            element.updateDataSources();
+          #        }
+          #    }
+          #    else
+          #    {
+          #        super();
+          #    }
+          #}
+        ENDSOURCE
+        SOURCE #sysLabelFile
+          #protected SysLabelFile sysLabelFile()
+          #{
+          #    LabelModuleId localModuleId = conPeek(SysLabel::labelIdSplit(otherLanguages.LabelId), 1);
+          #    return SysLabelFile::newLanguageModule(otherLanguages.Language, localModuleId);
+          #}
+        ENDSOURCE
+        SOURCE #write
+          #void write()
+          #{
+          #    otherLanguages.Label = Global::strLRTrim(otherLanguages.Label);
+          #
+          #    if (!this.hasChanged())
+          #        return;
+          #
+          #    if (!this.allowEditLabelFile())
+          #    {
+          #        this.reread();
+          #        throw error(strFmt("@SYS88309", this.sysLabelFile().name()));
+          #    }
+          #
+          #    if (sysLabelEdit.labelModify(otherLanguages.Language, otherLanguages.LabelId, otherLanguages.Label, otherLanguages.Description, otherLanguages.SysLabelApplModule))
+          #    {
+          #        super();
+          #    }
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #void init()
+          #{
+          #    QueryBuildDataSource    otherLanguagesDataSource;
+          #
+          #    super();
+          #
+          #    otherLanguagesDataSource = this.query().dataSourceTable(tableNum(TmpSysLabel));
+          #    otherLanguagesDataSource.addDynalink(fieldNum(TmpSysLabel, LabelId), mainLanguage, fieldNum(TmpSysLabel, LabelId));
+          #
+          #    otherLanguagesRange = otherLanguagesDataSource.addRange(fieldNum(TmpSysLabel, Language));
+          #    otherLanguagesRange.status(RangeStatus::Hidden);
+          #}
+        ENDSOURCE
+        SOURCE #executeQuery
+          #void executeQuery()
+          #{
+          #    otherLanguagesRange.value(languageRange);
+          #    super();
+          #
+          #}
+        ENDSOURCE
+        SOURCE #validateWrite
+          #public boolean validateWrite()
+          #{
+          #    boolean ret;
+          #
+          #    ret = super();
+          #
+          #    if (ret &&
+          #        !sysLabelEdit.validateWrite(otherLanguages.Label, otherLanguages.Description))
+          #    {
+          #        ret = false;
+          #    }
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #allowEditLabelFile
+          #protected boolean allowEditLabelFile()
+          #{
+          #    //
+          #    // Determine if the label file is editable
+          #    //
+          #    if (versioncontrol.parmSysVersionControlSystem() &&
+          #        !versioncontrol.parmSysVersionControlSystem().allowEdit(this.sysLabelFile()))
+          #    {
+          #        return false;
+          #    }
+          #    return true;
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #XRefNames
+          Table               #xRefNames
+          Index               #Name
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          JoinSource          #MainLanguage
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+    OtherLanguages MainLanguage
+    XRefNames MainLanguage
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Width               #570
+      Caption             #@SYS86138
+      Frame               #Dialog
+      WindowResize        #Dynamic
+      WindowType          #Workspace
+      HideToolbar         #Yes
+      SetCompany          #No
+      BackgroundColor     #Window background
+      TopMargin           #0
+      BottomMargin        #0
+      LeftMargin          #0
+      RightMargin         #0
+      ViewEditMode        #Edit
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #715827882
+          HierarchyParent     #LabelGroup
+          Style               #Strip
+          DataSource          #MainLanguage
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #VCSActionPane
+          AutoDeclaration     #Yes
+          ElementPosition     #1431655764
+          HierarchyParent     #Group
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+          DataSource          #MainLanguage
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab1
+          ElementPosition     #1431655764
+          HierarchyParent     #VCSActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #BtnGrp
+          Left                #Auto (right)
+          ElementPosition     #1073741823
+          HierarchyParent     #PastLabelGrp
+          FrameType           #None
+          Columns             #2
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ButtonGroup1
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab
+          DataSource          #MainLanguage
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #VCSButton
+          AutoDeclaration     #Yes
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab1
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #MainLanguageGrid
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #200
+          ElementPosition     #1073741823
+          HierarchyParent     #LabelGroup
+          MultiSelect         #No
+          DataSource          #MainLanguage
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #public void gotFocus()
+            #{
+            #    super();
+            #    pasteLabelBtn.defaultButton(true);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #OtherLanguageGrid
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1879048190
+          HierarchyParent     #LabelGroup
+          MultiSelect         #No
+          VisibleRows         #3
+          DataSource          #OtherLanguages
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #public void gotFocus()
+            #{
+            #    super();
+            #    pasteLabelBtn.defaultButton(true);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #AdvancedGroup
+          ElementPosition     #1073741823
+          HierarchyParent     #AdvancedTab
+          Caption             #@SYS2952
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #BottomMainGroup
+          AllowEdit           #No
+          Width               #Column width
+          Skip                #Yes
+          ElementPosition     #1879048190
+          HierarchyParent     #SearchResultGroup
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #FindToolbar
+          AutoDeclaration     #Yes
+          Width               #Column width
+          ElementPosition     #939524094
+          HierarchyParent     #SearchResultGroup
+          FrameType           #None
+          OptionValue         #0
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Group
+          Width               #Column width
+          ElementPosition     #715827882
+          Columnspace         #0
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Group1
+          Width               #Column width
+          ElementPosition     #1073741822
+          HierarchyParent     #FindToolbar
+          Style               #MarginlessContainer
+          Columnspace         #0
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GroupSplitter
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #5
+          ElementPosition     #1476395006
+          HierarchyParent     #LabelGroup
+          FrameType           #Raised 3D
+          BackgroundColor     #Window background
+          Style               #SplitterHorizontalContainer
+          TopMargin           #0
+          BottomMargin        #0
+          Columnspace         #0
+          HideIfEmpty         #No
+          AlignChild          #No
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #mouseDown
+            #int mouseDown(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int ret = super(x, y, button, ctrl, shift);
+            #
+            #    return formSplitter.mouseDown(x, y, button, ctrl, shift);
+            #}
+          ENDSOURCE
+          SOURCE #mouseMove
+            #int mouseMove(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int ret = super(x, y, button, ctrl, shift);
+            #
+            #    return formSplitter.mouseMove(x,y,button,ctrl,shift);
+            #}
+          ENDSOURCE
+          SOURCE #mouseUp
+            #int mouseUp(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int ret = super(x, y, button, ctrl, shift);
+            #
+            #    return formSplitter.mouseUp(x, y, button, ctrl, shift);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #LabelGroup
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #0
+          ElementPosition     #1409286142
+          HierarchyParent     #SearchResultGroup
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #MainGroup
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          FrameType           #None
+          Style               #DialogContent
+          LeftMargin          #8
+          RightMargin         #8
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #PastLabelGrp
+          AutoDeclaration     #Yes
+          Visible             #No
+          Left                #Right edge
+          ElementPosition     #1610612734
+          HierarchyParent     #BottomMainGroup
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #SearchResultGroup
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1073741823
+          HierarchyParent     #LabelTab
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #SelectLanguagesGroup
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1610612734
+          HierarchyParent     #AdvancedTab
+          Caption             #@SYS58314
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #void gotFocus()
+            #{
+            #    findNow.defaultButton(true);
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #WIK_SearchDetailsGroup
+          Width               #Column width
+          ElementPosition     #1610612734
+          HierarchyParent     #FindToolbar
+          Columns             #Auto
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUBUTTON
+        PROPERTIES
+          Name                #VCSButton2
+          AutoDeclaration     #Yes
+          VerticalSpacing     #0
+          Skip                #No
+          HelpText            #@SYS85912
+          ElementPosition     #1879048185
+          HierarchyParent     #ButtonGroup1
+          Text                #@SYS10541
+          Border              #None
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    element.setAllowEdit();
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TAB
+        PROPERTIES
+          Name                #Tab
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1073741823
+          HierarchyParent     #MainGroup
+          Tabs                #2
+          Columns             #Auto
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #AdvancedTab
+          ElementPosition     #1610612734
+          HierarchyParent     #Tab
+          Caption             #@SYS2186
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #pageActivated
+            #public void pageActivated()
+            #{
+            #    super();
+            #    element.enableToolbar(false);
+            #
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #LabelTab
+          ElementPosition     #1073741823
+          HierarchyParent     #Tab
+          Caption             #@SYS25058
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #pageActivated
+            #public void pageActivated()
+            #{
+            #    super();
+            #    element.enableToolbar(true);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #AddToVersionControlButton
+          AutoDeclaration     #Yes
+          HelpText            #@SYS342357
+          ElementPosition     #1840700268
+          HierarchyParent     #VCSButton
+          Text                #@SYS342358
+          ButtonDisplay       #Image only
+          NormalImage         #12072
+          ImageLocation       #EmbeddedResource
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    SysLabelFile labelFile = SysLabelFile::newLanguageModule(selectLanguage.text(), moduleId.text());
+            #
+            #    super();
+            #
+            #    if (versioncontrol.parmSysVersionControlSystem())
+            #        versioncontrol.parmSysVersionControlSystem().commandAdd(labelFile);
+            #
+            #    element.setAllowEdit();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #CheckOutButton
+          AutoDeclaration     #Yes
+          VerticalSpacing     #0
+          Skip                #No
+          HelpText            #@SYS86580
+          ElementPosition     #920350134
+          HierarchyParent     #VCSButton
+          Text                #@SYS85679
+          ButtonDisplay       #Image only
+          NormalImage         #12074
+          ImageLocation       #EmbeddedResource
+          Border              #None
+          BackStyle           #Transparent
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    SysLabelFile labelFile = SysLabelFile::newLanguageModule(selectLanguage.text(), moduleId.text());
+            #    super();
+            #    if (versioncontrol.parmSysVersionControlSystem())
+            #    {
+            #        versioncontrol.parmSysVersionControlSystem().commandSynchronizeAndCheckout(labelFile);
+            #    }
+            #    element.setAllowEdit();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #FindNow
+          AutoDeclaration     #Yes
+          Left                #Right edge
+          Skip                #No
+          HelpText            #@SYS58498
+          ElementPosition     #1288490187
+          HierarchyParent     #Group1
+          Text                #@SYS26822
+          ButtonDisplay       #Image only
+          NormalImage         #999
+          ImageLocation       #EmbeddedResource
+          DefaultButton       #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    element.labelSearch(searchString.text(), WIK_ExactMatch.value());
+            #    super();
+            #
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #NewSearch
+          AutoDeclaration     #Yes
+          Visible             #No
+          Left                #Right edge
+          Skip                #No
+          HelpText            #@SYS86356
+          ElementPosition     #1717986916
+          HierarchyParent     #Group1
+          Text                #@SYS2079
+          ButtonDisplay       #Image only
+          NormalImage         #3112
+          ImageLocation       #EmbeddedResource
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    element.reset();
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #PasteLabelBtn
+          AutoDeclaration     #Yes
+          Enabled             #No
+          Skip                #No
+          HelpText            #@SYS76788
+          ElementPosition     #1073741823
+          HierarchyParent     #BtnGrp
+          Text                #@SYS58290
+          BackStyle           #Transparent
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #    element.pasteLabel();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #SyncButton
+          AutoDeclaration     #Yes
+          VerticalSpacing     #0
+          Skip                #No
+          HelpText            #@SYS22807
+          ElementPosition     #1533916890
+          HierarchyParent     #VCSButton
+          Text                #@SYS86355
+          ButtonDisplay       #Image only
+          NormalImage         #12076
+          ImageLocation       #EmbeddedResource
+          Border              #None
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    SysVersionControlSyncParameters syncParm = SysVersionControlSyncParameters::construct();
+            #    SysLabelFile labelFile = SysLabelFile::newLanguageModule(selectLanguage.text(), moduleId.text());
+            #
+            #    super();
+            #    syncParm.parmForce(true);
+            #
+            #    if (versioncontrol.parmSysVersionControlSystem())
+            #        versioncontrol.parmSysVersionControlSystem().commandSynchronize(labelFile, syncParm);
+            #    element.setAllowEdit();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #UndoCheckOutButton
+          AutoDeclaration     #Yes
+          VerticalSpacing     #0
+          Skip                #No
+          HelpText            #@SYS63232
+          ElementPosition     #1227133512
+          HierarchyParent     #VCSButton
+          Text                #@SYS83894
+          ButtonDisplay       #Image only
+          NormalImage         #12075
+          ImageLocation       #EmbeddedResource
+          Border              #None
+          BackStyle           #Transparent
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    SysLabelFile labelFile = SysLabelFile::newLanguageModule(selectLanguage.text(), moduleId.text());
+            #    super();
+            #    if (versioncontrol.parmSysVersionControlSystem())
+            #        versioncontrol.parmSysVersionControlSystem().commandUndoCheckOut(labelFile);
+            #    element.setAllowEdit();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #AutoSearch
+          AutoDeclaration     #Yes
+          HelpText            #@SYS58305
+          ElementPosition     #1610612734
+          HierarchyParent     #AdvancedGroup
+          Value               #1
+          Label               #@SYS58307
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #void gotFocus()
+            #{
+            #    findNow.defaultButton(true);
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #WIK_ExactMatch
+          AutoDeclaration     #Yes
+          ElementPosition     #1610612733
+          HierarchyParent     #WIK_SearchDetailsGroup
+          Label               #@SYS335086
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #Cancel
+          ElementPosition     #1610612734
+          HierarchyParent     #BtnGrp
+          Command             #264
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #DeleteLabel
+          AutoDeclaration     #Yes
+          VerticalSpacing     #0
+          Skip                #No
+          HelpText            #@SYS90724
+          ElementPosition     #805306365
+          HierarchyParent     #ButtonGroup1
+          Text                #@SYS14425
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10121
+          ImageLocation       #EmbeddedResource
+          Border              #None
+          SaveRecord          #No
+          Primary             #Yes
+          Command             #2832
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #NewLabel
+          AutoDeclaration     #Yes
+          VerticalSpacing     #0
+          Skip                #No
+          HelpText            #@SYS90725
+          ElementPosition     #536870910
+          HierarchyParent     #ButtonGroup1
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Border              #None
+          Primary             #Yes
+          BackStyle           #Transparent
+          Command             #260
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #CheckInButton
+          AutoDeclaration     #Yes
+          ElementPosition     #613566756
+          HierarchyParent     #VCSButton
+          ButtonDisplay       #Image only
+          NormalImage         #12073
+          ImageLocation       #EmbeddedResource
+          MenuItemName        #SysVersionControlCheckIn
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    MenuFunction checkInForm;
+            #
+            #    checkInForm = this.menufunction();
+            #
+            #    if (checkInForm)
+            #    {
+            #        // Set parm to true, so we can set the SysVersionControlCheckIn form to modal behaviour
+            #        checkInForm.parameters(enum2str(true));
+            #        checkInForm.run();
+            #
+            #        element.setAllowEdit();
+            #    }
+            #    else
+            #    {
+            #        super();
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #SysLabelHistory
+          AutoDeclaration     #Yes
+          VerticalSpacing     #0
+          Skip                #No
+          ElementPosition     #1610612730
+          HierarchyParent     #ButtonGroup1
+          ButtonDisplay       #Text & Image left
+          NormalImage         #1035
+          ImageLocation       #EmbeddedResource
+          Border              #None
+          DataSource          #MainLanguage
+          MenuItemName        #SysLabelHistory
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #UsedBy
+          AutoDeclaration     #Yes
+          VerticalSpacing     #0
+          Skip                #No
+          ElementPosition     #1342177275
+          HierarchyParent     #ButtonGroup1
+          ButtonDisplay       #Text & Image left
+          NormalImage         #3077
+          ImageLocation       #EmbeddedResource
+          Border              #None
+          DataSource          #XRefNames
+          MenuItemName        #XRefReferencesUsedBy
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL SEPARATOR
+        PROPERTIES
+          Name                #Separator
+          ElementPosition     #1073741820
+          HierarchyParent     #ButtonGroup1
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #HitsText
+          AutoDeclaration     #Yes
+          AllowEdit           #No
+          Width               #Column width
+          Skip                #Yes
+          AlignControl        #No
+          ElementPosition     #1073741823
+          HierarchyParent     #BottomMainGroup
+          Border              #None
+          ShowLabel           #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MainLanguageDataSource_Description
+          ElementPosition     #2013265918
+          HierarchyParent     #MainLanguageGrid
+          DisplayLength       #17
+          DataSource          #MainLanguage
+          DataField           #Description
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #public void gotFocus()
+            #{
+            #    super();
+            #    pasteLabelBtn.defaultButton(true);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MainLanguageDataSource_Label
+          AutoDeclaration     #Yes
+          ElementPosition     #1879048190
+          HierarchyParent     #MainLanguageGrid
+          DataSource          #MainLanguage
+          DataField           #Label
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #public void gotFocus()
+            #{
+            #    super();
+            #    pasteLabelBtn.defaultButton(true);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MainLanguageDataSource_LabelId
+          AllowEdit           #No
+          Skip                #Yes
+          ElementPosition     #1073741823
+          HierarchyParent     #MainLanguageGrid
+          DisplayLength       #11
+          DataSource          #MainLanguage
+          DataField           #LabelId
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #public void gotFocus()
+            #{
+            #    super();
+            #    pasteLabelBtn.defaultButton(true);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MainLanguageDataSource_Language
+          AllowEdit           #No
+          Skip                #Yes
+          ElementPosition     #1610612734
+          HierarchyParent     #MainLanguageGrid
+          DataSource          #MainLanguage
+          DataField           #Language
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #public void gotFocus()
+            #{
+            #    super();
+            #    pasteLabelBtn.defaultButton(true);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #ModuleId
+          AutoDeclaration     #Yes
+          Width               #Column width
+          ElementPosition     #1073741823
+          HierarchyParent     #AdvancedGroup
+          LookupButton        #Always
+          ExtendedDataType    
+            ARRAY 
+              #LabelModuleId
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #void gotFocus()
+            #{
+            #    findNow.defaultButton(true);
+            #    super();
+            #}
+          ENDSOURCE
+          SOURCE #lookup
+            #public void lookup()
+            #{
+            #    lookup = true;
+            #
+            #    SysLabelEdit::moduleIdLookup(this);
+            #
+            #    lookup = false;
+            #}
+          ENDSOURCE
+          SOURCE #modified
+            #public boolean modified()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #    element.setAllowEdit();
+            #    return ret;
+            #}
+          ENDSOURCE
+          SOURCE #validate
+            #public boolean validate()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #
+            #    if (ret)
+            #    {
+            #        ret = SysLabelEdit::validateModuleId(this.text());
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #OtherLanguagesDataSource_Description
+          ElementPosition     #2013265918
+          HierarchyParent     #OtherLanguageGrid
+          DisplayLength       #17
+          DataSource          #OtherLanguages
+          DataField           #Description
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #OtherLanguagesDataSource_Label
+          ElementPosition     #1879048190
+          HierarchyParent     #OtherLanguageGrid
+          DataSource          #OtherLanguages
+          DataField           #Label
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #OtherLanguagesDataSource_LabelId
+          ElementPosition     #1073741823
+          HierarchyParent     #OtherLanguageGrid
+          DisplayLength       #11
+          DataSource          #OtherLanguages
+          DataField           #LabelId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #OtherLanguagesDataSource_Language
+          AllowEdit           #No
+          Skip                #Yes
+          ElementPosition     #1610612734
+          HierarchyParent     #OtherLanguageGrid
+          DataSource          #OtherLanguages
+          DataField           #Language
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #SearchString
+          AutoDeclaration     #Yes
+          Width               #Column width
+          HelpText            #@SYS58292
+          ElementPosition     #858993458
+          HierarchyParent     #Group1
+          Label               #@SYS58286
+          ExtendedDataType    
+            ARRAY 
+              #LabelType
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #void gotFocus()
+            #{
+            #    element.changeMode(true);
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #SelectLanguage
+          AutoDeclaration     #Yes
+          HelpText            #@SYS58303
+          ElementPosition     #1073741822
+          HierarchyParent     #WIK_SearchDetailsGroup
+          Label               #@SYS69766
+          ExtendedDataType    
+            ARRAY 
+              #LanguageId
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #gotFocus
+            #void gotFocus()
+            #{
+            #    findNow.defaultButton(true);
+            #    super();
+            #}
+          ENDSOURCE
+          SOURCE #lookup
+            #public void lookup()
+            #{
+            #    lookup = true;
+            #    super();
+            #    lookup = false;
+            #}
+          ENDSOURCE
+          SOURCE #lostFocus
+            #void lostFocus()
+            #{
+            #    element.changeLanguage();
+            #
+            #    super();
+            #
+            #}
+          ENDSOURCE
+          SOURCE #textChange
+            #void textChange()
+            #{
+            #    super();
+            #
+            #    element.changeLanguage();
+            #}
+          ENDSOURCE
+          SOURCE #validate
+            #public boolean validate()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #
+            #    if (ret)
+            #    {
+            #        element.changeLanguage();
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TREE
+        PROPERTIES
+          Name                #SelectLanguagesTree
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1073741823
+          HierarchyParent     #SelectLanguagesGroup
+          HasButtons          #No
+          LinesAtRoot         #No
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #expanding
+            #boolean expanding(int idx, FormTreeExpand action, anytype data)
+            #{
+            #    boolean ret;
+            #
+            #    if (action == FormTreeExpand::Expand)
+            #    {
+            #        ret = super(idx, action, data);
+            #    }
+            #    return ret;
+            #}
+          ENDSOURCE
+          SOURCE #mouseDblClick
+            #int mouseDblClick(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int             ret;
+            #    int             idx;
+            #    int             focus;
+            #    FormTreeItem    formTreeItem;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    [idx, focus] = this.hitTest(x, y);
+            #
+            #    if (focus & #FOCUS_FIELD && this.getItem(idx))
+            #    {
+            #        formTreeItem = this.getItem(idx);
+            #
+            #        element.mouseClick(formTreeItem);
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+          SOURCE #mouseDown
+            #int mouseDown(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int             ret;
+            #    int             focus;
+            #    TreeItemIdx     idx;
+            #    FormTreeItem    formTreeItem;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    [idx, focus] = this.hitTest(x, y);
+            #
+            #    if (focus & #FLCHT_TOLEFT && this.getItem(idx))
+            #    {
+            #        formTreeItem = this.getItem(idx);
+            #
+            #        element.mouseClick(formTreeItem);
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: END
