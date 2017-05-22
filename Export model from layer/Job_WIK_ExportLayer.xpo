@@ -1,0 +1,88 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_ExportLayer unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_ExportLayer
+    #static void WIK_ExportLayer(Args _args)
+    #{
+    #    #define.ModelToExport1("ISV Model")
+    #    #define.ModelToExport2("USR Model")
+    #    #define.ExportDestination(@"C:\Temp\")
+    #    #AOTExport
+    #    boolean     currentLayerOnly = true;
+    #
+    #    void exportModel(ModelName _modelName)
+    #    {
+    #        ProjectNode             project;
+    #        SysModelCreateProject   createProject   = SysModelCreateProject::construct();
+    #        ProjectName             projectName     = strReplace(_modelName, ' ', '_') + '_All';
+    #        SysModel                model;
+    #        SysModelManifest        modelManifest;
+    #        SysModelElement         modelElement;
+    #        SysModelElementData     modelElementData;
+    #        SysLabelFileExport      label           = SysLabelFileExport::construct();
+    #
+    #        select firstOnly Model, RecId from modelManifest
+    #            where modelManifest.Name == _modelName
+    #            join Layer from model
+    #                where modelManifest.Model   == model.RecId
+    #                    && model.Layer          == currentAOLayer();
+    #
+    #        createProject.parmModelId(modelManifest.RecId);
+    #        createProject.parmProjectName(projectName);
+    #
+    #        if (createProject.parmModelId())
+    #        {
+    #            // Export model metadata and source
+    #            createProject.run();
+    #            project = SysTreeNode::getPrivateProject().AOTfindChild(projectName);
+    #            project.treeNodeExport(#ExportDestination + projectName + '.xpo', currentLayerOnly ? #export | #expLayer : #export);
+    #
+    #            // Export label files and languages
+    #            while select modelElement
+    #                where modelElement.ElementType  == UtilElementType::LabelFileLanguage
+    #                exists join modelElementData
+    #                    where modelElementData.ModelId  == modelManifest.Model
+    #                        && modelElement.RecId       == modelElementData.ModelElement
+    #            {
+    #                label.parmTreenode(TreeNode::findNode(SysTreeNode::modelElement2Path(modelElement)));
+    #                label.parmPath(#ExportDestination);
+    #                label.run();
+    #            }
+    #
+    #            // Export project definitions
+    #            while select modelElement
+    #                where modelElement.ElementType  == UtilElementType::SharedProject
+    #                exists join modelElementData
+    #                    where modelElementData.ModelId  == modelManifest.Model
+    #                        && modelElement.RecId       == modelElementData.ModelElement
+    #            {
+    #                project = TreeNode::findNode(SysTreeNode::modelElement2Path(modelElement));
+    #                if (!WinAPI::folderExists(#ExportDestination + 'Projects'))
+    #                {
+    #                    WinAPI::createDirectory(#ExportDestination + 'Projects');
+    #                }
+    #                project.treeNodeExport(#ExportDestination + @'Projects\' + enum2str(currentAOLayer()) + modelElement.Name + '.xpo', currentLayerOnly ? #export | #expProjectOnly | #expLayer : #export | #expProjectOnly);
+    #            }
+    #        }
+    #        else
+    #        {
+    #            error(strFmt('Layer %1 does not have model %2', strUpr(enum2str(currentAOLayer())), _modelName));
+    #        }
+    #    }
+    #
+    #    exportModel(#ModelToExport1);
+    #    exportModel(#ModelToExport2);
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{6B6C96FE-D140-4833-AB70-689FB8084F6A}
+  ENDPROPERTIES
+  
+
+***Element: END
