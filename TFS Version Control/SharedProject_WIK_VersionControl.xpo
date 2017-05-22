@@ -1,0 +1,3729 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysVersionControlWorkItemProvider unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  INTERFACE #SysVersionControlWorkItemProvider
+    PROPERTIES
+      Name                #SysVersionControlWorkItemProvider
+      Origin              #{7D9C1089-B38A-4245-B7E5-D77C82F0F4B0}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// The <c>SysVersionControlWorkItemProvider</c> class allows work items to be associated
+        #/// with a Version Control System (VCS) check-in.
+        #/// </summary>
+        #// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+        #public interface SysVersionControlWorkItemProvider
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #flushCache
+        #/// <summary>
+        #/// Flushes the work item cache.
+        #/// </summary>
+        #public void flushCache()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #getItemById
+        #/// <summary>
+        #/// Gets the work item that has the specified work item ID.
+        #/// </summary>
+        #/// <param name="id">
+        #/// The ID of the work item to query.
+        #/// </param>
+        #/// <returns>
+        #/// A record in <c>SysVersionControlWorkItemId</c> table; otherwise, an empty record.
+        #/// </returns>
+        #public SysVersionControlTmpWorkItems getItemById(SysVersionControlWorkItemId id)
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #getItemsAssignedToMe
+        #/// <summary>
+        #/// Gets the work items that are assigned to the current user.
+        #/// </summary>
+        #/// <returns>
+        #/// A number of records in <c>SysVersionControlTmpWorkItems</c> table.
+        #/// </returns>
+        #public SysVersionControlTmpWorkItems getItemsAssignedToMe(
+        #    boolean _showClosed = false,
+        #    boolean _showUserStory = false
+        #    )
+        #{
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysVersionControlWorkItemProviderTFS unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysVersionControlWorkItemProviderTFS
+    PROPERTIES
+      Name                #SysVersionControlWorkItemProviderTFS
+      Origin              #{72EDEEE0-6C27-497E-B6F1-1AD7D70FEEE0}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// The <c>SysVersionControlWorkItemProviderTFS</c> class allows for TFS work items to be associated
+        #/// with a Version Control System (VCS) check-in.
+        #/// </summary>
+        #// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+        #public class SysVersionControlWorkItemProviderTFS implements SysVersionControlWorkItemProvider
+        #{
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemStoreProxy workItemStoreProxy;
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemProxyCollection workItemsCache;
+        #
+        #    #define.AssignedToMeQuery("SELECT [System.Id], [System.Title], [System.State], [System].[Work Item Type] FROM WorkItems WHERE [System.TeamProject] = @project  AND  [System.AssignedTo] = @me ORDER BY [System.Id]")
+        #}
+      ENDSOURCE
+      SOURCE #flushCache
+        #/// <summary>
+        #/// Flushes the work item cache.
+        #/// </summary>
+        #public void flushCache()
+        #{
+        #    workItemsCache.Clear();
+        #}
+      ENDSOURCE
+      SOURCE #getCheckInAction
+        #private Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.TFSWorkItemCheckinAction getCheckInAction(SysVersionControlWorkItemAction action)
+        #{
+        #    switch(action)
+        #    {
+        #        case SysVersionControlWorkItemAction::Associate:
+        #            return Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.TFSWorkItemCheckinAction::Associate;
+        #        case SysVersionControlWorkItemAction::Resolve:
+        #            return Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.TFSWorkItemCheckinAction::Resolve;
+        #        default:
+        #            throw error ("@SYS341283");
+        #
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #getCheckInItems
+        #/// <summary>
+        #/// Gets the links of the work items that are associated with the check-in.
+        #/// </summary>
+        #/// <param name="workItems">The work items to be associated with the check-in.</param>
+        #/// <returns>A list of the work item associations.</returns>
+        #public Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemCheckInInfoProxyCollection getCheckInItems(
+        #        SysVersionControlTmpWorkItems workItems)
+        #{
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemCheckInInfoProxyCollection res;
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemProxy workItem;
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemCheckInInfoProxy workItemCheckInInfo;
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.TFSWorkItemCheckinAction workItemCheckInAction;
+        #    int workItemId;
+        #
+        #    res = new Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemCheckInInfoProxyCollection();
+        #
+        #    while select ID, CheckInAction from workItems
+        #        where workItems.Selected == true
+        #    {
+        #        workItemId = workItems.ID;
+        #        workItemCheckInAction = this.getCheckInAction(workItems.CheckInAction);
+        #        workItem = this.getWorkItemProxyById(workItemId);
+        #        workItemCheckInInfo = new Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemCheckInInfoProxy(workItem, workItemCheckInAction);
+        #        res.Add(workItemCheckInInfo);
+        #    }
+        #
+        #    return res;
+        #}
+      ENDSOURCE
+      SOURCE #getItemById
+        #/// <summary>
+        #/// Gets the work item that has the specified work item ID.
+        #/// </summary>
+        #/// <param name="id">
+        #/// The ID of the work item to query.
+        #/// </param>
+        #/// <returns>
+        #/// A single record in <c>SysVersionControlWorkItemId</c> table; otherwise, an empty record.
+        #/// </returns>
+        #public SysVersionControlTmpWorkItems getItemById(SysVersionControlWorkItemId id)
+        #{
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemProxy workItem;
+        #    SysVersionControlTmpWorkItems ret;
+        #
+        #    workItem = this.getWorkItemProxyById(id);
+        #
+        #    if (workItem != null)
+        #    {
+        #        this.insertWorkItemToTable(ret, workItem);
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #getItemsAssignedToMe
+        #/// <summary>
+        #/// Gets the work items that are assigned to the current user.
+        #/// </summary>
+        #/// <returns>
+        #/// A number of records in the <c>SysVersionControlTmpWorkItems</c> table.
+        #/// </returns>
+        #public SysVersionControlTmpWorkItems getItemsAssignedToMe(
+        #    boolean _showClosed = false,
+        #    boolean _showUserStory = false
+        #    )
+        #{
+        #    SysVersionControlTmpWorkItems ret;
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemProxyCollection workItems;
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemProxy workItem;
+        #    int i, itemsCount;
+        #    str queryText = #AssignedToMeQuery;
+        #
+        #    queryText = _showClosed ? queryText : strReplace(queryText, @'ORDER BY [System.Id]', @"AND [System.State] <> 'Closed' ORDER BY [System.Id]");
+        #    queryText = _showUserStory ? queryText : strReplace(queryText, @'ORDER BY [System.Id]', @"AND [System.WorkItemType] <> 'User Story' ORDER BY [System.Id]");
+        #
+        #    workItems = workItemStoreProxy.ExecuteWorkItemQuery(queryText);
+        #    itemsCount = workItems.get_Count();
+        #
+        #    for (i = 0; i < itemsCount; i++)
+        #    {
+        #        workItem = workItems.get_Item(i);
+        #        this.insertWorkItemToTable(ret, workItem);
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #getWorkItemProxyById
+        #private Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemProxy getWorkItemProxyById(int id)
+        #{
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemProxy res;
+        #
+        #    res = workItemsCache.GetById(id);
+        #
+        #    if (res == null)
+        #    {
+        #        res = workItemStoreProxy.GetWorkItem(id);
+        #    }
+        #
+        #    return res;
+        #}
+      ENDSOURCE
+      SOURCE #insertWorkItemToTable
+        #private void insertWorkItemToTable(
+        #    SysVersionControlTmpWorkItems target,
+        #    Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemProxy workItem)
+        #{
+        #    int id;
+        #    str title;
+        #    System.Type clrWorkItemType;
+        #    int instanceFlag = CLRInterop::getAnyTypeForObject(System.Reflection.BindingFlags::Instance);
+        #    int publicFlag = CLRInterop::getAnyTypeForObject(System.Reflection.BindingFlags::Public);
+        #    int combinedFlag = instanceFlag | publicFlag;
+        #    System.Reflection.BindingFlags propertyReflectFlags;
+        #    System.Reflection.PropertyInfo propInfo;
+        #    anytype propertyValue;
+        #    CLRObject clrPropertyValue;
+        #    System.Object nullIndex;
+        #
+        #    id = workItem.get_Id();
+        #    title = workItem.get_Title();
+        #
+        #    target.ID = id;
+        #    target.Title = title;
+        #
+        #    clrWorkItemType = workItem.GetType();
+        #    if (clrWorkItemType != null)
+        #    {
+        #
+        #        propertyReflectFlags = System.Reflection.BindingFlags::Default;
+        #        propertyReflectFlags = System.Enum::ToObject(propertyReflectFlags.GetType(), combinedFlag);
+        #
+        #        // BP Deviation Documented
+        #        nullIndex = new System.Object[0]();
+        #
+        #        propInfo = clrWorkItemType.GetProperty('State', propertyReflectFlags);
+        #        if (propInfo != null && propInfo.get_CanRead())
+        #        {
+        #            clrPropertyValue = propInfo.GetValue(workItem, nullIndex);
+        #            PropertyValue = CLRInterop::getAnyTypeForObject(clrPropertyValue);
+        #
+        #            target.State = any2str(propertyValue);
+        #        }
+        #
+        #        propInfo = clrWorkItemType.GetProperty('WorkItemType', propertyReflectFlags);
+        #        if (propInfo != null && propInfo.get_CanRead())
+        #        {
+        #            clrPropertyValue = propInfo.GetValue(workItem, nullIndex);
+        #            PropertyValue = CLRInterop::getAnyTypeForObject(clrPropertyValue);
+        #
+        #            target.Type = any2str(propertyValue);
+        #        }
+        #    }
+        #
+        #    target.insert();
+        #
+        #    if (workItemsCache.GetById(id) == null)
+        #    {
+        #        workItemsCache.Add(workItem);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #/// <summary>
+        #/// Initializes a new instance of the <c>SysVersionControlWorkItemProviderTFS</c> class by using the specified connection data.
+        #/// </summary>
+        #/// <param name="connectionManager">The connection data to initialize the object.</param>
+        #public void new(Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.ConnectionManagerProxy connectionManager)
+        #{
+        #    workItemStoreProxy = new Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemStoreProxy(connectionManager);
+        #    workItemsCache = new Microsoft.Dynamics.AX.Framework.TeamFoundationServerFacade.WorkItemProxyCollection();
+        #}
+        #
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #SysImportDialog
+  PROPERTIES
+    Name                #SysImportDialog
+    Origin              #{47D4564C-6428-444E-9082-5FE1CDFFC808}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #class FormRun extends ObjectRun
+      #{
+      #    ImageListAppl_Aot               imageListAot;
+      #    ImageListAppl_checkbox          imageListState;
+      #    SysImportElementsForm           sysImportElementsForm;
+      #    QueryBuildRange                 importRange;
+      #    container                       lastFiles;
+      #    boolean                         called;
+      #    FormDataObject                  replaceWithLabel;
+      #    boolean                         examinedFile;
+      #    SysVersionControlParameters     sysVersionControlParameters;
+      #
+      #    #resAppl
+      #    #define.FOCUS_CHECKBOX(64)
+      #    #define.FOCUS_FIELD(4)
+      #
+      #    #FormListControl
+      #
+      #    #define.nodeDocumentation(0)
+      #
+      #    #define.currentVersion(1)
+      #    #define.currentList(lastFiles)
+      #
+      #    #define.tempFiles(5)
+      #    #define.expImpFileExtension('xpo')
+      #
+      #}
+    ENDSOURCE
+    SOURCE #buildHtml
+      #public void buildHtml()
+      #{
+      #    html.setText(sysImportElementsForm.buildImportDescription(tmpImportLabel));
+      #}
+    ENDSOURCE
+    SOURCE #enableAot
+      #void enableAot(boolean _enable)
+      #{
+      #    boolean enableDeleteSubNodes = _enable;
+      #
+      #    deleteSubNodes.allowEdit(enableDeleteSubNodes);
+      #    deleteSubNodes.skip(!enableDeleteSubNodes);
+      #}
+    ENDSOURCE
+    SOURCE #enableLabel
+      #public void enableLabel(boolean _enable)
+      #{
+      #    labelModuleId.enabled(   _enable && (!tabGrp.enableChilds() || sysImportElementsForm.parmImportLabels()));
+      #    labelLanguageTab.visible(_enable);
+      #    labelsTab.visible(       _enable);
+      #    labelDetailTab.visible(  _enable);
+      #
+      #    if (!_enable)
+      #    {
+      #        aotTab.setFocus();
+      #        importActionRbtn.setFocus();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #fileNameLookupFilename
+      #str fileNameLookupFilename()
+      #{
+      #    Filename    path;
+      #    Filename    name;
+      #    Filename    ext;
+      #    ;
+      #    [path, name, ext] = fileNameSplit(this.getFileName());
+      #
+      #    if (name)
+      #    {
+      #        return path + name + ext;
+      #    }
+      #
+      #    return '';
+      #}
+    ENDSOURCE
+    SOURCE #fileNameLookupFilter
+      #container fileNameLookupFilter()
+      #{
+      #    #file
+      #    return [WinAPI::fileType(#xpo), #allfilesName+#xpo, #allFilesType, #allFiles];
+      #}
+    ENDSOURCE
+    SOURCE #fileNameLookupInitialPath
+      #str fileNameLookupInitialPath()
+      #{
+      #    #WinApi
+      #    Filename                path;
+      #    Filename                name;
+      #    Filename                ext;
+      #    ;
+      #
+      #    [path, name, ext] = fileNameSplit(this.getFileName());
+      #
+      #    if (!path)
+      #    {
+      #        if (conLen(lastFiles))
+      #        {
+      #            [path, name, ext] = fileNameSplit(conPeek(lastFiles,1));
+      #        }
+      #
+      #        if (!path)
+      #        {
+      #            path = WinAPI::getFolderPath(#CSIDL_Personal);
+      #        }
+      #    }
+      #    return path;
+      #
+      #}
+    ENDSOURCE
+    SOURCE #fileNameLookupTitle
+      #str fileNameLookupTitle()
+      #{
+      #    return '';
+      #}
+    ENDSOURCE
+    SOURCE #getFileName
+      #public Filename getFileName()
+      #{
+      #    return strLRTrim(fileName.getText(fileName.selection()));
+      #}
+    ENDSOURCE
+    SOURCE #import
+      #public void import()
+      #{
+      #    if (WinAPI::fileExists(this.getFileName()))
+      #    {
+      #        element.updateBox(fileName.getEditText(), false);
+      #        xSysLastValue::saveLast(element);
+      #
+      #        if (!examinedFile)
+      #        {
+      #            sysImportElementsForm.newFile(this.getFileName());
+      #        }
+      #
+      #        sysImportElementsForm.bulidImportLabelLanguageSet(languageTree);
+      #
+      #        sysImportElementsForm.parmAddToProject( false);
+      #        sysImportElementsForm.parmDeleteSubNodes(deleteSubNodes.allowEdit() && deleteSubNodes.value());
+      #
+      #        sysImportElementsForm.parmImportLabels((importActionRbtn.selection() == SysAotImportAction::Label ||
+      #                                                importActionRbtn.selection() == SysAotImportAction::ElementAndLabel));
+      #        sysImportElementsForm.parmImportAot(   (importActionRbtn.selection() == SysAotImportAction::Element ||
+      #                                                importActionRbtn.selection() == SysAotImportAction::ElementAndLabel));
+      #        sysImportElementsForm.parmLabelModuleId(labelModuleId.text());
+      #
+      #        sysImportElementsForm.import();
+      #        element.close();
+      #    }
+      #    else
+      #    {
+      #        throw error(strFmt("@SYS109820", this.getFileName()));
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #importActionChanged
+      #void importActionChanged(SysAotImportAction _sysImportAction)
+      #{
+      #    switch (_sysImportAction)
+      #    {
+      #        case SysAotImportAction::Element:
+      #            this.enableAot(true);
+      #            this.enableLabel(false);
+      #            break;
+      #        case SysAotImportAction::ElementAndLabel:
+      #            this.enableAot(true);
+      #            this.enableLabel(true);
+      #            break;
+      #        case SysAotImportAction::Label:
+      #            this.enableAot(false);
+      #            this.enableLabel(true);
+      #            break;
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #void init()
+      #{
+      #    super();
+      #
+      #    sysImportElementsForm = new SysImportElementsForm();
+      #
+      #    imageListAot          = new ImageListAppl_Aot();
+      #    imageListState        = new ImageListAppl_checkbox();
+      #
+      #    aotTree.setImagelist(imageListAot.imageList());
+      #    aotTree.setStateImagelist(imageListState.imageList());
+      #
+      #    languageTree.setStateImagelist(imageListState.imageList());
+      #
+      #    sysVersionControlParameters = SysVersionControlParameters::find();
+      #}
+    ENDSOURCE
+    SOURCE #initParmDefault
+      #/*MAN
+      #This method is called when no SysLastValue record can be found in xSysLastValue.GetLast()
+      #*/
+      #void initParmDefault()
+      #{
+      #
+      #}
+    ENDSOURCE
+    SOURCE #lastValueDataAreaId
+      #dataAreaId lastValueDataAreaId()
+      #{
+      #    return curext();
+      #}
+    ENDSOURCE
+    SOURCE #lastValueDesignName
+      #private identifierName lastValueDesignName()
+      #{
+      #    return '';
+      #}
+    ENDSOURCE
+    SOURCE #lastValueElementName
+      #private identifierName lastValueElementName()
+      #{
+      #    return 'ImpExpLastFiles';
+      #
+      #}
+    ENDSOURCE
+    SOURCE #lastValueType
+      #private UtilElementType lastValueType()
+      #{
+      #    return UtilElementType::Form;
+      #}
+    ENDSOURCE
+    SOURCE #lastValueUserId
+      #private userId lastValueUserId()
+      #{
+      #    return curUserId();
+      #}
+    ENDSOURCE
+    SOURCE #mouseClick
+      #void mouseClick(FormTreeControl _formTreeControl, FormTreeItem _formTreeItem)
+      #{
+      #    ;
+      #    if (_formTreeItem)
+      #    {
+      #        SysFormTreeControl::changeStateImage_CheckBox(_formTreeControl, _formTreeItem.idx());
+      #        sysImportElementsForm.updateTmpImportAot(_formTreeItem.data(), (_formTreeItem.stateImage() != imageListState.image(#ImageCheckAll)));
+      #        tmpImportAot.setTmpData(sysImportElementsForm.getTmpImportAot());
+      #        tmpImportLabel_ds.executeQuery();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #newFile
+      #public void newFile()
+      #{
+      #    Map             languageMap = new Map(Types::String, Types::String);
+      #    Map             statusMap   = new Map(Types::String, Types::Enum);
+      #    SetIterator     setIterator;
+      #    Filename        filenameSelected = this.getFileName();
+      #    ;
+      #    this.lock();
+      #    examinedFile = false;
+      #
+      #    this.updateBox(filenameSelected);
+      #    if (tabGrp.enableChilds())
+      #    {
+      #        try
+      #        {
+      #            sysImportElementsForm.newFile(this.getFileName());
+      #            sysImportElementsForm.buildTree(aotTree);
+      #
+      #            setIterator = new SetIterator(Set::create(sysImportElementsForm.getLanguagePack()));
+      #            setIterator.begin();
+      #            while (setIterator.more())
+      #            {
+      #                languageMap.insert(LanguageTable::languageId2Description(setIterator.value()), setIterator.value());
+      #                statusMap.insert(setIterator.value(), true);
+      #                setIterator.next();
+      #            }
+      #            LanguageTable::buildSelectLanguageTree(languageTree, statusMap, languageMap);
+      #
+      #            tmpImportAot.setTmpData(sysImportElementsForm.getTmpImportAot());
+      #            tmpImportAotLabel.setTmpData(sysImportElementsForm.getTmpImportAotLabel());
+      #            tmpImportLabel.setTmpData(sysImportElementsForm.getTmpImportLabel());
+      #            tmpImportLabel_ds.executeQuery();
+      #            examinedFile = true;
+      #        }
+      #        catch
+      #        {
+      #            aotTree.deleteAll();
+      #        }
+      #    }
+      #
+      #    import.enabled(true);
+      #    called = false;
+      #    this.unLock();
+      #}
+    ENDSOURCE
+    SOURCE #pack
+      #public container pack()
+      #{
+      #
+      #    return [#CurrentVersion,#CurrentList];
+      #
+      #}
+    ENDSOURCE
+    SOURCE #run
+      #void run()
+      #{
+      #    ;
+      #    xSysLastValue::getLast(element);
+      #
+      #    labelModuleId.text(sysImportElementsForm.getDefaultLabelModuleId());
+      #    element.updateBox('');
+      #    this.importActionChanged(importActionRbtn.selection());
+      #
+      #    super();
+      #
+      #    element.enableLabel(false);
+      #    fileName.setFocus();
+      #}
+    ENDSOURCE
+    SOURCE #selectLanguage
+      #void selectLanguage(FormTreeControl _formTreeControl, FormTreeItem _formTreeItem)
+      #{
+      #    ;
+      #    if (_formTreeItem)
+      #    {
+      #        SysFormTreeControl::changeStateImage_CheckBox(_formTreeControl, _formTreeItem.idx());
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #setProject
+      #public void setProject(Name _projectName)
+      #{
+      #    this.design().caption(this.design().caption() + ' - ' + _projectName);
+      #
+      #}
+    ENDSOURCE
+    SOURCE #unpack
+      #public boolean unpack(container packedClass)
+      #{
+      #
+      #    Integer     version     = conPeek(packedClass,1);
+      #
+      #    switch (version)
+      #    {
+      #        case #CurrentVersion :
+      #            [version,#CurrentList] = packedClass;
+      #            if (!WinAPI::showMruAllowed())
+      #            {
+      #                #CurrentList = conNull();
+      #            }
+      #            break;
+      #        default :
+      #            return false;
+      #    }
+      #
+      #    return true;
+      #
+      #}
+    ENDSOURCE
+    SOURCE #updateBox
+      #void updateBox(Filename file, boolean updateBox = true)
+      #{
+      #    int         i;
+      #    boolean     showMruAllowed;
+      #    int         selection;
+      #
+      #    if (WinAPI::showMruAllowed())
+      #    {
+      #        showMruAllowed = true;
+      #
+      #        while (conFind(lastFiles, file))
+      #        {
+      #            lastFiles = conDel(lastFiles, conFind(lastFiles, file), 1);
+      #        }
+      #
+      #        if (file)
+      #        {
+      #            while (conLen(lastFiles) >= #tempFiles)
+      #            {
+      #                lastFiles = conDel(lastFiles, #tempFiles, 1);
+      #            }
+      #
+      #            lastFiles = conIns(lastFiles, 1, file);
+      #        }
+      #    }
+      #    else
+      #    {
+      #        lastFiles = conNull();
+      #        lastFiles = conIns(lastFiles, 1, file);
+      #    }
+      #
+      #
+      #    if (updateBox)
+      #    {
+      #        fileName.clear();
+      #        filename.selection(0);
+      #
+      #        if (showMruAllowed)
+      #        {
+      #            fileName.add('');
+      #
+      #            if (file)
+      #            {
+      #                selection = 1;
+      #            }
+      #            else
+      #            {
+      #                selection = 0;
+      #            }
+      #        }
+      #        else
+      #        {
+      #            selection = 0;
+      #        }
+      #
+      #        for (i = showMruAllowed ? 1 : 0; i <= conLen(lastFiles); i++)
+      #        {
+      #            if (conPeek(lastFiles, i))
+      #            {
+      #                fileName.add(conPeek(lastFiles, i));
+      #            }
+      #        }
+      #        fileName.setDropSize(conLen(lastFiles) + (showMruAllowed ? 1 : 0));
+      #        fileName.selection(selection);
+      #    }
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #TmpImportLabel
+          Table               #TmpLabelImport
+          Index               #LabelIdx
+          AllowCreate         #No
+          AllowDelete         #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+          DATAFIELD SysImportLabelError
+            PROPERTIES
+              AllowEdit           #No
+              Skip                #Yes
+            ENDPROPERTIES
+            
+            METHODS
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD LabelId
+            PROPERTIES
+              AllowEdit           #No
+              Skip                #Yes
+            ENDPROPERTIES
+            
+            METHODS
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD SysImportLabelAction
+            PROPERTIES
+            ENDPROPERTIES
+            
+            METHODS
+              SOURCE #modified
+                #public void modified()
+                #{
+                #    element.setTimeOut(identifierStr(buildHtml), 100, true);
+                #    replaceWithLabel.allowEdit(tmpImportLabel.SysImportLabelAction == SysAotImportLabelAction::UseExistingLabel);    super();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #active
+          #public int active()
+          #{
+          #    int ret;
+          #
+          #    ret = super();
+          #
+          #    element.setTimeOut(identifierStr(buildHtml), 100, true);
+          #    replaceWithLabel.allowEdit(tmpImportLabel.SysImportLabelAction == SysAotImportLabelAction::UseExistingLabel);
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #public void init()
+          #{
+          #    super();
+          #
+          #    replaceWithLabel = tmpImportLabel_ds.object(fieldNum(TmpLabelImport, ReplaceWithLabel));
+          #
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #TmpImportAotLabel
+          Table               #TmpAotLabelImport
+          Index               #PathLabelIdx
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          JoinSource          #TmpImportLabel
+          LinkType            #ExistJoin
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #TmpImportAot
+          Table               #TmpAotImport
+          Index               #PathIdx
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          JoinSource          #TmpImportAotLabel
+          LinkType            #ExistJoin
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #init
+          #public void init()
+          #{
+          #    super();
+          #    importRange = this.query().dataSourceTable(tableNum(TmpAotImport)).addRange(fieldNum(TmpAotImport, Import));
+          #    importRange.status(RangeStatus::Hidden);
+          #    importRange.value(enum2str(true));
+          #
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+    TmpImportAotLabel TmpImportLabel
+    TmpImportAot TmpImportAotLabel
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #@SYS1052
+      WindowType          #Workspace
+      SaveSize            #No
+      HideToolbar         #Yes
+      SetCompany          #No
+      BackgroundColor     #Window background
+      TopMargin           #0
+      BottomMargin        #0
+      LeftMargin          #0
+      RightMargin         #0
+      ViewEditMode        #Edit
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #AOTButtonGroup
+          ElementPosition     #1610612734
+          HierarchyParent     #AotTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ButtonGroup
+          Left                #Auto (left)
+          ElementPosition     #1431655764
+          HierarchyParent     #DialogCommit
+          Style               #DialogCommitContainer
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #LabelIdGrid
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1073741823
+          HierarchyParent     #LabelsTab
+          ShowRowLabels       #No
+          DataSource          #TmpImportLabel
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #DialogCommit
+          ElementPosition     #1431655764
+          Style               #DialogCommit
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #ImportGrp
+          Height              #Column height
+          ElementPosition     #1073741823
+          HierarchyParent     #TopSelectGrp
+          FrameType           #Edged 3D
+          Caption             #@SYS1052
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #LabelActionGrp
+          Width               #Column width
+          ElementPosition     #1610612734
+          HierarchyParent     #LabelDetailTab
+          Caption             #@SYS6661
+          Columns             #2
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #LabelFileGrp
+          Width               #Column width
+          ElementPosition     #1073741823
+          HierarchyParent     #LabelDetailTab
+          Caption             #@SYS25058
+          Columns             #2
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #LabelTextGrp
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1073741823
+          HierarchyParent     #LabelTextMainGrp
+          FrameType           #Sunken 3D
+          TopMargin           #2
+          BottomMargin        #2
+          LeftMargin          #2
+          RightMargin         #2
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #LabelTextMainGrp
+          AutoDeclaration     #Yes
+          AllowEdit           #No
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1879048190
+          HierarchyParent     #LabelDetailTab
+          Caption             #@SYS8811
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #MainGrp
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #715827882
+          Style               #DialogContent
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #OptionGrp
+          Width               #Column width
+          ElementPosition     #1431655764
+          HierarchyParent     #OptionMainGrp
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #OptionMainGrp
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1610612734
+          HierarchyParent     #TopSelectGrp
+          FrameType           #Edged 3D
+          Caption             #@SYS22622
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #TabGrp
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          HelpText            #@SYS69908
+          ElementPosition     #1610612734
+          HierarchyParent     #MainGrp
+          FrameType           #Edged 3D Line
+          Caption             #@SYS60132
+          FrameOptionButton   #Check
+          OptionValue         #0
+          HideIfEmpty         #No
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #public void clicked()
+            #{
+            #    super();
+            #
+            #    element.lock();
+            #    if (this.enableChilds())
+            #    {
+            #        tabGrp.frameType(FormFrameType::Edged3D);
+            #
+            #        if (!examinedFile)
+            #        {
+            #            element.newFile();
+            #        }
+            #    }
+            #    else
+            #    {
+            #        tabGrp.frameType(FormFrameType::Edged3DLine);
+            #    }
+            #    tab.visible(this.enableChilds());
+            #    html.prefColumnSize(0,100);
+            #    element.importActionChanged(importActionRbtn.selection());
+            #    element.resetSize();
+            #    element.arrange();
+            #    element.unLock();
+            #
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #TopGrp
+          Width               #Column width
+          ElementPosition     #1073741823
+          HierarchyParent     #MainGrp
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #TopMainGrp
+          Width               #Column width
+          ElementPosition     #1073741823
+          HierarchyParent     #TopGrp
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #TopSelectGrp
+          Width               #Column width
+          ElementPosition     #1610612734
+          HierarchyParent     #TopGrp
+          FrameType           #None
+          Columns             #2
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TAB
+        PROPERTIES
+          Name                #Tab
+          AutoDeclaration     #Yes
+          Visible             #No
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #TabGrp
+          Tabs                #4
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #AotTab
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1073741823
+          HierarchyParent     #Tab
+          Caption             #@SYS69909
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #LabelDetailTab
+          AutoDeclaration     #Yes
+          AlignControl        #Yes
+          ElementPosition     #2013265918
+          HierarchyParent     #Tab
+          Caption             #@SYS69912
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #LabelLanguageTab
+          AutoDeclaration     #Yes
+          AlignControl        #Yes
+          ElementPosition     #1610612734
+          HierarchyParent     #Tab
+          Caption             #@SYS15819
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #LabelsTab
+          AutoDeclaration     #Yes
+          AlignControl        #Yes
+          ElementPosition     #1879048190
+          HierarchyParent     #Tab
+          Caption             #@SYS13322
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #Browse
+          Left                #Right edge
+          HelpText            #@SYS74496
+          ElementPosition     #1610612734
+          HierarchyParent     #TopMainGrp
+          Text                #@SYS28927
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    Filename strFileName;
+            #
+            #    super();
+            #
+            #    strFileName = WinAPI::getOpenFileName(element.hWnd(),
+            #                                          element.filenameLookupFilter(),
+            #                                          element.filenameLookupInitialPath(),
+            #                                          element.filenameLookupTitle(),
+            #                                          '',
+            #                                          element.filenameLookupFileName());
+            #
+            #    if (strFileName
+            #     && strFileName != element.getFileName())
+            #    {
+            #        element.updateBox(strFileName);
+            #        fileName.modified();
+            #    }
+            #
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #CompareButton
+          AutoDeclaration     #Yes
+          Enabled             #No
+          HelpText            #@SYS121742
+          ElementPosition     #1073741823
+          HierarchyParent     #AOTButtonGroup
+          Text                #@SYS4735
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    FormTreeItem treeitem = aotTree.getItem(aotTree.getFirstSelected());
+            #    TreeNodePath treeNodePath = treeitem.data();
+            #    SysTreenodeCompareContext context;
+            #    TreeNode treenodeInAot;
+            #    TreeNode treenodeInXpo;
+            #
+            #    super();
+            #
+            #    treenodeInAot = TreeNode::findNode(treeNodePath);
+            #    treenodeInXpo = sysImportElementsForm.extractTreenodeFromFile(treeNodePath);
+            #
+            #    if (!treenodeInXpo)
+            #    {
+            #        warning(strFmt("@SYS28152", element.getFileName()));
+            #    }
+            #
+            #    if (!treenodeInAot)
+            #    {
+            #        warning(strFmt("@SYS28152", treeNodePath));
+            #    }
+            #
+            #    if (treenodeInAot &&
+            #        treenodeInXpo)
+            #    {
+            #        context = SysTreenodeCompareContext::newSysTreeNode(
+            #            SysTreeNode::newTreeNode(treenodeInAot),
+            #            SysTreeNodeVirtualXPO::newTreeNode(treenodeInXpo));
+            #
+            #        SysCompare::startCompareOfContextProvider(context);
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #WIK_CheckOutButton
+          AutoDeclaration     #Yes
+          Enabled             #No
+          ElementPosition     #1610612734
+          HierarchyParent     #AOTButtonGroup
+          Text                #@SYS85679
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    FormTreeItem            treeitem = aotTree.getItem(aotTree.getFirstSelected());
+            #    TreeNodePath            treeNodePath = treeitem.data();
+            #    SysVersionControllable  vcs;
+            #
+            #    super();
+            #
+            #    vcs = SysTreeNode::newTreeNodePath(treeNodePath);
+            #
+            #    if (!vcs)
+            #    {
+            #        warning(strFmt("@SYS28152", treeNodePath));
+            #    }
+            #    else if (VersionControl.parmSysVersionControlSystem().allowCheckOut(vcs) == NoYes::Yes)
+            #    {
+            #        VersionControl.parmSysVersionControlSystem().commandCheckOut(vcs);
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #DeleteSubNodes
+          AutoDeclaration     #Yes
+          AllowEdit           #No
+          Skip                #Yes
+          HelpText            #@SYS55630
+          ElementPosition     #939524094
+          HierarchyParent     #OptionGrp
+          Value               #1
+          Label               #@SYS55532
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #toolTip
+            #str toolTip()
+            #{
+            #    str ret;
+            #
+            #    ret = "@SYS55630";
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #TableRecovery
+          AutoDeclaration     #Yes
+          HelpText            #@SYS75724
+          ElementPosition     #1409286141
+          HierarchyParent     #OptionGrp
+          Label               #@SYS75723
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMBOBOX
+        PROPERTIES
+          Name                #FileName
+          AutoDeclaration     #Yes
+          Width               #Column width
+          AlignControl        #No
+          HelpText            #@SYS21196
+          ElementPosition     #1073741823
+          HierarchyParent     #TopMainGrp
+          Label               #@SYS16423
+          AppendNew           #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #modified
+            #public boolean modified()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #
+            #    if (!called)
+            #    {
+            #        if (tabGrp.enableChilds())
+            #        {
+            #            //
+            #            // Wait for tree control to by populated
+            #            //
+            #
+            #            import.enabled(false);
+            #            element.setTimeOut(identifierStr(newFile), 500, true);
+            #            called = true;
+            #        }
+            #        else
+            #        {
+            #            element.newFile();
+            #        }
+            #    }
+            #
+            #    element.redraw();
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMBOBOX
+        PROPERTIES
+          Name                #SysLabelImportAction
+          ElementPosition     #1610612734
+          HierarchyParent     #LabelIdGrid
+          DataSource          #TmpImportLabel
+          DataField           #SysImportLabelAction
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMBOBOX
+        PROPERTIES
+          Name                #TmpImportLabel_SysLabelImportAction
+          ElementPosition     #1073741823
+          HierarchyParent     #LabelActionGrp
+          DataSource          #TmpImportLabel
+          DataField           #SysImportLabelAction
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMBOBOX
+        PROPERTIES
+          Name                #TmpImportLabel_SysLabelImportError
+          Width               #Column width
+          ElementPosition     #1610612734
+          HierarchyParent     #LabelsTab
+          DataSource          #TmpImportLabel
+          DataField           #SysImportLabelError
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMBOBOX
+        PROPERTIES
+          Name                #TmpImportLabel_SysLabelImportError2
+          Width               #Column width
+          ElementPosition     #1610612734
+          HierarchyParent     #LabelFileGrp
+          DataSource          #TmpImportLabel
+          DataField           #SysImportLabelError
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #Cancel
+          ElementPosition     #1610612734
+          HierarchyParent     #ButtonGroup
+          Command             #264
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #Import
+          AutoDeclaration     #Yes
+          ElementPosition     #1073741822
+          HierarchyParent     #ButtonGroup
+          DefaultButton       #Yes
+          Command             #263
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    element.import();
+            #    if (tableRecovery.value())
+            #    {
+            #        new SqlSyncPending().databaseTouched(true); // Force full synchronization.
+            #    }
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL HTML
+        PROPERTIES
+          Name                #HTML
+          Width               #Column width
+          Height              #Column height
+          Skip                #Yes
+          ElementPosition     #1073741823
+          HierarchyParent     #LabelTextGrp
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+        BINARY 251
+          3C 21 44 4F 43 54 59 50 45 20 48 54 4D 4C 20 50 55 42 4C 49 43 20 22 2D 2F 2F 57 33 43 2F 2F 44
+          54 44 20 48 54 4D 4C 20 34 2E 30 20 54 72 61 6E 73 69 74 69 6F 6E 61 6C 2F 2F 45 4E 22 3E 0D 0A
+          3C 48 54 4D 4C 3E 3C 48 45 41 44 3E 0D 0A 3C 4D 45 54 41 20 68 74 74 70 2D 65 71 75 69 76 3D 43
+          6F 6E 74 65 6E 74 2D 54 79 70 65 20 63 6F 6E 74 65 6E 74 3D 22 74 65 78 74 2F 68 74 6D 6C 3B 20
+          63 68 61 72 73 65 74 3D 77 69 6E 64 6F 77 73 2D 31 32 35 32 22 3E 0D 0A 3C 4D 45 54 41 20 63 6F
+          6E 74 65 6E 74 3D 22 4D 53 48 54 4D 4C 20 36 2E 30 30 2E 32 37 31 33 2E 31 31 30 30 22 20 6E 61
+          6D 65 3D 47 45 4E 45 52 41 54 4F 52 3E 3C 2F 48 45 41 44 3E 0D 0A 3C 42 4F 44 59 3E 0D 0A 3C 50
+          3E 26 6E 62 73 70 3B 3C 2F 50 3E 3C 2F 42 4F 44 59 3E 3C 2F 48 54 4D 4C 3E 0D 0A
+        ENDBINARY
+        BINARY 1
+          00
+        ENDBINARY
+      ENDCONTROL 
+      
+      CONTROL RADIOBUTTON
+        PROPERTIES
+          Name                #ImportActionRbtn
+          AutoDeclaration     #Yes
+          ElementPosition     #1431655764
+          HierarchyParent     #ImportGrp
+          EnumType            #SysAotImportAction
+          Caption             #@SYS1052
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #modified
+            #public boolean modified()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #    element.lock();
+            #    element.importActionChanged(this.selection());
+            #    element.unLock();
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #DetailReplaceWithLabel
+          ElementPosition     #1610612734
+          HierarchyParent     #LabelActionGrp
+          LookupButton        #Always
+          DataSource          #TmpImportLabel
+          DataField           #ReplaceWithLabel
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #LabelId
+          ElementPosition     #1073741823
+          HierarchyParent     #LabelIdGrid
+          DataSource          #TmpImportLabel
+          DataField           #LabelId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #LabelModuleId
+          AutoDeclaration     #Yes
+          HelpText            #@SYS69907
+          ElementPosition     #1879048190
+          HierarchyParent     #OptionGrp
+          LookupButton        #Always
+          Label               #@SYS69913
+          ExtendedDataType    
+            ARRAY 
+              #LabelModuleId
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #lookup
+            #public void lookup()
+            #{
+            #    ;
+            #    SysLabelEdit::moduleIdLookup(this);
+            #}
+          ENDSOURCE
+          SOURCE #validate
+            #public boolean validate()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #
+            #    if (ret)
+            #    {
+            #        ret = SysLabelEdit::validateModuleId(this.text());
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #TabReplaceWithLabel
+          ElementPosition     #1879048190
+          HierarchyParent     #LabelIdGrid
+          LookupButton        #Always
+          DataSource          #TmpImportLabel
+          DataField           #ReplaceWithLabel
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #TmpImportLabel_LabelId
+          ElementPosition     #1073741823
+          HierarchyParent     #LabelFileGrp
+          DataSource          #TmpImportLabel
+          DataField           #LabelId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TREE
+        PROPERTIES
+          Name                #AOTTree
+          Width               #Column width
+          Height              #Column height
+          HelpText            #@SYS69910
+          ElementPosition     #1073741823
+          HierarchyParent     #AotTab
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #copy
+            #public void copy()
+            #{
+            #    super();
+            #
+            #    sysImportElementsForm.copyTreeAsListToClipboard(this, this.getItem(this.getFirstSelected()));
+            #
+            #}
+          ENDSOURCE
+          SOURCE #expanding
+            #public boolean expanding(int _idx, FormTreeExpand _action, anytype _data)
+            #{
+            #    boolean ret;
+            #    ;
+            #    sysImportElementsForm.expandTree(this, this.getItem(_idx));
+            #    ret = super(_idx, _action, _data);
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+          SOURCE #mouseDblClick
+            #int mouseDblClick(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int             ret;
+            #    int             idx;
+            #    int             focus;
+            #    FormTreeItem    formTreeItem;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    [idx, focus] = this.hitTest(x, y);
+            #
+            #    if (focus & #FOCUS_FIELD && this.getItem(idx))
+            #    {
+            #        formTreeItem = this.getItem(idx);
+            #
+            #        element.mouseClick(this, formTreeItem);
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+          SOURCE #mouseDown
+            #int mouseDown(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int             ret;
+            #    int             focus;
+            #    TreeItemIdx     idx;
+            #    FormTreeItem    formTreeItem;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    [idx, focus] = this.hitTest(x, y);
+            #
+            #    if (focus & #FLCHT_TOLEFT && this.getItem(idx))
+            #    {
+            #        formTreeItem = this.getItem(idx);
+            #
+            #        element.mouseClick(this, formTreeItem);
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+          SOURCE #selectionChanged
+            #public void selectionChanged(FormTreeItem _oldItem, FormTreeItem _newItem, FormTreeSelect _how)
+            #{
+            #    super(_oldItem, _newItem, _how);
+            #
+            #    if (_newItem && _newItem.stateBold())
+            #    {
+            #        compareButton.enabled(true);
+            #        WIK_CheckOutButton.enabled(sysVersionControlParameters.vcsEnabled == EnableDisable::Enable);
+            #    }
+            #    else
+            #    {
+            #        compareButton.enabled(false);
+            #        WIK_CheckOutButton.enabled(false);
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TREE
+        PROPERTIES
+          Name                #LanguageTree
+          Width               #Column width
+          Height              #Column height
+          HelpText            #@SYS69911
+          ElementPosition     #1073741823
+          HierarchyParent     #LabelLanguageTab
+          LinesAtRoot         #No
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #expanding
+            #boolean expanding(int idx, FormTreeExpand action, anytype data)
+            #{
+            #    boolean ret;
+            #    ;
+            #    if (action == FormTreeExpand::Expand)
+            #    {
+            #        ret = super(idx, action, data);
+            #    }
+            #    return ret;
+            #}
+          ENDSOURCE
+          SOURCE #mouseDblClick
+            #int mouseDblClick(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int             ret;
+            #    int             idx;
+            #    int             focus;
+            #    FormTreeItem    formTreeItem;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    [idx, focus] = this.hitTest(x, y);
+            #
+            #    if (focus & #FOCUS_FIELD && this.getItem(idx))
+            #    {
+            #        formTreeItem = this.getItem(idx);
+            #
+            #        element.mouseClick(this, formTreeItem);
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+          SOURCE #mouseDown
+            #int mouseDown(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int             ret;
+            #    int             focus;
+            #    TreeItemIdx     idx;
+            #    FormTreeItem    formTreeItem;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    [idx, focus] = this.hitTest(x, y);
+            #
+            #    if (focus & #FLCHT_TOLEFT && this.getItem(idx))
+            #    {
+            #        formTreeItem = this.getItem(idx);
+            #
+            #        element.selectLanguage(this, formTreeItem);
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #SysVersionControlCheckedOut
+  PROPERTIES
+    Name                #SysVersionControlCheckedOut
+    Origin              #{004BC647-42A1-48E5-A3FC-4DFF5DFDB09C}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    SysVersionControlTmpItem item;
+      #}
+    ENDSOURCE
+    SOURCE #changeList
+      #public SysVersionControlChangeListId changeList()
+      #{
+      #    return changeListId.text();
+      #}
+    ENDSOURCE
+    SOURCE #fetchData
+      #void fetchData(boolean _firsttime = false, str _changeList = "" )
+      #{
+      #    SysVersionControlSystem sysVersionControlSystem = versioncontrol.parmSysVersionControlSystem();
+      #    SysVersionControlChangeLists sysVersionControlChangeLists = sysVersionControlSystem as SysVersionControlChangeLists;
+      #
+      #    if(sysVersionControlChangeLists && _changeList)
+      #    {
+      #        item = sysVersionControlChangeLists.getPendingChangeListContents(_changeList);
+      #    }
+      #    else if (sysVersionControlSystem)
+      #    {
+      #        item = sysVersionControlSystem.getCheckedOutItems();
+      #    }
+      #    else
+      #    {
+      #        item = null;
+      #    }
+      #
+      #    // BP deviation documented
+      #    sysVersionControlTmpItem.setTmp();
+      #    sysVersionControlTmpItem.checkRecord(false);
+      #    sysVersionControlTmpItem.setTmpData(item);
+      #
+      #    if (!_firsttime)
+      #    {
+      #        sysVersionControlTmpItem_ds.research();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #    SysVersionControlSystem sysVersionControlSystem = versioncontrol.parmSysVersionControlSystem();
+      #
+      #    if (SysVersionControlParameters::find().vcsEnabled == EnableDisable::Disable)
+      #    {
+      #        throw error("@SYS135983" + ' ' + strfmt("@SYS120745", "@SYS85914"), '', SysInfoAction_Formrun::newFormname(formstr(SysVersionControlParametersDev)));
+      #    }
+      #
+      #    super();
+      #
+      #    aotImage.imageList(new ImageListAppl_Aot().imageList());
+      #
+      #    if (sysVersionControlSystem)
+      #    {
+      #        if (!sysVersionControlSystem.supportReviews())
+      #        {
+      #            sysVersionControlReview.visible(false);
+      #        }
+      #        if (!sysVersionControlSystem.supportPendingChangeLists())
+      #        {
+      #            changeListId.visible(false);
+      #        }
+      #        if (!sysVersionControlSystem.supportChangeVersion())
+      #        {
+      #            overview_Version.visible(false);
+      #        }
+      #        if (!sysVersionControlSystem.supportImportOfPendingElements())
+      #        {
+      #            importList.visible(false);
+      #        }
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #run
+      #public void run()
+      #{
+      #    this.fetchData();
+      #    super();
+      #    sysVersionControlCheckIn.enabled(sysVersionControlTmpItem != null);
+      #    sysVersionControlUndoCheckOut.enabled(sysVersionControlTmpItem != null);
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #SysVersionControlTmpItem
+          Table               #SysVersionControlTmpItem
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #active
+          #public int active()
+          #{
+          #    int ret = super();
+          #
+          #    sysVersionControlCheckIn.enabled(sysVersionControlTmpItem != null);
+          #    sysVersionControlUndoCheckOut.enabled(sysVersionControlTmpItem != null);
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #public void init()
+          #{
+          #    super();
+          #    this.query().dataSourceTable(tablenum(SysVersionControlTmpItem)).addSortField(fieldnum(SysVersionControlTmpItem, vcsDate),SortOrder::Descending);
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #@SYS85738
+      TitleDatasource     #SysVersionControlTmpItem
+      WindowType          #Workspace
+      SetCompany          #No
+      ViewEditMode        #Edit
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ButtonGroup
+          ElementPosition     #1879048189
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ButtonGroup1
+          Left                #Auto (right)
+          ElementPosition     #1610612734
+          HierarchyParent     #OverviewTab
+          Columns             #2
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #4
+          ElementPosition     #1073741823
+          HierarchyParent     #OverviewTab
+          DataSource          #SysVersionControlTmpItem
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Identification
+          Width               #Column width
+          ElementPosition     #1073741823
+          HierarchyParent     #GeneralTab
+          DataSource          #SysVersionControlTmpItem
+          DataGroup           #Identification
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Overview
+          ElementPosition     #1610612734
+          HierarchyParent     #Grid
+          BackgroundColor     #Window background
+          DataSource          #SysVersionControlTmpItem
+          DataGroup           #ChangelistGrid
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUBUTTON
+        PROPERTIES
+          Name                #ImportList
+          AutoDeclaration     #Yes
+          HelpText            #@SYS99902
+          ElementPosition     #1610612734
+          HierarchyParent     #ButtonGroup1
+          Text                #@SYS54759
+          MultiSelect         #Yes
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TAB
+        PROPERTIES
+          Name                #Tab
+          Width               #Column width
+          Height              #Column height
+          HelpText            #@SYS35017
+          ElementPosition     #1610612733
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #GeneralTab
+          ElementPosition     #1610612734
+          HierarchyParent     #Tab
+          Caption             #@SYS2952
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #OverviewTab
+          VerticalSpacing     #0
+          ElementPosition     #1073741823
+          HierarchyParent     #Tab
+          Caption             #@SYS9039
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #ImportAll
+          HelpText            #@SYS99905
+          ElementPosition     #1073741823
+          HierarchyParent     #ImportList
+          Text                #@SYS99903
+          MultiSelect         #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    SysVersionControlSystem sysVersionControlSystem = versioncontrol.parmSysVersionControlSystem();
+            #    ;
+            #
+            #    if(sysVersionControlSystem)
+            #        sysVersionControlSystem.importLocalItems(sysVersionControlTmpItem);
+            #
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #ImportSelected
+          HelpText            #@SYS99906
+          ElementPosition     #1610612734
+          HierarchyParent     #ImportList
+          Text                #@SYS99904
+          MultiSelect         #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    SysVersionControlTmpItem selectedDSItem, selectedItems;
+            #    SysVersionControlSystem sysVersionControlSystem = versioncontrol.parmSysVersionControlSystem();
+            #
+            #    if (sysVersionControlSystem)
+            #    {
+            #        if (sysVersionControlTmpItem_DS.anyMarked())
+            #        {
+            #            selectedDSItem = sysVersionControlTmpItem_DS.getFirst(true);
+            #            while (selectedDSItem)
+            #            {
+            #                selectedItems.data(selectedDSItem);
+            #                selectedItems.insert();
+            #                selectedDSItem = sysVersionControlTmpItem_DS.getNext();
+            #            }
+            #        }
+            #        else
+            #        {
+            #            selectedItems.data(SysVersionControlTmpItem);
+            #            selectedItems.insert();
+            #        }
+            #        sysVersionControlSystem.importLocalItems(selectedItems);
+            #    }
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #Refresh
+          HelpText            #@SYS85922
+          ElementPosition     #1073741823
+          HierarchyParent     #ButtonGroup
+          Text                #@SYS29018
+          MultiSelect         #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    if(changeListId.visible())
+            #        element.fetchData(false,changeListId.valueStr());
+            #    else
+            #        element.fetchData();
+            #
+            #    sysVersionControlCheckIn.enabled(sysVersionControlTmpItem != null);
+            #    sysVersionControlUndoCheckOut.enabled(sysVersionControlTmpItem != null);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #Overview_Version
+          AutoDeclaration     #Yes
+          ElementPosition     #1610612734
+          HierarchyParent     #Overview
+          DataSource          #SysVersionControlTmpItem
+          DataField           #Version
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #WIK_SysTreeNodeOpenNewWindow
+          ElementPosition     #2080374782
+          HierarchyParent     #ButtonGroup
+          MenuItemType        #Action
+          MenuItemName        #SysTreeNodeOpenNewWindow
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    Args                        args    = new Args();
+            #    TreeNode                    tn;
+            #    ProjectNode                 pn;
+            #    SysContextMenuTreeNode      cm;
+            #    SysTreeNodeOpenNewWindow    sysTreeNodeOpenNewWindow;
+            #
+            #    if (subStr(SysVersionControlTmpItem.ItemPath, 1, 5) == @'\Proj')
+            #    {
+            #        switch (subStr(SysVersionControlTmpItem.ItemPath, 11, 3))
+            #        {
+            #            case 'Sha' :
+            #                pn = SysTreeNode::getSharedProject().AOTfindChild(
+            #                    subStr(SysVersionControlTmpItem.ItemPath, 18, strLen(SysVersionControlTmpItem.ItemPath)-17));
+            #                break;
+            #
+            #            case 'Pri' :
+            #                pn = SysTreeNode::getPrivateProject().AOTfindChild(
+            #                    subStr(SysVersionControlTmpItem.ItemPath, 19, strLen(SysVersionControlTmpItem.ItemPath)-18));
+            #                break;
+            #        }
+            #
+            #        if (pn)
+            #        {
+            #            pn.getRunNode();
+            #        }
+            #    }
+            #    else
+            #    {
+            #        tn = TreeNode::findNode(SysVersionControlTmpItem.ItemPath);
+            #        if (tn)
+            #        {
+            #            cm = new SysContextMenuTreeNode(tn);
+            #        }
+            #    }
+            #
+            #    if (cm)
+            #    {
+            #        args.parmObject(cm);
+            #        if (SysContextMenu::startedFrom(args))
+            #        {
+            #            sysTreeNodeOpenNewWindow = new SysTreeNodeOpenNewWindow();
+            #            sysTreeNodeOpenNewWindow.runsysContextMenu(args.parmObject());
+            #        }
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #SysVersionControlCheckIn
+          AutoDeclaration     #Yes
+          ElementPosition     #1610612734
+          HierarchyParent     #ButtonGroup
+          MultiSelect         #Yes
+          MenuItemName        #SysVersionControlCheckIn
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #SysVersionControlCreateProject
+          ElementPosition     #2013265918
+          HierarchyParent     #ButtonGroup
+          MenuItemType        #Action
+          MenuItemName        #SysVersionControlCreateProject
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #SysVersionControlReview
+          AutoDeclaration     #Yes
+          ElementPosition     #1879048190
+          HierarchyParent     #ButtonGroup
+          MultiSelect         #Yes
+          MenuItemName        #SysVersionControlReview
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #SysVersionControlUndoCheckOut
+          AutoDeclaration     #Yes
+          Left                #Auto (right)
+          ElementPosition     #1073741823
+          HierarchyParent     #ButtonGroup1
+          MenuItemType        #Action
+          MenuItemName        #SysVersionControlUndoCheckOut
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #    element.fetchData();
+            #    sysVersionControlCheckIn.enabled(sysVersionControlTmpItem != null);
+            #    sysVersionControlUndoCheckOut.enabled(sysVersionControlTmpItem != null);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #ChangeListId
+          AutoDeclaration     #Yes
+          ElementPosition     #1073741822
+          LookupButton        #Always
+          ExtendedDataType    
+            ARRAY 
+              #SysVersionControlChangeListId
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #lookup
+            #public void lookup()
+            #{
+            #    FormRun formRun = ClassFactory::formRunClassOnClient(new Args(formstr(SysVersionControlPendingChangeList)));
+            #
+            #    formRun.init();
+            #    this.performFormLookup(formRun);
+            #}
+          ENDSOURCE
+          SOURCE #modified
+            #public boolean modified()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #
+            #    element.fetchData(false, changeListId.valueStr());
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #Identification_Filename
+          Width               #Column width
+          ElementPosition     #1610612734
+          HierarchyParent     #Identification
+          DataSource          #SysVersionControlTmpItem
+          DataField           #Filename
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #Identification_ItemPath
+          Width               #Column width
+          ElementPosition     #1073741823
+          HierarchyParent     #Identification
+          DataSource          #SysVersionControlTmpItem
+          DataField           #ItemPath
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL WINDOW
+        PROPERTIES
+          Name                #AOTImage
+          AutoDeclaration     #Yes
+          AllowEdit           #No
+          Width               #16
+          Height              #16
+          ElementPosition     #1073741823
+          HierarchyParent     #Grid
+          BackStyle           #Transparent
+          ShowLabel           #No
+          DataSource          #SysVersionControlTmpItem
+          DataField           #ImageRes
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #SysVersionControlCheckIn
+  PROPERTIES
+    Name                #SysVersionControlCheckIn
+    Origin              #{0B180000-0000-1000-6C98-A7ECEC045D6B}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    SysVersionControlTmpItem            item;
+      #    SysVersionControlTmpWorkItems       tmpWorkItems;
+      #    SysVersionControlAction             action;
+      #    SysVersionControlWorkItemProvider   workItemProvider;
+      #    SysFormSplitter_Y                   formSplitter;
+      #
+      #    // Controls whether or not the form should have modal behaviour
+      #    boolean                             setFormToModal;
+      #    boolean                             workItemsActivatedFirstTime;
+      #
+      #    SysVersionControlChangeListId       changeList;
+      #}
+    ENDSOURCE
+    SOURCE #addWorkItemById
+      #public void addWorkItemById(SysVersionControlWorkItemId idToAdd)
+      #{
+      #    SysVersionControlTmpWorkItems addedItem;
+      #
+      #    addedItem = workItemProvider.getItemById(idToAdd);
+      #
+      #    if (SysVersionControlTmpWorkItems::numberOfWorkItems(addedItem) == 0)
+      #    {
+      #        warning("@SYS341267");
+      #    }
+      #    else
+      #    {
+      #        select firstonly addedItem;
+      #
+      #        tmpWorkItems.id = addedItem.id;
+      #        tmpWorkItems.Title = addedItem.Title;
+      #        tmpWorkItems.State = addedItem.State;
+      #        tmpWorkItems.Type = addedItem.Type;
+      #
+      #        tmpWorkItems.insert();
+      #
+      #        sysVersionControlTmpWorkItems_ds.executeQuery();
+      #        sysVersionControlTmpWorkItems_ds.findRecord(tmpWorkItems);
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #close
+      #public void close()
+      #{
+      #    if (workItemProvider != null)
+      #    {
+      #        workItemProvider.flushCache();
+      #    }
+      #    super();
+      #}
+    ENDSOURCE
+    SOURCE #closeOk
+      #public void closeOk()
+      #{
+      #    SysVersionControlTmpItem localitem;
+      #    SysVersionControlReviews review;
+      #    boolean closeForm = true;
+      #;
+      #    //
+      #    // Remove deselected items from list
+      #    // and store them in local variable
+      #    //
+      #    while select item
+      #        where item.Selected == false
+      #    {
+      #        localitem.data(item);
+      #        localitem.insert();
+      #        item.delete();
+      #    }
+      #
+      #    try
+      #    {
+      #        switch (action)
+      #        {
+      #            case SysVersionControlAction::CheckIn:
+      #                if (gatedCheckin.value())
+      #                    versioncontrol.checkInChangelist(item, '', changeList, tmpWorkItems);
+      #                else
+      #                    versioncontrol.checkInChangelist(item, comment.valueStr(), changeList, tmpWorkItems);
+      #                break;
+      #
+      #            case SysVersionControlAction::Review:
+      #                review = versioncontrol.parmSysVersionControlSystem() as SysVersionControlReviews;
+      #                if (review)
+      #                    review.reviewChangeList(item, comment.valueStr(), filename.valueStr());
+      #                break;
+      #        }
+      #    }
+      #    catch
+      #    {
+      #        //
+      #        // If something failed, reinsert the deselected items,
+      #        // and keep the form running.
+      #        //
+      #
+      #        while select localitem
+      #        {
+      #            item.data(localitem);
+      #            item.insert();
+      #        }
+      #        closeForm = false;
+      #    }
+      #    if (closeForm)
+      #    {
+      #        super();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #fetchData
+      #void fetchData(boolean _firsttime = false)
+      #{
+      #    SysVersionControlSystem sysVersionControlSystem = versioncontrol.parmSysVersionControlSystem();
+      #    SysVersionControlChangeLists sysVersionControlChangeLists = sysVersionControlSystem as SysVersionControlChangeLists;
+      #
+      #    if(sysVersionControlChangeLists && changeList)
+      #    {
+      #        item = sysVersionControlChangeLists.getPendingChangeListContents(changeList);
+      #    }
+      #    else
+      #    {
+      #        item = versioncontrol.getCheckedOutItems();
+      #    }
+      #
+      #    if (element.args() &&
+      #        element.args().caller())
+      #    {
+      #        // By default select all items
+      #        this.setSelected(true);
+      #    }
+      #    else
+      #    {
+      #        // Started from AOT context menu - only select the items from the AOT
+      #        this.setSelectedAotElements();
+      #    }
+      #
+      #    // BP deviation documented
+      #    sysVersionControlTmpItem.setTmp();
+      #    sysVersionControlTmpItem.checkRecord(false);
+      #    sysVersionControlTmpItem.setTmpData(item);
+      #    if (!_firsttime)
+      #        sysVersionControlTmpItem_ds.executeQuery();
+      #}
+    ENDSOURCE
+    SOURCE #filenameLookupFileName
+      #str filenameLookupFileName()
+      #{
+      #    return '';
+      #}
+    ENDSOURCE
+    SOURCE #filenameLookupFilter
+      #FilenameFilter filenameLookupFilter()
+      #{
+      #    SysVersionControlReviews review =versioncontrol.parmSysVersionControlSystem() as SysVersionControlReviews;
+      #
+      #    if (review)
+      #        return review.reviewFilenameLookupFilter();
+      #    return conNull();
+      #}
+    ENDSOURCE
+    SOURCE #filenameLookupInitialPath
+      #str filenameLookupInitialPath()
+      #{
+      #    return '';
+      #}
+    ENDSOURCE
+    SOURCE #filenameLookupTitle
+      #str filenameLookupTitle()
+      #{
+      #    return "@SYS88311";
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #    SysVersionControlSystem vcs = versioncontrol.parmSysVersionControlSystem();
+      #    Object caller;
+      #
+      #    element.args().record(null);
+      #    super();
+      #    aotImage.imageList(new ImageListAppl_Aot().imageList());
+      #
+      #    this.initializeWorkItems(vcs);
+      #
+      #    if (element.args().parmEnumType() == enumnum(SysVersionControlAction))
+      #    {
+      #        action = element.args().parmEnum();
+      #
+      #        // If parm not empty, then the form should have modal behaviour
+      #        if (element.args().parm())
+      #        {
+      #            setFormToModal = str2enum(setFormToModal, element.args().parm());
+      #        }
+      #
+      #        switch (action)
+      #        {
+      #            case SysVersionControlAction::Review:
+      #                element.design().caption("@SYS60543");
+      #                filename.visible(true);
+      #                break;
+      #
+      #            default:
+      #                if (vcs && vcs.supportCheckInWizard())
+      #                {
+      #                    gatedCheckin.visible(true);
+      #                    //Check and disable the 'use checkin wizard' check box so checkins are forced through the checkin wizard.
+      #                    //Also disable the change description box because it should be disabled when using the checkin wizard.
+      #                    gatedCheckin.value(1);
+      #                    gatedCheckin.enabled(false);
+      #                    comment.visible(false);
+      #                }
+      #                break;
+      #        }
+      #
+      #        if (vcs && !vcs.supportChangeVersion())
+      #        {
+      #            overview_Version.visible(false);
+      #        }
+      #    }
+      #    else
+      #    {
+      #        throw error(Error::missingParameter(element));
+      #    }
+      #
+      #    caller = element.args().caller() as FormRun;
+      #    if (caller &&
+      #        formHasMethod(caller, identifierstr(changeList)))
+      #    {
+      #        changeList = caller.changeList();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #initializeWorkItems
+      #private void initializeWorkItems(SysVersionControlSystem vcs)
+      #{
+      #    workItemsActivatedFirstTime = false;
+      #    workItemProvider = vcs.workItemProvider();
+      #    if (workItemProvider == null)
+      #    {
+      #        workItems.visible(false);
+      #    }
+      #    else
+      #    {
+      #        workItemProvider.flushCache();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #run
+      #public void run()
+      #{
+      #    this.fetchData();
+      #
+      #    super();
+      #
+      #    if (setFormToModal)
+      #    {
+      #        element.wait(setFormToModal);
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #setSelected
+      #void setSelected(boolean _selected)
+      #{
+      #    while select forupdate item
+      #    {
+      #        item.Selected = _selected;
+      #        item.update();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #setSelectedAotElements
+      #void setSelectedAotElements()
+      #{
+      #    LastAotSelection lastAotSelection = new LastAotSelection();
+      #    TreeNode treeNode;
+      #
+      #    treeNode = lastAotSelection.first();
+      #
+      #    element.setSelected(treeNode == null);
+      #
+      #    while (treeNode)
+      #    {
+      #        select forupdate item
+      #            where item.ItemPath == treeNode.treeNodePath();
+      #
+      #        if (item)
+      #        {
+      #            item.Selected = true;
+      #            item.update();
+      #        }
+      #
+      #        treeNode = lastAotSelection.next();
+      #    }
+      #
+      #    sysVersionControlTmpItem_ds.executeQuery();
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #SysVersionControlTmpItem
+          Table               #SysVersionControlTmpItem
+          AllowCreate         #No
+          AllowDelete         #No
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #validateDelete
+          #public boolean validateDelete()
+          #{
+          #    //
+          #    // Do not display warning dialog, as this is a temporary form
+          #    //
+          #    return true;
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #public void init()
+          #{
+          #    super();
+          #    this.query().dataSourceTable(tableNum(SysVersionControlTmpItem)).addSortField(fieldNum(SysVersionControlTmpItem, vcsDate),SortOrder::Descending);
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #SysVersionControlTmpWorkItems
+          Table               #SysVersionControlTmpWorkItems
+          AllowCreate         #No
+          AllowDelete         #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #init
+          #public void init()
+          #{
+          #    super();
+          #    this.queryBuildDataSource().addSortField(fieldNum(SysVersionControlTmpWorkItems, ID), SortOrder::Descending);
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Width               #Column width
+      Height              #Column height
+      Caption             #@SYS85680
+      WindowType          #Workspace
+      SetCompany          #No
+      BackgroundColor     #Window background
+      TopMargin           #0
+      BottomMargin        #0
+      LeftMargin          #0
+      RightMargin         #0
+      ViewEditMode        #Edit
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ButtonGroup
+          ElementPosition     #1431655764
+          HierarchyParent     #DialogCommit
+          Style               #DialogCommitContainer
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #SelectGrp
+          ElementPosition     #1610612733
+          HierarchyParent     #ButtomGroup
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1073741822
+          HierarchyParent     #ButtomGroup
+          ShowRowLabels       #No
+          DataSource          #SysVersionControlTmpItem
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #WorkItemsList
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1610612733
+          HierarchyParent     #WorkItems
+          ShowRowLabels       #No
+          DataSource          #SysVersionControlTmpWorkItems
+          DataGroup           #CheckInActionData
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #ButtomGroup
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1610612733
+          HierarchyParent     #ModelElements
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #CommentGroup
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1288490187
+          HierarchyParent     #TopGroup
+          Caption             #@SYS7576
+          AlignChild          #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #DialogCommit
+          ElementPosition     #1431655764
+          Style               #DialogCommit
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #DialogContent
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #715827882
+          Style               #DialogContent
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #ItemQueryGroup
+          ElementPosition     #1073741822
+          HierarchyParent     #WorkItems
+          ArrangeMethod       #Horizontal, flush right
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Overview
+          AllowEdit           #No
+          ElementPosition     #1717986916
+          HierarchyParent     #Grid
+          BackgroundColor     #Window background
+          DataSource          #SysVersionControlTmpItem
+          DataGroup           #ChangelistGrid
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #TopGroup
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1073741822
+          HierarchyParent     #ModelElements
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TAB
+        PROPERTIES
+          Name                #MainTab
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #DialogContent
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #ModelElements
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1073741822
+          HierarchyParent     #MainTab
+          Caption             #@SYS341269
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #WorkItems
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1610612733
+          HierarchyParent     #MainTab
+          Caption             #@SYS341266
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #fetchWorkItemsData
+            #private void fetchWorkItemsData()
+            #{
+            #    tmpWorkItems = workItemProvider.getItemsAssignedToMe(WIK_filterClosed.checked(), WIK_filterUserStory.checked());
+            #    //BP Deviation documented
+            #    sysVersionControlTmpWorkItems.setTmp();
+            #    sysVersionControlTmpWorkItems.checkRecord(false);
+            #    sysVersionControlTmpWorkItems.setTmpData(tmpWorkItems);
+            #    sysVersionControlTmpWorkItems_ds.executeQuery();
+            #}
+          ENDSOURCE
+          SOURCE #pageActivated
+            #public void pageActivated()
+            #{
+            #    super();
+            #
+            #    if (workItemsActivatedFirstTime == false)
+            #    {
+            #        this.fetchWorkItemsData();
+            #        workItemsActivatedFirstTime = true;
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #AddToList
+          HelpText            #@SYS341271
+          ElementPosition     #1610612734
+          HierarchyParent     #ItemQueryGroup
+          Text                #@SYS341270
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    SysVersionControlWorkItemId idToAdd;
+            #
+            #    super();
+            #
+            #    idToAdd = workItemIdToAdd.value();
+            #
+            #    if (tmpWorkItems.containsItemById(idToAdd))
+            #    {
+            #        warning("@SYS341268");
+            #    }
+            #    else
+            #    {
+            #        element.addWorkItemById(idToAdd);
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #SelectAll
+          HelpText            #@SYS111701
+          ElementPosition     #1073741822
+          HierarchyParent     #SelectGrp
+          Text                #@SYS11696
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    element.setSelected(true);
+            #    sysVersionControlTmpItem_ds.executeQuery();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #SelectNone
+          HelpText            #@SYS111702
+          ElementPosition     #1610612733
+          HierarchyParent     #SelectGrp
+          Text                #@SYS1369
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    element.setSelected(false);
+            #    sysVersionControlTmpItem_ds.executeQuery();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #GatedCheckIn
+          AutoDeclaration     #Yes
+          Visible             #No
+          HelpText            #@SYS90671
+          ElementPosition     #1717986916
+          HierarchyParent     #TopGroup
+          Label               #@SYS90670
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #modified
+            #public boolean modified()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #    comment.allowEdit(!this.value());
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #WIK_filterClosed
+          AutoDeclaration     #Yes
+          ElementPosition     #536870910
+          HierarchyParent     #ItemQueryGroup
+          Label               #@SYS14403
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #modified
+            #public boolean modified()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #
+            #    workItemsActivatedFirstTime = false;
+            #    WorkItems.pageActivated();
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #WIK_filterUserStory
+          AutoDeclaration     #Yes
+          ElementPosition     #805306366
+          HierarchyParent     #ItemQueryGroup
+          Label               #User story
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #modified
+            #public boolean modified()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #
+            #    workItemsActivatedFirstTime = false;
+            #    WorkItems.pageActivated();
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #SysVersionControlTmpItem_Selected
+          ElementPosition     #858993458
+          HierarchyParent     #Grid
+          BackgroundColor     #Window background
+          DataSource          #SysVersionControlTmpItem
+          DataField           #Selected
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #CommandCancel
+          ElementPosition     #1610612733
+          HierarchyParent     #ButtonGroup
+          Command             #264
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #CommandOk
+          ElementPosition     #1073741822
+          HierarchyParent     #ButtonGroup
+          DefaultButton       #Yes
+          Command             #263
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    if (!comment.valueStr() && !gatedCheckin.value())
+            #    {
+            #        throw error(strFmt("@SYS84753","@SYS85716"));
+            #    }
+            #
+            #    if (action == SysVersionControlAction::Review &&
+            #        !filename.valueStr())
+            #    {
+            #        throw error(strFmt("@SYS84753","@SYS53125"));
+            #    }
+            #
+            #    //
+            #    // Verify at least one file is selected
+            #    //
+            #    select count(RecId) from item
+            #        where item.Selected ==true;
+            #
+            #    if (item.RecId == 0)
+            #    {
+            #        throw error("@SYS111699");
+            #    }
+            #
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #Overview_Version
+          AutoDeclaration     #Yes
+          ElementPosition     #1288490187
+          HierarchyParent     #Overview
+          DataSource          #SysVersionControlTmpItem
+          DataField           #Version
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #WorkItemIdToAdd
+          AutoDeclaration     #Yes
+          ElementPosition     #1073741822
+          HierarchyParent     #ItemQueryGroup
+          ExtendedDataType    
+            ARRAY 
+              #SysVersionControlWorkItemId
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #WorkItemsList_ID
+          AllowEdit           #No
+          ElementPosition     #1073741823
+          HierarchyParent     #WorkItemsList
+          DataSource          #SysVersionControlTmpWorkItems
+          DataField           #ID
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #Comment
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #CommentGroup
+          DisplayHeight       #5
+          MultiLine           #Yes
+          ShowLabel           #No
+          Mandatory           #Yes
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #Filename
+          AutoDeclaration     #Yes
+          Visible             #No
+          Width               #Column width
+          ElementPosition     #858993458
+          HierarchyParent     #TopGroup
+          Mandatory           #Yes
+          ExtendedDataType    
+            ARRAY 
+              #FilenameSave
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WorkItemsList_State
+          AllowEdit           #No
+          ElementPosition     #1610612733
+          HierarchyParent     #WorkItemsList
+          DataSource          #SysVersionControlTmpWorkItems
+          DataField           #State
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WorkItemsList_Type
+          AllowEdit           #No
+          ElementPosition     #1879048188
+          HierarchyParent     #WorkItemsList
+          DataSource          #SysVersionControlTmpWorkItems
+          DataField           #Type
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL WINDOW
+        PROPERTIES
+          Name                #AOTImage
+          AutoDeclaration     #Yes
+          AllowEdit           #No
+          Width               #16
+          Height              #16
+          ElementPosition     #1288490187
+          HierarchyParent     #Grid
+          BackStyle           #Transparent
+          ShowLabel           #No
+          DataSource          #SysVersionControlTmpItem
+          DataField           #ImageRes
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: PRN
+
+; Microsoft Dynamics AX Project : WIK_VersionControl unloaded
+; --------------------------------------------------------------------------------
+  PROJECTVERSION 2
+  
+  PROJECT #WIK_VersionControl
+  SHARED
+  PROPERTIES
+    Name                #WIK_VersionControl
+    Origin              #{093EBED2-AC08-47DC-B34D-3AA7CD12DE3E}
+  ENDPROPERTIES
+  
+    PROJECTCLASS ProjectNode
+    BEGINNODE
+      FILETYPE 0
+      UTILTYPE 45
+      UTILOBJECTID 1020084
+      NODETYPE 329
+      NAME #SysVersionControlWorkItemProvider
+    ENDNODE
+    BEGINNODE
+      FILETYPE 0
+      UTILTYPE 45
+      UTILOBJECTID 1020085
+      NODETYPE 329
+      NAME #SysVersionControlWorkItemProviderTFS
+    ENDNODE
+    BEGINNODE
+      FILETYPE 0
+      UTILTYPE 11
+      UTILOBJECTID 0
+      NODETYPE 201
+      NAME #SysImportDialog
+    ENDNODE
+    BEGINNODE
+      FILETYPE 0
+      UTILTYPE 11
+      UTILOBJECTID 0
+      NODETYPE 201
+      NAME #SysVersionControlCheckedOut
+    ENDNODE
+    BEGINNODE
+      FILETYPE 0
+      UTILTYPE 11
+      UTILOBJECTID 0
+      NODETYPE 201
+      NAME #SysVersionControlCheckIn
+    ENDNODE
+  ENDPROJECT
+  
+
+***Element: END
