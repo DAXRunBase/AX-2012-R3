@@ -1,0 +1,122 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_findUnknownFields unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_findUnknownFields
+    #static void WIK_findUnknownFields(Args _args)
+    #{
+    #    #AOT
+    #    #Properties
+    #    TreeNode            node;
+    #
+    #    // TreeNode iterator for subnodes
+    #    void checkSubNode(str _nodeStr, UtilElementType _calltype = UtilElementType::Cue)
+    #    {
+    #        boolean             displayNode;
+    #        TreeNode            subNode;
+    #        TreeNode            groupNode;
+    #        TreeNodeIterator    tniGroups;
+    #        TreeNodeIterator    tniSubGroups;
+    #
+    #        tniGroups = node.AOTfindChild(_nodeStr).AOTiterator();
+    #        groupNode = tniGroups.next();
+    #
+    #        while (groupNode)
+    #        {
+    #            tniSubGroups = groupNode.AOTiterator();
+    #            subNode = tniSubGroups.next();
+    #
+    #            // Fields do not have 2 levels of subnodes
+    #            if (!subNode)
+    #            {
+    #                displayNode = false;
+    #
+    #                switch (_calltype)
+    #                {
+    #                    case UtilElementType::Table :
+    #                        displayNode = hasProperty(groupNode.AOTgetProperties(), #PropertyEnumType)
+    #                            && groupNode.AOTgetProperty(#PropertyEnumType) == '' ? true : displayNode;
+    #                        break;
+    #
+    #                    case UtilElementType::ViewQuery :
+    #                        displayNode = groupNode.AOTgetProperty(#PropertyDataField) == 'UNKNOWN' ? true : displayNode;
+    #                        break;
+    #                }
+    #
+    #                if (displayNode)
+    #                {
+    #                    info(groupNode.treeNodePath());
+    #                }
+    #            }
+    #            else
+    #            {
+    #                while (subNode)
+    #                {
+    #                    displayNode = false;
+    #
+    #                    if (subNode.AOTgetProperty(#PropertyDataField) == 'UNKNOWN'
+    #                        || subNode.AOTgetProperty(#PropertyDataField) == '')
+    #                    {
+    #                        displayNode = true;
+    #                    }
+    #
+    #                    if (displayNode)
+    #                    {
+    #                        info(subNode.treeNodePath());
+    #                    }
+    #
+    #                    subNode = tniSubGroups.next();
+    #                }
+    #            }
+    #
+    #            groupNode = tniGroups.next();
+    #        }
+    #    }
+    #
+    #    // TreeNode iterator for main nodes
+    #    void checkMainNode(TreeNodePath _path, UtilElementType _type)
+    #    {
+    #        TreeNodeIterator    tni;
+    #
+    #        node    = TreeNode::findNode(_path);
+    #        tni     = node.AOTiterator();
+    #        node    = tni.next();
+    #
+    #        while (node)
+    #        {
+    #            if (node.AOTLayer() >= UtilEntryLevel::isv)
+    #            {
+    #                // Validate fields
+    #                checkSubNode('Fields', _type);
+    #
+    #                if (_type == UtilElementType::Table)
+    #                {
+    #                    // Validate indexes
+    #                    checkSubNode('Indexes');
+    #
+    #                    // Validate field groups
+    #                    checkSubNode('Field groups');
+    #
+    #                    // Validate delete actions
+    #                    checkSubNode('DeleteActions');
+    #                }
+    #            }
+    #            node    = tni.next();
+    #        }
+    #    }
+    #
+    #    checkMainNode(#ViewsPath, UtilElementType::ViewQuery);
+    #    checkMainNode(#TablesPath, UtilElementType::Table);
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{AC43353C-BCFE-4160-BD1D-5655F57304F8}
+  ENDPROPERTIES
+  
+
+***Element: END
