@@ -1,0 +1,43 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_setCILexecution unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_setCILexecution
+    #static void WIK_setCILexecution(Args _args)
+    #{
+    #    #LOCALMACRO.FLAG_ExecBusinessOpsWithInterpreter (1 << 10) #ENDMACRO
+    #
+    #    UserInfo            userInfo;
+    #    boolean             setEnabled = false;
+    #
+    #    ttsBegin;
+    #
+    #    while select forUpdate DebugInfo from userInfo
+    #        where userInfo.accountType  == UserAccountType::ADUser
+    #            && userInfo.enable      == NoYes::Yes
+    #    {
+    #        if (setEnabled)
+    #        {
+    #            userInfo.DebugInfo  = userInfo.DebugInfo ^ #FLAG_ExecBusinessOpsWithInterpreter;
+    #        }
+    #        else
+    #        {
+    #            userInfo.DebugInfo  = userInfo.DebugInfo | #FLAG_ExecBusinessOpsWithInterpreter;
+    #        }
+    #        userInfo.update();
+    #    }
+    #
+    #    ttsCommit;
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{DE451F57-3A71-4F44-B406-6D7B36B1B269}
+  ENDPROPERTIES
+  
+
+***Element: END
