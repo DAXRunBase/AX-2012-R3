@@ -1,0 +1,2723 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: WIK_SysLicenseCodeReadFile unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #WIK_SysLicenseCodeReadFile
+    PROPERTIES
+      Name                #WIK_SysLicenseCodeReadFile
+      Extends             #SysLicenseCodeReadFile
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+        #class WIK_SysLicenseCodeReadFile extends SysLicenseCodeReadFile
+        #{
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    boolean                 skipInsert;
+        #    SysConfig               sysConfigGlobal;
+        #    SysLicenseSerialnumber  WIK_sysLicenseSerialnumber;
+        #    SysLicenseHolder        WIK_sysLicenseHolder;
+        #    SysLicenseExpireDateStr WIK_sysLicenseExpireDateStr;
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #}
+      ENDSOURCE
+      SOURCE #getSysLicenseExpireDateStr
+        #//  2.0 : SAB/WIK/LIM/27/05/2010 - License Impact Manager / License Impact Manager
+        #public SysLicenseExpireDateStr getSysLicenseExpireDateStr()
+        #{
+        #    ;
+        #
+        #    return WIK_sysLicenseExpireDateStr;
+        #}
+      ENDSOURCE
+      SOURCE #getSysLicenseHolder
+        #//  2.0 : SAB/WIK/LIM/27/05/2010 - License Impact Manager / License Impact Manager
+        #public SysLicenseHolder getSysLicenseHolder()
+        #{
+        #    ;
+        #
+        #    return WIK_sysLicenseHolder;
+        #}
+      ENDSOURCE
+      SOURCE #getSysLicenseSerialnumber
+        #//  2.0 : SAB/WIK/LIM/27/05/2010 - License Impact Manager / License Impact Manager
+        #public SysLicenseSerialnumber getSysLicenseSerialnumber()
+        #{
+        #    ;
+        #
+        #    return WIK_sysLicenseSerialnumber;
+        #}
+      ENDSOURCE
+      SOURCE #parmSysConfig
+        #//  1.0 : SAB/WIK/LIM/27/05/2010 - License Impact Manager / first
+        #//BP Deviation Documented
+        #public SysConfig parmSysConfig(
+        #    SysConfig       _sysConfig  = sysConfigGlobal
+        #    )
+        #{
+        #    SysConfig       sysConfigLocal;
+        #    ;
+        #
+        #    // Only allow temporary table assignment
+        #    //BP Deviation Documented
+        #    sysConfigLocal.setTmp();
+        #    sysConfigLocal.setTmpData(_sysConfig);
+        #    select count(RecId) from sysConfigLocal;
+        #    if (_sysConfig.isTmp() || sysConfigLocal.RecId > 0)
+        #    {
+        #        //BP Deviation Documented
+        #        sysConfigGlobal.setTmp();
+        #        sysConfigGlobal.setTmpData(_sysConfig);
+        #    }
+        #
+        #    return sysConfigGlobal;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #read
+        #/*
+        #Uses the following parameters :
+        #Path to the file from the licens configurator
+        #*/
+        #//BP Deviation Documented
+        #void read()
+        #{
+        #    str                     txt;
+        #    int                     pos;
+        #    str #KeywordLen         firstWord;
+        #    str                     secondWord;
+        #    int                     curCodeLine;
+        #    int                     i;
+        #    int                     j;
+        #
+        #    TextIo                 io = SysLicenseCodeReadFile::openFile(fileName,'r');
+        #    container               c;
+        #
+        #    boolean                 startLicense;
+        #    boolean                 startProperties;
+        #    boolean                 startCodes;
+        #    boolean                 startCodeline;
+        #
+        #    SysLicenseHolder        licenseHolder;
+        #    SysLicenseSerialnumber  serialnumber;
+        #    SysLicenseExpireDate    expireDate;
+        #    str                     expireDateStr;
+        #
+        #    container               licenseCodeContainer;
+        #
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig               sysConfigLocal;
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #
+        #    void throwError(str #KeywordLen keyword)
+        #    {
+        #        throw error(strfmt("@SYS66085",keyword));
+        #    }
+        #;
+        #    if (!io)
+        #        throw error(strfmt("@SYS18678",fileName));
+        #
+        #    io.inFieldDelimiter(io.inRecordDelimiter());
+        #
+        #    while (io.status() == IO_Status::Ok)
+        #    {
+        #        c = io.read();
+        #
+        #        if (io.status() != IO_Status::Ok)
+        #            break;
+        #
+        #        [txt] = c;
+        #        txt = strLRTrim(txt);
+        #        if ( txt == '')
+        #            continue;
+        #        pos = strscan(txt,' ',1,strlen(txt));
+        #        if (pos)
+        #        {
+        #            firstWord   = substr(txt,1,pos-1);
+        #            secondWord  = substr(txt,pos+1,strlen(txt));
+        #        }
+        #        else
+        #        {
+        #            firstWord   = txt;
+        #            secondWord  = '';
+        #        }
+        #
+        #        switch (firstWord)
+        #        {
+        #            case 'LicenseVersion':
+        #                if (str2int(strLRTrim(secondWord)) != #licenseVersion)
+        #                    throw error("@SYS62357");
+        #
+        #                break;
+        #            case #keywordLicense:
+        #                startLicense    = true;
+        #                licenseHolder = strdel(secondWord,1,1);
+        #                readCode = true;
+        #                break;
+        #            case #keywordProperties:
+        #                if (! startLicense)
+        #                    throwError(#keywordLicense);
+        #
+        #                startProperties = true;
+        #                break;
+        #            case 'Name':
+        #                // Nothing
+        #                break;
+        #            case #keywordSerial:
+        #                if (! startProperties)
+        #                    throwError(#keywordProperties);
+        #
+        #                serialnumber = strdel(secondWord,1,1);
+        #                readCode = true;
+        #                break;
+        #            case #keywordDate:
+        #                if (! startProperties)
+        #                    throwError(#keywordProperties);
+        #
+        #                secondWord  = strdel(secondWord,1,1);
+        #                // only check expiration date if it's not empty
+        #                // empty expiration date means no expiration
+        #                if ( strLRTrim(secondWord) != '' && !appl.isDemoMode())
+        #                {
+        #                    expireDate  = str2date(secondWord,123); // MILA-00500
+        #                    if ( expireDate < DateTimeUtil::date(DateTimeUtil::utcNow()) )
+        #                        throw error("@SYS98404");
+        #                }
+        #                expireDateStr = secondWord;
+        #                readCode = true;
+        #                break;
+        #            case 'Endproperties':
+        #                startProperties = false;
+        #                break;
+        #            case #keywordCodes:
+        #                startCodes = true;
+        #                break;
+        #            case #keywordCodeline:
+        #                if (! startCodes)
+        #                    throwError(#keywordCodes);
+        #
+        #                startCodeline   = true;
+        #                secondWord      = strdel(secondWord,1,1);
+        #                curCodeLine     = str2int(secondWord)-1;
+        #                break;
+        #            case #keywordValue:
+        #                if (! startCodeline)
+        #                    throwError(#keywordCodeline);
+        #
+        #                secondWord         = strdel(secondWord,1,1);
+        #                licenseCodeContainer += [curCodeLine, secondWord];
+        #                readCode = true;
+        #                break;
+        #            case 'EndCodeLine':
+        #                startCodeline = false;
+        #                break;
+        #            case 'EndCodes':
+        #                startCodes = false;
+        #                break;
+        #            case 'EndLicense':
+        #                startLicense = false;
+        #                break;
+        #            default:
+        #                 throw error("@SYS62379");
+        #        }
+        #    }
+        #
+        #    if (startLicense || startProperties || startCodes)
+        #        throw error("@SYS62379");
+        #
+        #
+        #    // finally, send codes over to server and get info back
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    if (this.parmSysConfig().isTmp())
+        #    {
+        #        //BP Deviation Documented
+        #        sysConfigLocal.setTmp();
+        #        sysConfigLocal.setTmpData(WIK_SysLicenseCodeReadFile::WIK_serverProcessing(licenseHolder, serialnumber, expireDateStr, licenseCodeContainer, doNotCheck));
+        #        this.parmSysConfig(sysConfigLocal);
+        #        select sysConfigLocal
+        #            where sysConfigLocal.configType == ConfigType::SerialNo
+        #               && sysConfigLocal.id         == 0;
+        #        WIK_sysLicenseSerialnumber  = sysConfigLocal.value;
+        #        select sysConfigLocal
+        #            where sysConfigLocal.configType == ConfigType::LicenseName
+        #               && sysConfigLocal.id         == 0;
+        #        WIK_sysLicenseHolder        = sysConfigLocal.value;
+        #        select sysConfigLocal
+        #            where sysConfigLocal.configType == ConfigType::LicenseName
+        #               && sysConfigLocal.id         == 1;
+        #        WIK_sysLicenseExpireDateStr = sysConfigLocal.value;
+        #    }
+        #    else
+        #    {
+        #        c = SysLicenseCodeReadFile::serverProcessing(licenseHolder, serialnumber, expireDateStr, licenseCodeContainer, doNotCheck);
+        #    }
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #
+        #    i=1;
+        #    while(i<conlen(c))
+        #    {
+        #        j = conpeek(c, i);
+        #        i++;
+        #
+        #        secondWord = conpeek(c, i);
+        #        i++;
+        #
+        #        switch(j)
+        #        {
+        #            case #keywordInfo:
+        #                info(secondWord);
+        #                break;
+        #            case #keywordWarning:
+        #                warning(secondWord);
+        #                break;
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #run
+        #public void run()
+        #{
+        #    if (! this.validate())
+        #        throw error("@SYS62377");
+        #
+        #    startLengthyOperation();
+        #
+        #    // No retry needed here
+        #    try
+        #    {
+        #        this.read();
+        #
+        #        if (readCode && !this.parmSysConfig().isTmp())
+        #        {
+        #            SysLicenseCodeReadFile::codesModified(allowSynchronize);
+        #        }
+        #    }
+        #    catch(Exception::Error)
+        #    {
+        #        infolog.viewUpdate();
+        #        // if error happens, we need to abort the transaction and reload security
+        #        if (appl.ttsLevel() > 0 )
+        #            ttsabort;
+        #
+        #        new Dictionary().reloadSecurity(true);
+        #    }
+        #
+        #    endLengthyOperation();
+        #}
+      ENDSOURCE
+      SOURCE #construct
+        #public static WIK_SysLicenseCodeReadFile construct()
+        #{
+        #    ;
+        #
+        #    return new WIK_SysLicenseCodeReadFile();
+        #}
+        #
+      ENDSOURCE
+      SOURCE #createCode
+        #server static void createCode(
+        #    int             codeLine,
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig       _sysConfig = null
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #    )
+        #{
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig   sysConfig = _sysConfig;
+        #    ;
+        #
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #    ttsbegin;
+        #
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    if (_sysConfig.isTmp())
+        #    {
+        #        sysConfig.ConfigType    = ConfigType::AccessCodes;
+        #        sysConfig.Id            = codeLine;
+        #        sysConfig.Value         = '';
+        #        sysConfig.insert();
+        #    }
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #    else if (! xSysConfig::exist(ConfigType::AccessCodes,codeLine))
+        #    {
+        #        sysConfig.ConfigType    = ConfigType::AccessCodes;
+        #        sysConfig.Id            = codeLine;
+        #        sysConfig.Value         = '';
+        #        sysConfig.insert();
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #createCodes
+        #server static void createCodes(
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig       _sysConfig = null
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #    )
+        #{
+        #    Dictionary dictionary = new Dictionary();
+        #    DictLicenseCode sysDictLicenseCode;
+        #    int i, j;
+        #    LanguageId      languageId;
+        #    LanguageId      tmpLanguageId;
+        #
+        #    ttsbegin;
+        #    for (i=dictionary.licenseCodeCnt(); i; i--)
+        #    {
+        #        sysDictLicenseCode = new DictLicenseCode(dictionary.licenseCodeCnt2Id(i));
+        #        if (sysDictLicenseCode)
+        #        {
+        #            switch (sysDictLicenseCode.group())
+        #            {
+        #                case LicenseCodeGroup::Language:
+        #                    for (j = xLanguage::labelFileCount(); j; j--)
+        #                    {
+        #                        languageId      = xLanguage::labelFileNumber2LanguageID(j);
+        #                        tmpLanguageId   = strkeep(languageId, 'abcdefghijklmnopqrstuvwxyz-_');
+        #
+        #                        if (languageId != 'USER' &&
+        #                            languageId != 'SYSTEM' &&
+        #                            languageId == tmpLanguageId)
+        #                        {
+        #                            if (languageId == sysDictLicenseCode.name())
+        #                            {
+        #                                //--> SAB/WIK/LIM/27.05.2010
+        #                                WIK_SysLicenseCodeReadFile::createCode(sysDictLicenseCode.id(), _sysConfig);
+        #                                //<-- SAB/WIK/LIM/27.05.2010
+        #                                break;
+        #                            }
+        #                        }
+        #                    }
+        #                    break;
+        #                default:
+        #                    if ( sysDictLicenseCode.id() != licensecodenum(SysVersion) )
+        #                        //--> SAB/WIK/LIM/27.05.2010
+        #                        WIK_SysLicenseCodeReadFile::createCode(sysDictLicenseCode.id(), _sysConfig);
+        #                        //<-- SAB/WIK/LIM/27.05.2010
+        #                    else
+        #                        //--> SAB/WIK/LIM/27.05.2010
+        #                        WIK_SysLicenseCodeReadFile::createCode(0, _sysConfig);
+        #                        //<-- SAB/WIK/LIM/27.05.2010
+        #                    break;
+        #            }
+        #        }
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #setCode
+        #server static boolean setCode(
+        #    int             codeLine,
+        #    str             code,
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig       _sysConfig = null
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #    )
+        #{
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig   sysConfig = _sysConfig;
+        #    ;
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    if (sysConfig.isTmp())
+        #    {
+        #        select sysConfig
+        #            where sysConfig.configType  == ConfigType::AccessCodes
+        #               && sysConfig.id          == codeLine;
+        #        if (!sysConfig)
+        #        {
+        #            return false;
+        #        }
+        #    }
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #    else if (! xSysConfig::exist(ConfigType::AccessCodes,codeLine))
+        #    {
+        #        //warning(strfmt("@SYS62401",SysLicenseCodeReadFile::codeDescription(codeLine)));
+        #        return false;
+        #    }
+        #
+        #    ttsbegin;
+        #
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    if (sysConfig.isTmp())
+        #    {
+        #        select sysConfig
+        #            where sysConfig.configType  == ConfigType::AccessCodes
+        #               && sysConfig.id          == codeLine;
+        #    }
+        #    else
+        #    {
+        #        sysConfig = xSysConfig::find(ConfigType::AccessCodes,codeLine,true);
+        #    }
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #
+        #    if (sysConfig)
+        #    {
+        #        sysConfig.ConfigType    = ConfigType::AccessCodes;
+        #        sysConfig.Id            = codeLine;
+        #        sysConfig.Value = code;
+        #        sysConfig.update();
+        #    }
+        #
+        #    ttscommit;
+        #
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #setExpireDateStr
+        #server static void setExpireDateStr(
+        #    str expireDate,
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig               _sysConfig = null
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #    )
+        #{
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig   sysConfig = _sysConfig;
+        #    ;
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #
+        #    ttsbegin;
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    if (sysConfig.isTmp())
+        #    {
+        #        select sysConfig
+        #            where sysConfig.configType  == ConfigType::LicenseName
+        #               && sysConfig.id          == 1;
+        #    }
+        #    else
+        #    {
+        #        sysConfig = xSysConfig::find(ConfigType::LicenseName,1,true);
+        #    }
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #
+        #    if (! sysConfig)
+        #    {
+        #        sysConfig.ConfigType = ConfigType::LicenseName;
+        #        sysConfig.Id         = 1;
+        #    }
+        #    sysConfig.Value = expireDate;
+        #    sysConfig.write();
+        #
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #setLicenseHolder
+        #server static void setLicenseHolder(
+        #    SysLicenseHolder    licenseHolder,
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig           _sysConfig = null
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #    )
+        #{
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig   sysConfig = _sysConfig;
+        #    ;
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #
+        #    ttsbegin;
+        #
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    if (sysConfig.isTmp())
+        #    {
+        #        select sysConfig
+        #            where sysConfig.configType  == ConfigType::LicenseName
+        #               && sysConfig.id          == 0;
+        #    }
+        #    else
+        #    {
+        #        sysConfig = xSysConfig::find(ConfigType::LicenseName,0,true);
+        #    }
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #
+        #    if (! sysConfig)
+        #    {
+        #        sysConfig.ConfigType = ConfigType::LicenseName;
+        #        sysConfig.Id         = 0;
+        #    }
+        #    sysConfig.Value = licenseHolder;
+        #    sysConfig.write();
+        #
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #setSerialnumber
+        #server static void setSerialnumber(
+        #    SysLicenseSerialnumber  serialnumber,
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig               _sysConfig = null
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #    )
+        #{
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    SysConfig   sysConfig = _sysConfig;
+        #    ;
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #
+        #    ttsbegin;
+        #
+        #    //--> SAB/WIK/LIM/27.05.2010
+        #    if (sysConfig.isTmp())
+        #    {
+        #        select sysConfig
+        #            where sysConfig.configType  == ConfigType::SerialNo
+        #               && sysConfig.id          == 0;
+        #    }
+        #    else
+        #    {
+        #        sysConfig = xSysConfig::find(ConfigType::SerialNo,0,true);
+        #    }
+        #    //<-- SAB/WIK/LIM/27.05.2010
+        #
+        #    if (! sysConfig)
+        #    {
+        #        sysConfig.ConfigType = ConfigType::SerialNo;
+        #        sysConfig.Id         = 0;
+        #    }
+        #    sysConfig.Value = serialnumber;
+        #    sysConfig.write();
+        #
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #WIK_ServerProcessing
+        #//  1.0 : SAB/WIK/LIM/27/05/2010 - License Impact Manager / first
+        #server static SysConfig WIK_ServerProcessing(
+        #    SysLicenseHolder        licenseHolder,
+        #    SysLicenseSerialnumber  serialnumber,
+        #    str                     expireDateStr,
+        #    container               codeContainer,
+        #    boolean                 doNotCheck)
+        #{
+        #    container   infoBack;
+        #    int         i;
+        #    boolean                 testCode = true;
+        #
+        #    int                     curCodeLine;
+        #    str                     curCode;
+        #    boolean demomode = appl.isDemoMode();
+        #    SysConfig               sysConfig = null;
+        #    ;
+        #
+        #    SysLicenseCodeReadFile::checkDependency(codeContainer);
+        #
+        #    ttsbegin;
+        #    //BP Deviation Documented
+        #    sysConfig.setTmp();
+        #    WIK_SysLicenseCodeReadFile::createCodes(sysConfig);
+        #
+        #    // set license holder
+        #    WIK_SysLicenseCodeReadFile::setLicenseHolder(licenseHolder, sysConfig);
+        #    infoBack += [#keywordInfo, strfmt("@SYS62384",licenseHolder)];
+        #
+        #    // set serial number
+        #    WIK_SysLicenseCodeReadFile::setSerialnumber(serialnumber, sysConfig);
+        #    infoBack += [#keywordInfo, strfmt("@SYS62385",serialnumber)];
+        #
+        #    // set expiration date
+        #    WIK_SysLicenseCodeReadFile::setExpireDateStr(expireDateStr, sysConfig);
+        #    infoBack += [#keywordInfo, strfmt("@SYS74433",expireDateStr)];
+        #
+        #    i=1;
+        #    while (i<conlen(codeContainer))
+        #    {
+        #        curCodeLine = conpeek(codeContainer, i);
+        #        i++;
+        #        curCode = conpeek(codeContainer, i);
+        #        i++;
+        #
+        #        if (testCode && SysLicenseCodeReadFile::isCodeOK(licenseHolder, serialnumber, expireDateStr, curCodeLine, curCode) ||
+        #            !testCode)
+        #        {
+        #            if (WIK_SysLicenseCodeReadFile::setCode(curCodeLine,curCode, sysConfig))
+        #            {
+        #                infoBack += [#keywordInfo, strfmt("@SYS62378",SysLicenseCodeReadFile::codeDescription(curCodeLine))];
+        #            }
+        #            else
+        #            {
+        #                infoBack += [#keywordWarning, strfmt("@SYS62401",SysLicenseCodeReadFile::codeDescription(curCodeLine))];
+        #
+        #            }
+        #        }
+        #        else
+        #        {
+        #            if ( curCodeLine == 0 || curCodeLine == licensecodenum(SysUsers) || curCodeLine == licensecodenum(SysObjectServers) )
+        #            {
+        #                // if BasePackage, SysUsers or SysObjectServers code is incorrect
+        #                // this means we are dealing with a bad license
+        #                // throw exception and terminate processing right away
+        #                    throw error("@SYS98729");
+        #            }
+        #            else
+        #                infoBack += [#keywordWarning, strfmt("@SYS62383",SysLicenseCodeReadFile::codeDescription(curCodeLine))];
+        #        }
+        #
+        #    }
+        #
+        #    ttscommit;
+        #
+        #    return sysConfig;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 5
+
+FORM #WIK_SysLicenseCode
+  PROPERTIES
+    Name                #WIK_SysLicenseCode
+  ENDPROPERTIES
+  
+  METHODS
+    Version: 3
+    SOURCE #ClassDeclaration
+      #class FormRun extends ObjectRun
+      #{
+      #    boolean                modified;
+      #    SysLicenseSerialnumber sysLicenseSerialnumber;
+      #    SysLicenseHolder       sysLicenseHolder;
+      #    SysLicenseExpireDateStr  sysLicenseExpireDateStr;
+      #    boolean                sysLicenseExpireDateCached;
+      #    QueryBuildRange        range;
+      #
+      #    //--> SAB/WIK/LIM/27.05.2010
+      #    boolean                 isLicenseCompared;
+      #    QueryBuildRange         WIK_range;
+      #    SysLicenseSerialnumber  WIK_sysLicenseSerialnumber;
+      #    SysLicenseHolder        WIK_sysLicenseHolder;
+      #    SysLicenseExpireDateStr WIK_sysLicenseExpireDateStr;
+      #    //<-- SAB/WIK/LIM/27.05.2010
+      #}
+    ENDSOURCE
+    SOURCE #enableCompareGrid
+      #//  2.0 : SAB/WIK/LIM/27/05/2010 - License Impact Manager
+      #public void enableCompareGrid(
+      #    boolean _setVisible = false
+      #    )
+      #{
+      #    ;
+      #
+      #    isLicenseCompared   = _setVisible;
+      #    WIK_SystemGrid.visible(isLicenseCompared);
+      #    WIK_ModulesGrid.visible(isLicenseCompared);
+      #    WIK_WebGrid.visible(isLicenseCompared);
+      #    WIK_LanguagesGrid.visible(isLicenseCompared);
+      #    WIK_UnknownGrid.visible(isLicenseCompared);
+      #}
+    ENDSOURCE
+    SOURCE #expireDate
+      #//BP Deviation Documented
+      #edit SysLicenseExpireDate expireDate(
+      #    boolean              _set           = false,
+      #    SysLicenseExpireDate          _expireDate
+      #    )
+      #{
+      #    if (_set)
+      #    {
+      #        // convert date to string
+      #        if (str2date(sysLicenseExpireDateStr, 123) != _expireDate)
+      #        {
+      #            if (! element.deleteCodes())
+      #                return str2date(sysLicenseExpireDateStr, 123);
+      #        }
+      #        modified                = true;
+      #        sysLicenseExpireDateStr    = date2str(_expireDate, 1, 2, 2, 2, 2, 2);
+      #        return _expireDate;
+      #    }
+      #    if (! sysLicenseExpireDateCached) //found and empty cache
+      #    {
+      #        sysLicenseExpireDateStr        = xSysConfig::find(ConfigType::LicenseName,1).Value;
+      #        sysLicenseExpireDateCached  = true;
+      #    }
+      #    return str2date(sysLicenseExpireDateStr, 123);
+      #}
+    ENDSOURCE
+    SOURCE #clearCache
+      #void clearCache()
+      #{
+      #;
+      #    sysLicenseSerialnumber     = '';
+      #    sysLicenseHolder           = '';
+      #    sysLicenseExpireDateStr    = '';
+      #    sysLicenseExpireDateCached = false;
+      #}
+    ENDSOURCE
+    SOURCE #deleteCodes
+      #boolean deleteCodes()
+      #{
+      #
+      #    if (Box::yesNo("@SYS67860"+'\n\n'+
+      #                   "@SYS67859"+'\n\n'+
+      #                   "@SYS60031" , DialogButton::No) == DialogButton::Yes)
+      #    {
+      #        ttsbegin;
+      #
+      #        SysLicenseCodeReadFile::deleteCodes();
+      #        WIK_SysLicenseCodeReadFile::createCodes();
+      #
+      #        ttscommit;
+      #        sysConfig_ds.executeQuery();
+      #        sysConfig_ds.refresh();
+      #        return true;
+      #    }
+      #    return false;
+      #}
+    ENDSOURCE
+    SOURCE #serialnumber
+      #//BP Deviation Documented
+      #edit SysLicenseSerialnumber serialnumber(
+      #    boolean                 _set            = false,
+      #    SysLicenseSerialnumber  _serialnumber   = ''
+      #    )
+      #{
+      #    if (_set)
+      #    {
+      #        if (sysLicenseSerialnumber != _serialnumber)
+      #        {
+      #            if (!element.deleteCodes())
+      #                return sysLicenseSerialnumber;
+      #        }
+      #        WIK_SysLicenseCodeReadFile::setSerialnumber(_serialnumber);
+      #        modified = true;
+      #        sysLicenseSerialnumber = _serialnumber;
+      #        return _serialnumber;
+      #    }
+      #    if (!sysLicenseSerialnumber) //found cache
+      #        sysLicenseSerialnumber = xSysConfig::find(ConfigType::SerialNo,0).Value;
+      #
+      #    return sysLicenseSerialnumber;
+      #}
+    ENDSOURCE
+    SOURCE #licenseHolder
+      #//BP Deviation Documented
+      #edit SysLicenseHolder licenseHolder(
+      #    boolean             _set            = false,
+      #    SysLicenseHolder    _licenseHolder  = ''
+      #    )
+      #{
+      #    if (_set)
+      #    {
+      #        if (sysLicenseHolder != _licenseHolder)
+      #        {
+      #            if (!element.deleteCodes())
+      #                return sysLicenseHolder;
+      #        }
+      #        WIK_SysLicenseCodeReadFile::setLicenseHolder(_licenseHolder);
+      #        modified = true;
+      #        sysLicenseHolder = _licenseHolder;
+      #        return _licenseHolder;
+      #    }
+      #    if (!sysLicenseHolder) //found cache
+      #        sysLicenseHolder = xSysConfig::find(ConfigType::LicenseName,0).Value;
+      #
+      #    return sysLicenseHolder;
+      #}
+    ENDSOURCE
+    SOURCE #Init
+      #void init()
+      #{
+      #;
+      #    WIK_SysLicenseCodeReadFile::createCodes();
+      #    SysLicenseCodeSort::createSortIdx();
+      #
+      #    SysSecurity::validateDomainSetup();
+      #    SysCheckList::createAdministratorGroup();
+      #    SysSecurity::reload(false);
+      #
+      #    // mark all current configurations as already minimized
+      #    // so that they will be kept intact
+      #    if (xSysConfig::find(ConfigType::LicenseName,0).Value)
+      #        SysDictConfigurationKey::keepMaximizedConfiguration();
+      #
+      #    super();
+      #//    if (!WIK_SysLicenseCodeReadFile::rangeUnknown())
+      #    // unknown tab should always be invisible
+      #    unknown.visible(false);
+      #
+      #    //--> SAB/WIK/LIM/27.05.2010
+      #    this.enableCompareGrid();
+      #    //BP Deviation documented
+      #    WIK_SysConfig.setTmp();
+      #    //<-- SAB/WIK/LIM/27.05.2010
+      #}
+    ENDSOURCE
+    SOURCE #close
+      #void close()
+      #{
+      #    ;
+      #    if (modified)
+      #    {
+      #        SysLicenseCodeReadFile::codesModified();
+      #    }
+      #
+      #    SysCheckList::update();
+      #
+      #    super();
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #SysConfig
+          Table               #SysConfig
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        Version: 3
+        SOURCE #Package
+          #//BP Deviation Documented
+          #display SysLicenseCode package(SysConfig _sysConfig)
+          #{
+          #    return enum2str(SysLicenseCodeReadFile::licensePackage(_sysConfig.Id));
+          #}
+        ENDSOURCE
+        SOURCE #image
+          #//BP Deviation Documented
+          #display int image(SysConfig _sysConfig)
+          #{
+          #    #resAppl
+          #    if (SysLicenseCodeReadFile::isCodeOK(element.licenseHolder(),
+          #                                            element.serialNumber(),
+          #                                            sysLicenseExpireDateStr,
+          #                                            _sysConfig.Id,
+          #                                            _sysConfig.Value))
+          #    {
+          #        return #ImageLicenseCode;
+          #    }
+          #    return 0;
+          #}
+        ENDSOURCE
+        SOURCE #write
+          #public void write()
+          #{
+          #    super();
+          #
+          #    if (sysConfig.Id == 0)
+          #        new Dictionary().reloadSecurity(true);
+          #}
+        ENDSOURCE
+        SOURCE #licenseCode
+          #//BP Deviation Documented
+          #edit SysLicenseCode licenseCode(
+          #    boolean         _set,
+          #    SysConfig       _sysConfig,
+          #    SysLicenseCode  _code
+          #    )
+          #{
+          #    Set licenseCodeSet = new Set(Types::Integer);
+          #    SysRemoveLicense remLic;
+          #    int confCount = 0;
+          #    FormRun confirmForm;
+          #    Args            args    = new Args(formstr(SysLicenseCompareForm));
+          #    boolean proceed = false;
+          #    Set dependentSet;
+          #    SysDictLicenseCode codeDict;
+          #    str message;
+          #    SetEnumerator it;
+          #
+          #    if (_set && !strfind(_code, '*', 1, strlen(_code)))
+          #    {
+          #        if (!_sysConfig.Value && SysLicenseCodeReadFile::codeStatus(element.licenseHolder(),
+          #                                               element.serialNumber(),
+          #                                               sysLicenseExpireDateStr,
+          #                                               _sysConfig.Id,
+          #                                               _code))
+          #        {
+          #            // if currently we don't have a value for the license Id
+          #            // and user entered a correct license code
+          #            // we need to make sure the dependencies of this license code has been entered
+          #            codeDict = new SysDictLicenseCode(_sysConfig.Id);
+          #            dependentSet =  codeDict.prerequisites();
+          #            if ( !dependentSet.empty() )
+          #            {
+          #                // get the description of the dependencies
+          #                it = dependentSet.getEnumerator();
+          #                while (it.moveNext())
+          #                {
+          #                    codeDict = new SysDictLicenseCode(it.current());
+          #                    if ( codeDict.isEntered() )
+          #                        continue;
+          #
+          #                    message += SysLicenseCodeReadFile::codeDescription(it.current());
+          #                    message += ',';
+          #                }
+          #                if ( strlen(message) > 0 )
+          #                {
+          #                    // remove the last ','
+          #                    message = strdel(message, strlen(message), 1);
+          #                    throw error(strfmt('@SYS113414',message));
+          #                }
+          #            }
+          #
+          #            proceed = true;
+          #        }
+          #        else
+          #        {
+          #            // If there's an existing value and user entered a wrong code
+          #            // we are removing a license code
+          #
+          #            // first check whether there's other code depending on this code
+          #            codeDict = new SysDictLicenseCode(_sysConfig.Id);
+          #            dependentSet = codeDict.dependents();
+          #            if ( !dependentSet.empty() )
+          #            {
+          #                // get the description of the dependencies
+          #                it = dependentSet.getEnumerator();
+          #                while (it.moveNext())
+          #                {
+          #                    message += SysLicenseCodeReadFile::codeDescription(it.current());
+          #                    message += ',';
+          #                }
+          #                // remove the last ','
+          #                message = strdel(message, strlen(message), 1);
+          #
+          #                throw error(strfmt('@SYS111936',message));
+          #            }
+          #
+          #            // otherwise we need to display the form
+          #            delete_from remLic;
+          #
+          #            remLic.LicenseCode = _sysConfig.Id;
+          #            remLic.Description = SysLicenseCodeReadFile::codeDescription(_sysConfig.Id);
+          #            remLic.insert();
+          #
+          #            // if not valid code, then we should display the warning
+          #            licenseCodeSet.add(_sysConfig.Id);
+          #            confCount = SysLicenseCodeReadFile::findConfigKeysFromLicenseCodeSet(licenseCodeSet);
+          #
+          #            // if we need to remove config key, let's show the dialog
+          #            // and let customer decide whether to proceed
+          #            confirmForm = classfactory.formRunClass(args);
+          #
+          #            confirmForm.init();
+          #            confirmForm.run();
+          #            confirmForm.wait();
+          #
+          #            // we only set the code if user confirms
+          #            if ( confirmForm.closedOk())
+          #            {
+          #                proceed = true;
+          #            }
+          #        }
+          #
+          #        if (proceed)
+          #        {
+          #            modified = true;
+          #            _sysConfig.Value = _code;
+          #        }
+          #    }
+          #
+          #    if (SysLicenseCodeReadFile::codeStatus(element.licenseHolder(),
+          #                                           element.serialNumber(),
+          #                                           sysLicenseExpireDateStr,
+          #                                           _sysConfig.Id,
+          #                                           _sysConfig.Value))
+          #    {
+          #        return '*******';
+          #    }
+          #
+          #    return _sysConfig.Value;
+          #}
+        ENDSOURCE
+        SOURCE #Init
+          #void init()
+          #{
+          #    super();
+          #
+          #    //--> SAB/WIK/LIM/27.05.2010
+          #    range = this.query().dataSourceName('SysConfig').addRange(fieldnum(SysConfig,ConfigType));
+          #    //<-- SAB/WIK/LIM/27.05.2010
+          #    range.value(enum2Value(ConfigType::AccessCodes));
+          #    range.status(RangeStatus::Hidden);
+          #
+          #    //--> SAB/WIK/LIM/27.05.2010
+          #    range = this.query().dataSourceName('SysConfig').addRange(fieldnum(SysConfig,Id));
+          #    //<-- SAB/WIK/LIM/27.05.2010
+          #    range.value(SysLicenseCodeReadFile::rangeSystem());
+          #    range.status(RangeStatus::Hidden);
+          #
+          #}
+        ENDSOURCE
+        SOURCE #Status
+          #//BP Deviation Documented
+          #display SysLicenseCodeStatus status(SysConfig _sysConfig)
+          #{
+          #    return SysLicenseCodeReadFile::codeStatus(element.licenseHolder(),
+          #                                              element.serialNumber(),
+          #                                              sysLicenseExpireDateStr,
+          #                                              _sysConfig.Id,
+          #                                              _sysConfig.Value);
+          #}
+        ENDSOURCE
+        SOURCE #codeDescription
+          #//BP Deviation Documented
+          #display SysLicenseCodeDescription codeDescription(SysConfig _sysConfig)
+          #{
+          #    return SysLicenseCodeReadFile::codeDescription(_sysConfig.Id);
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #SysLicenseCodeSort
+          Table               #SysLicenseCodeSort
+          Index               #SortIdx
+          AllowCheck          #No
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          JoinSource          #SysConfig
+          LinkType            #OuterJoin
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        Version: 3
+        SOURCE #init
+          #public void init()
+          #{
+          #    super();
+          #    //--> SAB/WIK/LIM/27.05.2010
+          #    this.query().dataSourceName('SysLicenseCodeSort').addSortField(fieldnum(SysLicenseCodeSort, SortIdx));
+          #    //<-- SAB/WIK/LIM/27.05.2010
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #WIK_SysConfig
+          Table               #SysConfig
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        Version: 3
+        SOURCE #isLicenseDifferent
+          #//  2.0 : SAB/WIK/LIM/27/05/2010 - License Impact Manager / License Impact Manager
+          #//BP Deviation Documented
+          #display int isLicenseDifferent(SysConfig _sysConfig)
+          #{
+          #    #resAppl
+          #
+          #    SysConfig               sysConfigLocal = xSysConfig::find(_sysConfig.ConfigType, _sysConfig.id);
+          #    SysLicenseCodeStatus    origStatus,
+          #                            newStatus;
+          #    int                     ret = 1031;
+          #    ;
+          #
+          #    origStatus  = SysLicenseCodeReadFile::codeStatus(element.licenseHolder(), element.serialNumber(), sysLicenseExpireDateStr, sysConfigLocal.Id, sysConfigLocal.Value);
+          #    newStatus   = SysLicenseCodeReadFile::codeStatus(WIK_sysLicenseHolder, WIK_sysLicenseSerialnumber, WIK_sysLicenseExpireDateStr, _sysConfig.Id, _sysConfig.Value);
+          #
+          #    if (origStatus == newStatus)
+          #    {
+          #        ret = 1030;
+          #    }
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #void init()
+          #{
+          #    ;
+          #
+          #    super();
+          #
+          #    WIK_range = this.query().dataSourceName('WIK_SysConfig').addRange(fieldnum(SysConfig, ConfigType));
+          #    WIK_range.value(enum2Value(ConfigType::AccessCodes));
+          #    WIK_range.status(RangeStatus::Hidden);
+          #
+          #    WIK_range = this.query().dataSourceName('WIK_SysConfig').addRange(fieldnum(SysConfig, Id));
+          #    WIK_range.value(SysLicenseCodeReadFile::rangeSystem());
+          #    WIK_range.status(RangeStatus::Hidden);
+          #
+          #}
+        ENDSOURCE
+        SOURCE #package
+          #//BP Deviation Documented
+          #display SysLicenseCode package(SysConfig _sysConfig)
+          #{
+          #    ;
+          #
+          #    return enum2str(SysLicenseCodeReadFile::licensePackage(_sysConfig.Id));
+          #}
+        ENDSOURCE
+        SOURCE #image
+          #//BP Deviation Documented
+          #display int image(SysConfig _sysConfig)
+          #{
+          #    #resAppl
+          #    ;
+          #
+          #    if (SysLicenseCodeReadFile::isCodeOK(WIK_sysLicenseHolder,
+          #        WIK_sysLicenseSerialnumber,
+          #        WIK_sysLicenseExpireDateStr,
+          #        _sysConfig.Id,
+          #        _sysConfig.Value))
+          #    {
+          #        return #ImageLicenseCode;
+          #    }
+          #    return 0;
+          #}
+        ENDSOURCE
+        SOURCE #licenseCode
+          #//BP Deviation Documented
+          #edit SysLicenseCode licenseCode(
+          #    boolean         _set,
+          #    SysConfig       _sysConfig,
+          #    SysLicenseCode  _code
+          #    )
+          #{
+          #    Set licenseCodeSet = new Set(Types::Integer);
+          #    SysRemoveLicense remLic;
+          #    int confCount = 0;
+          #    FormRun confirmForm;
+          #    Args            args    = new Args(formstr(SysLicenseCompareForm));
+          #    boolean proceed = false;
+          #    Set dependentSet;
+          #    SysDictLicenseCode codeDict;
+          #    str message;
+          #    SetEnumerator it;
+          #
+          #    if (_set && !strfind(_code, '*', 1, strlen(_code)))
+          #    {
+          #        if (!_sysConfig.Value && SysLicenseCodeReadFile::codeStatus(WIK_sysLicenseHolder,
+          #           WIK_sysLicenseSerialnumber,
+          #           WIK_sysLicenseExpireDateStr,
+          #           _sysConfig.Id,
+          #           _code))
+          #        {
+          #            // if currently we don't have a value for the license Id
+          #            // and user entered a correct license code
+          #            // we need to make sure the dependencies of this license code has been entered
+          #            codeDict = new SysDictLicenseCode(_sysConfig.Id);
+          #            dependentSet =  codeDict.prerequisites();
+          #            if ( !dependentSet.empty() )
+          #            {
+          #                // get the description of the dependencies
+          #                it = dependentSet.getEnumerator();
+          #                while (it.moveNext())
+          #                {
+          #                    codeDict = new SysDictLicenseCode(it.current());
+          #                    if ( codeDict.isEntered() )
+          #                        continue;
+          #
+          #                    message += SysLicenseCodeReadFile::codeDescription(it.current());
+          #                    message += ',';
+          #                }
+          #                if ( strlen(message) > 0 )
+          #                {
+          #                    // remove the last ','
+          #                    message = strdel(message, strlen(message), 1);
+          #                    throw error(strfmt('@SYS113414',message));
+          #                }
+          #            }
+          #
+          #            proceed = true;
+          #        }
+          #        else
+          #        {
+          #            // If there's an existing value and user entered a wrong code
+          #            // we are removing a license code
+          #
+          #            // first check whether there's other code depending on this code
+          #            codeDict = new SysDictLicenseCode(_sysConfig.Id);
+          #            dependentSet = codeDict.dependents();
+          #            if ( !dependentSet.empty() )
+          #            {
+          #                // get the description of the dependencies
+          #                it = dependentSet.getEnumerator();
+          #                while (it.moveNext())
+          #                {
+          #                    message += SysLicenseCodeReadFile::codeDescription(it.current());
+          #                    message += ',';
+          #                }
+          #                // remove the last ','
+          #                message = strdel(message, strlen(message), 1);
+          #
+          #                throw error(strfmt('@SYS111936',message));
+          #            }
+          #
+          #            // otherwise we need to display the form
+          #            delete_from remLic;
+          #
+          #            remLic.LicenseCode = _sysConfig.Id;
+          #            remLic.Description = SysLicenseCodeReadFile::codeDescription(_sysConfig.Id);
+          #            remLic.insert();
+          #
+          #            // if not valid code, then we should display the warning
+          #            licenseCodeSet.add(_sysConfig.Id);
+          #            confCount = SysLicenseCodeReadFile::findConfigKeysFromLicenseCodeSet(licenseCodeSet);
+          #
+          #            // if we need to remove config key, let's show the dialog
+          #            // and let customer decide whether to proceed
+          #            confirmForm = classfactory.formRunClass(args);
+          #
+          #            confirmForm.init();
+          #            confirmForm.run();
+          #            confirmForm.wait();
+          #
+          #            // we only set the code if user confirms
+          #            if ( confirmForm.closedOk())
+          #            {
+          #                proceed = true;
+          #            }
+          #        }
+          #
+          #        if (proceed)
+          #        {
+          #            modified = true;
+          #            _sysConfig.Value = _code;
+          #        }
+          #    }
+          #
+          #    if (SysLicenseCodeReadFile::codeStatus(WIK_sysLicenseHolder,
+          #           WIK_sysLicenseSerialnumber,
+          #           WIK_sysLicenseExpireDateStr,
+          #           _sysConfig.Id,
+          #           _code))
+          #    {
+          #        return '*******';
+          #    }
+          #
+          #    return _sysConfig.Value;
+          #}
+        ENDSOURCE
+        SOURCE #status
+          #//BP Deviation Documented
+          #display SysLicenseCodeStatus status(SysConfig _sysConfig)
+          #{
+          #    ;
+          #
+          #    return SysLicenseCodeReadFile::codeStatus(WIK_sysLicenseHolder,
+          #        WIK_sysLicenseSerialnumber,
+          #        WIK_sysLicenseExpireDateStr,
+          #        _sysConfig.Id,
+          #        _sysConfig.Value);
+          #}
+        ENDSOURCE
+        SOURCE #codeDescription
+          #//BP Deviation Documented
+          #display SysLicenseCodeDescription codeDescription(SysConfig _sysConfig)
+          #{
+          #    ;
+          #
+          #    return SysLicenseCodeReadFile::codeDescription(_sysConfig.Id);
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #WIK_SysLicenseCodeSort
+          Table               #SysLicenseCodeSort
+          Index               #SortIdx
+          AllowCheck          #No
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          JoinSource          #WIK_SysConfig
+          LinkType            #OuterJoin
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        Version: 3
+        SOURCE #init
+          #//  2.0 : SAB/WIK/LIM/27/05/2010 - License Impact Manager / License Impact Manager
+          #public void init()
+          #{
+          #    ;
+          #
+          #    super();
+          #
+          #    this.query().dataSourceName('WIK_SysLicenseCodeSort').addSortField(fieldnum(SysLicenseCodeSort, SortIdx));
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  JOINS
+    SysLicenseCodeSort SysConfig
+    WIK_SysLicenseCodeSort WIK_SysConfig
+  ENDJOINS
+  
+  DESIGN
+    PROPERTIES
+      Left                #166
+      Top                 #245
+      Caption             #@SYS5916
+      SetCompany          #No
+      HTMLHelpFile        #HTMLHelpFileIWorker
+      HTMLHelpTopic       #AxShared.chm::/html/46A2E787-8FD3-4CF7-A5D4-F910728F948F.htm
+      HideIfEmpty         #No
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL GROUP
+        PROPERTIES
+          Name                #MainGroup
+          AutoDeclaration     #Yes
+          AllowEdit           #No
+          Width               #Column width
+          HTMLHelpFile        #HTMLHelpFileAxShared
+          HTMLHelpTopic       #html/3C4EC8BF-F61F-4BF4-AD1A-DE597222D1D5.htm
+          FrameType           #None
+        ENDPROPERTIES
+        
+          CONTAINER
+            CONTROL STRINGEDIT
+              PROPERTIES
+                Name                #LicenseHolder
+                AutoDeclaration     #Yes
+                AllowEdit           #No
+                Width               #Column width
+                DataMethod          #LicenseHolder
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL GROUP
+              PROPERTIES
+                Name                #Group
+                AllowEdit           #No
+                HTMLHelpFile        #HTMLHelpFileAxShared
+                HTMLHelpTopic       #html/8B056136-DA17-4067-9505-C755395C36AD.htm
+                FrameType           #None
+                Columns             #2
+                ArrangeGuide        
+                  ARRAY INDEX Columns 
+                    #0
+                    #0
+                  ENDARRAY
+              ENDPROPERTIES
+              
+                CONTAINER
+                  CONTROL STRINGEDIT
+                    PROPERTIES
+                      Name                #serialnumber
+                      AutoDeclaration     #Yes
+                      AllowEdit           #No
+                      DataMethod          #serialnumber
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL DATEEDIT
+                    PROPERTIES
+                      Name                #expireDate
+                      AutoDeclaration     #Yes
+                      AllowEdit           #No
+                      DataMethod          #expireDate
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                ENDCONTAINER
+                
+            ENDCONTROL 
+            
+          ENDCONTAINER
+          
+      ENDCONTROL 
+      
+      CONTROL TAB
+        PROPERTIES
+          Name                #Tab
+          Width               #Column width
+          Height              #Column height
+          Tabs                #6
+        ENDPROPERTIES
+        
+        METHODS
+          Version: 3
+          SOURCE #tabChanged
+            #public void tabChanged(int _fromTab, int _toTab)
+            #{
+            #    #define.system(1)
+            #    #define.modules(2)
+            #    #define.partnerModules(3)
+            #    #define.web(4)
+            #    #define.languages(5)
+            #    #define.unknown(6)
+            #
+            #    switch (_toTab)
+            #    {
+            #        case #system:
+            #            range.value(SysLicenseCodeReadFile::rangeSystem());
+            #            //--> SAB/WIK/LIM/27.05.2010
+            #            WIK_range.value(SysLicenseCodeReadFile::rangeSystem());
+            #            //<-- SAB/WIK/LIM/27.05.2010
+            #            break;
+            #        case #partnerModules:
+            #            range.value(SysLicenseCodeReadFile::rangePartnerModules());
+            #            //--> SAB/WIK/LIM/27.05.2010
+            #            WIK_range.value(SysLicenseCodeReadFile::rangePartnerModules());
+            #            //<-- SAB/WIK/LIM/27.05.2010
+            #            break;
+            #        case #modules:
+            #            range.value(SysLicenseCodeReadFile::rangeModules());
+            #            //--> SAB/WIK/LIM/27.05.2010
+            #            WIK_range.value(SysLicenseCodeReadFile::rangeModules());
+            #            //<-- SAB/WIK/LIM/27.05.2010
+            #            break;
+            #        case #web:
+            #            range.value(SysLicenseCodeReadFile::rangeWeb());
+            #            //--> SAB/WIK/LIM/27.05.2010
+            #            WIK_range.value(SysLicenseCodeReadFile::rangeWeb());
+            #            //<-- SAB/WIK/LIM/27.05.2010
+            #            break;
+            #        case #languages:
+            #            range.value(SysLicenseCodeReadFile::rangeLanguage());
+            #            //--> SAB/WIK/LIM/27.05.2010
+            #            WIK_range.value(SysLicenseCodeReadFile::rangeLanguage());
+            #            //<-- SAB/WIK/LIM/27.05.2010
+            #            break;
+            #        case #unknown:
+            #            range.value(SysLicenseCodeReadFile::rangeUnknown());
+            #            //--> SAB/WIK/LIM/27.05.2010
+            #            WIK_range.value(SysLicenseCodeReadFile::rangeUnknown());
+            #            //<-- SAB/WIK/LIM/27.05.2010
+            #            break;
+            #    }
+            #    sysConfig_ds.executeQuery();
+            #    //--> SAB/WIK/LIM/27.05.2010
+            #    WIK_sysConfig_ds.executeQuery();
+            #    //<-- SAB/WIK/LIM/27.05.2010
+            #
+            #    super(_fromTab, _toTab);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+        CONTAINER
+          CONTROL TABPAGE
+            PROPERTIES
+              Name                #System
+              AutoDeclaration     #Yes
+              Caption             #@SYS4278
+              Columns             #2
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                  #0
+                ENDARRAY
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL GRID
+                PROPERTIES
+                  Name                #SystemGrid
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #SystemCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/5FD0288C-4060-45FF-B2AD-93CC19F8C199.htm
+                        DataSource          #SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #SystemConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/C85F0567-470B-4671-A6CE-724715125C3F.htm
+                        ChangeCase          #None
+                        DataSource          #SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #SystemStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/9E2ED5E3-BEBE-43A4-BE4C-D08E0079AAFD.htm
+                        DataSource          #SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #SystemWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #Package
+                        AllowEdit           #No
+                        DataSource          #SysConfig
+                        DataMethod          #Package
+                        IMEMode             #Disabled
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+              CONTROL GRID
+                PROPERTIES
+                  Name                #WIK_SystemGrid
+                  AutoDeclaration     #Yes
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #WIK_SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_SystemDifferent
+                        Width               #16
+                        Height              #16
+                        ImageResource       #928
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #isLicenseDifferent
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_SystemCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/5FD0288C-4060-45FF-B2AD-93CC19F8C199.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_SystemConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/C85F0567-470B-4671-A6CE-724715125C3F.htm
+                        ChangeCase          #None
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_SystemStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/9E2ED5E3-BEBE-43A4-BE4C-D08E0079AAFD.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_SystemWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_Package
+                        AllowEdit           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #Package
+                        IMEMode             #Disabled
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+          CONTROL TABPAGE
+            PROPERTIES
+              Name                #Modules
+              Caption             #@SYS60337
+              Columns             #2
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                  #0
+                ENDARRAY
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL GRID
+                PROPERTIES
+                  Name                #ModulesGrid
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #ModulesCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/D9828DEA-AC05-401F-8A1D-16881D371E01.htm
+                        DataSource          #SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #ModulesConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/8D2F2CEB-CC74-4D39-A29F-68AF30C09A5C.htm
+                        ChangeCase          #None
+                        DataSource          #SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #ModulesStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/55E2227F-1743-4D24-9A88-C5112AC21923.htm
+                        DataSource          #SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #ModulesWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #StringEdit
+                        AllowEdit           #No
+                        DataSource          #SysConfig
+                        DataMethod          #Package
+                        IMEMode             #Disabled
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+              CONTROL GRID
+                PROPERTIES
+                  Name                #WIK_ModulesGrid
+                  AutoDeclaration     #Yes
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #WIK_SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_ModulesDifferent
+                        Width               #16
+                        Height              #16
+                        ImageResource       #928
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #isLicenseDifferent
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_ModulesCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/D9828DEA-AC05-401F-8A1D-16881D371E01.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_ModulesConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/8D2F2CEB-CC74-4D39-A29F-68AF30C09A5C.htm
+                        ChangeCase          #None
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_ModulesStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/55E2227F-1743-4D24-9A88-C5112AC21923.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_ModulesWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_StringEdit
+                        AllowEdit           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #Package
+                        IMEMode             #Disabled
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+          CONTROL TABPAGE
+            PROPERTIES
+              Name                #PartnerModules
+              Caption             #@SYS67876
+              Columns             #2
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                  #0
+                ENDARRAY
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL GRID
+                PROPERTIES
+                  Name                #PartnerModulesGrid
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #PartnerModulesCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/29856EC6-4F71-4F85-92AD-3D441E11B2D2.htm
+                        DataSource          #SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #PartnerModulesConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/5B93B59A-B327-4AB8-BC8E-752BC5C9A793.htm
+                        ChangeCase          #None
+                        DataSource          #SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #PartnerModulesStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/DF2F2556-04B5-46E2-9744-5D44934FE503.htm
+                        DataSource          #SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #PartnerModulesWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+              CONTROL GRID
+                PROPERTIES
+                  Name                #WIK_PartnerModulesGrid
+                  AutoDeclaration     #Yes
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #WIK_SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_PartnerModulesDifferent
+                        Width               #16
+                        Height              #16
+                        ImageResource       #928
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #isLicenseDifferent
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_PartnerModulesCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/29856EC6-4F71-4F85-92AD-3D441E11B2D2.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_PartnerModulesConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/5B93B59A-B327-4AB8-BC8E-752BC5C9A793.htm
+                        ChangeCase          #None
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_PartnerModulesStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/DF2F2556-04B5-46E2-9744-5D44934FE503.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_PartnerModulesWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+          CONTROL TABPAGE
+            PROPERTIES
+              Name                #Web
+              Caption             #@SYS74020
+              Columns             #2
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                  #0
+                ENDARRAY
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL GRID
+                PROPERTIES
+                  Name                #WebGrid
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WebCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/8CE890FD-217D-4E9B-B3A0-B044FB427AA3.htm
+                        DataSource          #SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WebConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/1916ECFD-811A-45DF-A252-5D41F8B3B030.htm
+                        ChangeCase          #None
+                        DataSource          #SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WebStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/5F483153-85BC-42BC-A64E-CE4B7E760914.htm
+                        DataSource          #SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WebWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #StringEdit1
+                        AllowEdit           #No
+                        DataSource          #SysConfig
+                        DataMethod          #Package
+                        IMEMode             #Disabled
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+              CONTROL GRID
+                PROPERTIES
+                  Name                #WIK_WebGrid
+                  AutoDeclaration     #Yes
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #WIK_SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_WebDifferent
+                        Width               #16
+                        Height              #16
+                        ImageResource       #928
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #isLicenseDifferent
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_WebCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/8CE890FD-217D-4E9B-B3A0-B044FB427AA3.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_WebConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/1916ECFD-811A-45DF-A252-5D41F8B3B030.htm
+                        ChangeCase          #None
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_WebStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/5F483153-85BC-42BC-A64E-CE4B7E760914.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_WebWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_StringEdit1
+                        AllowEdit           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #Package
+                        IMEMode             #Disabled
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+          CONTROL TABPAGE
+            PROPERTIES
+              Name                #Languages
+              Caption             #@SYS15819
+              Columns             #2
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                  #0
+                ENDARRAY
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL GRID
+                PROPERTIES
+                  Name                #LanguagesGrid
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #LanguageCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/4882BCBD-006C-4D3C-90D5-BC5072CFBB04.htm
+                        DataSource          #SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #LanguageConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/3F560B75-3CBD-4803-93BD-F94B48004731.htm
+                        ChangeCase          #None
+                        DataSource          #SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #LanguageStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/B2902203-66C3-4B11-910F-1601D9E33CF5.htm
+                        DataSource          #SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #LanguageWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+              CONTROL GRID
+                PROPERTIES
+                  Name                #WIK_LanguagesGrid
+                  AutoDeclaration     #Yes
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #WIK_SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_LanguagesDifferent
+                        Width               #16
+                        Height              #16
+                        ImageResource       #928
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #isLicenseDifferent
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_LanguageCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/4882BCBD-006C-4D3C-90D5-BC5072CFBB04.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_LanguageConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/3F560B75-3CBD-4803-93BD-F94B48004731.htm
+                        ChangeCase          #None
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_LanguageStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/B2902203-66C3-4B11-910F-1601D9E33CF5.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_LanguageWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+          CONTROL TABPAGE
+            PROPERTIES
+              Name                #Unknown
+              AutoDeclaration     #Yes
+              Caption             #@SYS21247
+              Columns             #2
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                  #0
+                ENDARRAY
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL GRID
+                PROPERTIES
+                  Name                #UnknownGrid
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #UnknownCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/357D1A52-3994-4529-871D-12A16C70F274.htm
+                        DataSource          #SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #UnknownConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/5EA73840-2E09-4DCA-B318-7CCF1AD06A59.htm
+                        ChangeCase          #None
+                        DataSource          #SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #UnknownStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/33B96DDF-BEBE-431A-ADB2-DDA925B49503.htm
+                        DataSource          #SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #UnknownWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+              CONTROL GRID
+                PROPERTIES
+                  Name                #WIK_UnknownGrid
+                  AutoDeclaration     #Yes
+                  Width               #Column width
+                  Height              #Column height
+                  DataSource          #WIK_SysConfig
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_UknownDifferent
+                        Width               #16
+                        Height              #16
+                        ImageResource       #928
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #isLicenseDifferent
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_UnknownCodeDescription
+                        AllowEdit           #No
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/357D1A52-3994-4529-871D-12A16C70F274.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #codeDescription
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_UnknownConfig_Value
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/5EA73840-2E09-4DCA-B318-7CCF1AD06A59.htm
+                        ChangeCase          #None
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #licenseCode
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      PROPERTIES
+                        Name                #WIK_UnknownStatus
+                        AllowEdit           #No
+                        Width               #80
+                        Skip                #Yes
+                        HTMLHelpFile        #HTMLHelpFileAxShared
+                        HTMLHelpTopic       #html/33B96DDF-BEBE-431A-ADB2-DDA925B49503.htm
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #Status
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL WINDOW
+                      PROPERTIES
+                        Name                #WIK_UnknownWindow
+                        Width               #16
+                        Height              #16
+                        ImageResource       #905
+                        BackStyle           #Transparent
+                        ShowLabel           #No
+                        DataSource          #WIK_SysConfig
+                        DataMethod          #image
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+        ENDCONTAINER
+        
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ButtonGroup
+        ENDPROPERTIES
+        
+        CONTAINER
+          CONTROL MENUITEMBUTTON
+            PROPERTIES
+              Name                #SysLicenseCodeReadFile
+              Visible             #No
+              MenuItemType        #Action
+              MenuItemName        #SysLicenseCodeReadFile
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #clicked
+                #void clicked()
+                #{
+                #    super();
+                #    licenseHolder.update();
+                #    serialnumber.update();
+                #    expireDate.update();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDCONTROL 
+          
+          CONTROL BUTTON
+            PROPERTIES
+              Name                #WIK_LicenseCompareButton
+              HelpText            #@SYS68610
+              Text                #@SYS4735
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #clicked
+                #//  2.0 : SAB/WIK/LIM/27/05/2010 - License Impact Manager / License Impact Manager
+                #void clicked()
+                #{
+                #    WIK_SysLicenseCodeReadFile  WIK_SysLicenseCodeReadFile;
+                #    ;
+                #
+                #    super();
+                #
+                #    WIK_SysLicenseCodeReadFile  = WIK_SysLicenseCodeReadFile::construct();
+                #    WIK_SysLicenseCodeReadFile.parmDoNotCheck(true);
+                #    WIK_SysLicenseCodeReadFile.parmSysConfig(WIK_SysConfig);
+                #    if (WIK_SysLicenseCodeReadFile.prompt())
+                #    {
+                #        WIK_SysLicenseCodeReadFile.run();
+                #        //BP Deviation documented
+                #        WIK_SysConfig.setTmpData(WIK_SysLicenseCodeReadFile.parmSysConfig());
+                #        WIK_sysLicenseSerialnumber      = WIK_SysLicenseCodeReadFile.getSysLicenseSerialnumber();
+                #        WIK_sysLicenseHolder            = WIK_SysLicenseCodeReadFile.getSysLicenseHolder();
+                #        WIK_sysLicenseExpireDateStr     = WIK_SysLicenseCodeReadFile.getSysLicenseExpireDateStr();
+                #        WIK_SysConfig_ds.research();
+                #        element.enableCompareGrid(true);
+                #    }
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDCONTROL 
+          
+        ENDCONTAINER
+        
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+ENDFORM
+
+
+***Element: PRN
+
+; Microsoft Dynamics AX Project : WIK_LicenseImpactManager unloaded
+; --------------------------------------------------------------------------------
+  PROJECTVERSION 2
+  
+  PROJECT #WIK_LicenseImpactManager
+   SHARED
+  PROPERTIES
+    Name                #WIK_LicenseImpactManager
+  ENDPROPERTIES
+  
+    PROJECTCLASS ProjectNode
+    GROUP #Classes
+      PROPERTIES
+        Name                #Classes
+        ProjectGroupType    #Classes
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 30003
+        NODETYPE 329
+        NAME #WIK_SysLicenseCodeReadFile
+      ENDNODE
+      ENDGROUP
+      
+    GROUP #Forms
+      PROPERTIES
+        Name                #Forms
+        ProjectGroupType    #Forms
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 11
+        UTILOBJECTID 0
+        NODETYPE 201
+        NAME #WIK_SysLicenseCode
+      ENDNODE
+      ENDGROUP
+      
+  ENDPROJECT
+  
+
+***Element: END
