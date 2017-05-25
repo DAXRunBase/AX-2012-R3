@@ -1,0 +1,1626 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysEDTMigration unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysEDTMigration
+    PROPERTIES
+      Name                #SysEDTMigration
+      Origin              #{2CF45F06-F79E-4C57-B2F4-83C0678539AB}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+        #class SysEDTMigration
+        #{
+        #    #define.IgnoreEDTRelation('IgnoreEDTRelation')
+        #    #define.DELPrefix('DEL_')
+        #    #define.Relations('Relations')
+        #    #define.Fields('Fields')
+        #    #define.Table('Table')
+        #    #define.Field('Field')
+        #    #define.Fields('Fields')
+        #    #define.RelatedField('RelatedField')
+        #    #define.Value('Value')
+        #    #define.SourceEDT('SourceEDT')
+        #    #define.Indexes('Indexes')
+        #    #define.Cardinality('Cardinality')
+        #    #define.RelatedTableCardinality('RelatedTableCardinality')
+        #    #define.EDTRelation('EDTRelation')
+        #    #define.RelationshipType('RelationshipType')
+        #    #define.DataSets('Data Sets')
+        #    #define.DataSources('Data Sources')
+        #    #define.Query('Query')
+        #    #define.Queries('Queries')
+        #    #define.Reports('Reports')
+        #    #define.Name('Name')
+        #    #AOT
+        #    #TreeNodeSysNodeType
+        #    str logFilePath;
+        #    TextIo log;
+        #}
+      ENDSOURCE
+      SOURCE #findExistingRelations
+        #/// <summary>
+        #/// Finds an existing relation in a table.
+        #/// </summary>
+        #/// <param name="_pkTable">
+        #/// The name of the related table.
+        #/// </param>
+        #/// <param name="_pkField">
+        #/// The name of the related field.
+        #/// </param>
+        #/// <param name="_fkTable">
+        #/// The name of the table.
+        #/// </param>
+        #/// <param name="_fkField">
+        #/// The name of the field.
+        #/// </param>
+        #/// <param name="_edtName">
+        #/// The name of the extended data type.
+        #/// </param>
+        #/// <returns>
+        #/// The migration status of the table relation.
+        #/// </returns>
+        #public container findExistingRelations(tableName _pkTable,fieldName _pkField,tableName _fkTable, fieldName _fkField, Name _edtName)
+        #{
+        #    SysEDTMigrationStatus   retStatus = SysEDTMigrationStatus::NotMigrated;
+        #    tableId                 fkTableId = tablename2id(_fkTable);
+        #    tableId                 pkTableId = tablename2id(_pkTable);
+        #    fieldId                 fkFieldId = fieldname2id(fkTableId, _fkField);
+        #    fieldId                 pkFieldId = fieldname2id(pkTableId, _pkField);
+        #
+        #    SysDictTable            sysDictFKTable = new SysDictTable(fkTableId);
+        #    Set                     fkFields = sysDictFKTable.fields(false,false);
+        #
+        #    SysDictType             edtDictType = new SysDictType(extendedTypeName2Id(_edtName));
+        #
+        #    DictRelation            typeRelation;
+        #    DictRelation            tableRelation;
+        #    SysDictField            sysDictField;
+        #
+        #    container               con;
+        #    boolean                 isEDTRelation;
+        #    boolean                 previousLineFound;
+        #    boolean                 lineFound;
+        #    int                     i;
+        #    int                     j;
+        #
+        #    boolean                 isSourceEDTPropertySet;
+        #    Name                    relationName;
+        #    str                     thisRole;
+        #    str                     relatedTableRole;
+        #    Cardinality             cardinality;
+        #    RelatedTableCardinality relatedTableCardinality;
+        #    RelationshipType        relationType;
+        #
+        #    fieldId                 thisFieldId;
+        #    fieldId                 relatedFieldId;
+        #
+        #    TreeNode                fkTableNode;
+        #    TreeNode                relationsNode;
+        #    TreeNode                relationNode;
+        #    int                     typeRelLineCount, tableRelLineCount;
+        #
+        #
+        #    if (!edtDictType || !edtDictType.relationObject())
+        #    {
+        #        return [retStatus,connull()];
+        #    }
+        #
+        #    typeRelation = edtDictType.relationObject();
+        #
+        #    // check if the FK field is marked as "IgnoreEDTRelation"
+        #    sysDictField = new SysDictField(fkTableId,fkFieldId);
+        #    if (sysDictField.isIgnoreEDTRelation())
+        #    {
+        #        return [SysEDTMigrationStatus::MigratedToIgnoreEDTRelation,connull()];
+        #    }
+        #
+        #    fkTableNode = TreeNode::findNode(strfmt('%1\\%2',#TablesPath,_fkTable));
+        #    relationsNode = fkTableNode.AOTfindChild(#Relations);
+        #    relationNode = relationsNode.AOTfirstChild();
+        #
+        #    //loop through all the relations of the table to find the migration status of the given EDT
+        #    while (relationNode)
+        #    {
+        #        tableRelation = new DictRelation(fkTableId);
+        #        tableRelation.loadNameRelation(relationNode.AOTgetProperty('Name'));
+        #        if (tableRelation)
+        #        {
+        #
+        #            if (retStatus == SysEDTMigrationStatus::NotMigrated)
+        #            {
+        #                relationName = relationNode.AOTgetProperty(#Name);
+        #                thisRole = tableRelation.Role();
+        #                relatedTableRole = tableRelation.RelatedTableRole();
+        #                cardinality = tableRelation.Cardinality();
+        #                relatedTableCardinality = tableRelation.RelatedTableCardinality();
+        #                relationType = tableRelation.relationshipType();
+        #            }
+        #
+        #            isEDTRelation = tableRelation.EDTRelation();
+        #            previousLineFound = false;
+        #            con = connull();
+        #
+        #            //if the Table property on the relation matches with the PK table, explore the relation lines to see if the line matches the EDT relation
+        #            if (tableRelation.externTable() == pkTableId)
+        #            {
+        #                previousLineFound = true;
+        #                typeRelLineCount = typeRelation.lines();
+        #                for (i=1; previousLineFound && i <= typeRelLineCount; i++)
+        #                {
+        #                    lineFound = false;
+        #                    tableRelLineCount = tableRelation.lines();
+        #                    for (j = 1; !lineFound && j <= tableRelLineCount; j++)
+        #                    {
+        #                        //If the EDT relation and the Table relation are both Normal relations
+        #                        if (typeRelation.lineType(i) == TableRelation::Dataset &&
+        #                            tableRelation.lineType(j) == TableRelation::Field) //RelationshipSubType::Default || typeRelation.lineSubType(i) == RelationshipSubType::ForeignKey) )
+        #                        {
+        #                            relatedFieldId = tableRelation.lineExternTableValue(j);
+        #                            thisFieldId = tableRelation.lineTableValue(j);
+        #                            if (relatedFieldId == pkFieldId && thisFieldId == fkFieldId)
+        #                            {
+        #                                con += [j];
+        #                                lineFound = true;
+        #                            }
+        #                        }
+        #                        // in case the EDT relation and the Table relation are both ExternFixed
+        #                        else if (typeRelation.lineType(i) == TableRelation::ExternFixed &&
+        #                            tableRelation.lineType(j) == TableRelation::ExternFixed &&
+        #                            typeRelation.lineTableValue(i) == tableRelation.lineTableValue(j) &&
+        #                            typeRelation.table() == tableRelation.externTable() &&
+        #                            typeRelation.lineExternTableValue(i) == tableRelation.lineExternTableValue(j))
+        #                        {
+        #                            con += [j];
+        #                            lineFound = true;
+        #                        }
+        #                    }
+        #                    previousLineFound = lineFound;
+        #                }
+        #            }
+        #            if (previousLineFound)
+        #            {
+        #                if(con)
+        #                {
+        #                    isSourceEDTPropertySet = true;
+        #                    tableRelLineCount = tableRelation.lines();
+        #                    for (j = 1; j <= tableRelLineCount; j++)
+        #                    {
+        #                        if (confind(con,j) >0 &&
+        #                            isSourceEDTPropertySet &&
+        #                            tableRelation.lineSourceEDT(j) != edtDictType.id())
+        #                        {
+        #                            isSourceEDTPropertySet = false;
+        #                            break;
+        #                        }
+        #                    }
+        #                }
+        #
+        #                if (isSourceEDTPropertySet)
+        #                {
+        #                    if (isEDTRelation)
+        #                    {
+        #                        return [SysEDTMigrationStatus::Migrated,[relationName, thisRole,relatedTableRole,cardinality,relatedTableCardinality,relationType]];
+        #                    }
+        #                    else
+        #                    {
+        #                        retStatus = SysEDTMigrationStatus::MigratedToExistingTableRelation;
+        #                    }
+        #
+        #                }
+        #            }
+        #        }
+        #        relationNode = relationNode.AOTnextSibling();
+        #    }
+        #
+        #
+        #    if (retStatus != SysEDTMigrationStatus::NotMigrated)
+        #    {
+        #        return [retStatus,[relationName, thisRole,relatedTableRole,cardinality,relatedTableCardinality,relationType]];
+        #    }
+        #    else
+        #    {
+        #        return [retStatus,connull()];
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #getAssociationType
+        #/// <summary>
+        #/// Gets the relationship type of the relation between two tables.
+        #/// </summary>
+        #/// <param name="_tableName">
+        #/// The table name.
+        #/// </param>
+        #/// <param name="_fieldName">
+        #/// The field name.
+        #/// </param>
+        #/// <param name="_edtInfo">
+        #/// The record that holds the extended data type.
+        #/// </param>
+        #/// <param name="_deleteAction">
+        #/// A Boolean value that specifies whether the extended data type relation is used in a table delete
+        #/// action.
+        #/// </param>
+        #/// <returns>
+        #/// The type of the relationship.
+        #/// </returns>
+        #private RelationshipType getAssociationType(tableName _tableName,fieldName _fieldName, SysEDTMigrationEDT _edtInfo, boolean _deleteAction)
+        #{
+        #    RelationshipType    ret = RelationshipType::NotSpecified;
+        #    SysDictTable        fkDictTable;
+        #    SysDictTable        pkDictTable;
+        #    SysDictField        fkDictField;
+        #
+        #    int                 i,cnt;
+        #    tableId             daTableId;
+        #
+        #    fkDictTable = new SysDictTable(tablename2id(_tableName));
+        #    pkDictTable = new SysDictTable(tablename2id(_edtInfo.RelatedTableName));
+        #    if(_deleteAction)
+        #    {
+        #        cnt = pkDictTable.deleteActionCnt();
+        #        for(i =1; i <= cnt;i++)
+        #        {
+        #            daTableId = pkDictTable.deleteActionTableId(i);
+        #            if(daTableId == fkDictTable.id())
+        #            {
+        #                if(pkDictTable.deleteActionType(i) == 1)
+        #                {
+        #                    return RelationshipType::Aggregation;
+        #                }
+        #
+        #            }
+        #        }
+        #    }
+        #    if(fkDictTable)
+        #    {
+        #        fkDictField = new DictField(fkDictTable.id(),Fieldname2id(fkDictTable.id(),_fieldName));
+        #        if(fkDictField && fkDictField.mandatory())
+        #        {
+        #            return RelationShipType::Aggregation;
+        #        }
+        #    }
+        #
+        #
+        #    return RelationshipType::Association;
+        #}
+      ENDSOURCE
+      SOURCE #getCardinality
+        #/// <summary>
+        #/// Gets the <c>Cardinality</c> enumeration type of the relation to a table.
+        #/// </summary>
+        #/// <param name="tableName">
+        #/// The table name.
+        #/// </param>
+        #/// <param name="fieldName">
+        #/// The field name.
+        #/// </param>
+        #/// <returns>
+        #/// The <c>Cardinality</c> enumeration type of the relation.
+        #/// </returns>
+        #private Cardinality getCardinality(str tableName,str fieldName)
+        #{
+        #    int retint;
+        #    DictTable tbl;
+        #    DictField fld ;
+        #    DictIndex idx;
+        #    int idxCnt,idxIterator,idxFldCnt,idxFldIterator;
+        #    tbl = new DictTable(tablename2id(tableName));
+        #    if(tbl)
+        #    {
+        #        fld = new DictField(tbl.id(),fieldname2id(tbl.id(),fieldName));
+        #        if(fld)
+        #        {
+        #            retint = Cardinality::NotSpecified;
+        #            idxCnt = tbl.indexCnt();
+        #
+        #            for(idxIterator = 1; idxIterator <= idxCnt ;idxIterator++)
+        #            {
+        #                idx = new DictIndex(tbl.id(),tbl.indexCnt2Id(idxIterator));
+        #                if(idx && idx.enabled())
+        #                {
+        #                    idxFldCnt = idx.numberOfFields();
+        #                    for(idxFldIterator =1;idxFldIterator <= idxFldCnt;idxFldIterator++)
+        #                    {
+        #                        if(fld.id() == idx.field(idxFldIterator))
+        #                        {
+        #                            if(idxFldCnt == 1)
+        #                            {
+        #                                if(tbl.primaryIndex() == idx.id())
+        #                                {
+        #                                    return Cardinality::ExactlyOne;
+        #
+        #                                }
+        #                                if(!idx.allowDuplicates())
+        #                                {
+        #                                    if(fld.mandatory())
+        #                                    {
+        #                                        retint = Cardinality::ExactlyOne;
+        #                                    }
+        #                                    else
+        #                                    {
+        #                                        retint = Cardinality::ZeroOne;
+        #                                    }
+        #                                }
+        #                                else
+        #                                {
+        #                                    if(retint == Cardinality::NotSpecified)
+        #                                    {
+        #                                        if(fld.mandatory())
+        #                                        {
+        #                                            retint = Cardinality::OneMore;
+        #                                        }
+        #                                        else
+        #                                        {
+        #                                            retint = Cardinality::ZeroMore;
+        #                                        }
+        #                                    }
+        #                                }
+        #                            }
+        #                            else
+        #                            {
+        #                                if(retint == Cardinality::NotSpecified)
+        #                                {
+        #                                    if(fld.mandatory())
+        #                                    {
+        #                                        retint = Cardinality::OneMore;
+        #                                    }
+        #                                    else
+        #                                    {
+        #                                        retint = Cardinality::ZeroMore;
+        #                                    }
+        #                                }
+        #                            }
+        #                        }
+        #                    }
+        #                }
+        #            }
+        #            if(retint == Cardinality::NotSpecified)
+        #            {
+        #                if(fld.mandatory())
+        #                {
+        #                    retint = Cardinality::OneMore;
+        #                }
+        #                else
+        #                {
+        #                    retint = Cardinality::ZeroMore;
+        #                }
+        #            }
+        #        }
+        #    }
+        #    return retint;
+        #}
+      ENDSOURCE
+      SOURCE #getEDTRelationRecIds
+        #/// <summary>
+        #/// Gets a set of extended data type relations that link two tables.
+        #/// </summary>
+        #/// <param name="_tableName">
+        #/// The name of the table.
+        #/// </param>
+        #/// <param name="_relatedTableName">
+        #/// The name of the related table.
+        #/// </param>
+        #/// <returns>
+        #/// The set of extended data type relations that link two tables.
+        #/// </returns>
+        #private Set getEDTRelationRecIds(tableName _tableName, tableName _relatedTableName)
+        #{
+        #    Set             relationFounds = new Set(Types::Int64);
+        #    SysEDTMigrationRelation  edtRelation;
+        #    SysEDTMigrationEDT      edtInfo;
+        #    while select RecId, TableName from edtRelation
+        #        join RecId, RelatedTableName from edtInfo
+        #        where edtRelation.SysEDTMigrationEDT == edtInfo.RecId &&
+        #                edtRelation.TableName == _tableName &&
+        #                edtInfo.RelatedTableName == _relatedTableName
+        #    {
+        #        relationFounds.add(edtRelation.RecId);
+        #    }
+        #
+        #    while select RecId, TableName from edtRelation
+        #        join RecId, RelatedTableName from edtInfo
+        #        where edtRelation.SysEDTMigrationEDT == edtInfo.RecId &&
+        #                edtRelation.TableName == _relatedTableName &&
+        #                edtInfo.RelatedTableName == _tableName
+        #    {
+        #        relationFounds.add(edtRelation.RecId);
+        #    }
+        #
+        #    return relationFounds;
+        #}
+      ENDSOURCE
+      SOURCE #getIndexType
+        #/// <summary>
+        #/// Gets the index type of the index that covers the fields in an extended data type relation.
+        #/// </summary>
+        #/// <param name="_tableName">
+        #/// The name of the table.
+        #/// </param>
+        #/// <param name="_fieldName">
+        #/// The name of the field.
+        #/// </param>
+        #/// <param name="_edtFields">
+        #/// The set of fields in the extended data type relations.
+        #/// </param>
+        #/// <returns>
+        #/// The index type of the table that covers the extended data type fields.
+        #/// </returns>
+        #public SysEDTMigrationIndexType getIndexType(tableName _tableName, fieldName _fieldName, Set _edtFields)
+        #{
+        #    SysDictTable                sysDictTable;
+        #    SysDictField                sysDictField;
+        #    SysDictIndex                sysDictIndex;
+        #
+        #    SysEDTMigrationIndexType    indexType = SysEDTMigrationIndexType::None;
+        #    boolean                     normalFieldFound;
+        #    boolean                     found = false;
+        #    int                         indexCnt;
+        #    int                         i, j, cnt;
+        #
+        #    int id = tablename2id(_tableName);
+        #    sysDictTable = new SysDictTable(tablename2id(_tableName));
+        #    if (!sysDictTable)
+        #        throw error(strfmt("@SYS75683", _tableName));
+        #
+        #    sysDictField = new SysDictField(sysDictTable.id(),fieldname2id(sysDictTable.id(),_fieldName));
+        #    if (!sysDictField)
+        #        throw error(strfmt("@SYS107145",_fieldName,_tableName));
+        #    else
+        #    {
+        #        indexCnt = sysDictTable.indexCnt();
+        #        //Iterator over all the Indexes to get the best match
+        #        for (i = 1; i <= indexCnt; i++)
+        #        {
+        #            sysDictIndex = new SysDictIndex(sysDictTable.id(),sysDictTable.indexCnt2Id(i));
+        #            if (sysDictIndex && sysDictIndex.enabled())
+        #            {
+        #                //Continue only if the Index Field list is a subset of EDT Field List
+        #                found = true;
+        #                normalFieldFound = false;
+        #
+        #                cnt = sysDictIndex.numberOfFields();
+        #                for ( j=1; j <= cnt ; j++)
+        #                {
+        #                    //If the Index field matches the Normal Field Id
+        #                    if(sysDictIndex.field(j) == sysDictField.id())
+        #                    {
+        #                        normalFieldFound = true;
+        #                    }
+        #                    else
+        #                    {
+        #                        if(!_edtFields.in(fieldid2name(sysDictTable.id(), sysDictIndex.field(j))))
+        #                        {
+        #                            found = false;
+        #                            //If we already found the Normal Field no need to look further.
+        #                            if(normalFieldFound)
+        #                                break;
+        #
+        #                        }
+        #                    }
+        #                }// index fields loop
+        #
+        #                //If the Normal Field is found then only we can look furhter to tag the Index Char
+        #                if (normalFieldFound)
+        #                {
+        #                    //if found = true tha means all the Index Fields are covered by the EDT relation FIelds on PK Side
+        #                    if(found)
+        #                    {
+        #                        //Look if the Index is Primary Index . This takes precedence
+        #                        if( (sysDictTable.primaryIndex() == sysDictIndex.id()))
+        #                        {
+        #                            return SysEDTMigrationIndexType::PrimaryKey;
+        #                        }
+        #
+        #                        //if it is not primary check if it is alternate key
+        #                        if(sysDictIndex.isAlternateKey())
+        #                        {
+        #                            indexType = SysEDTMigrationIndexType::AlternateKey;
+        #                            continue;
+        #                        }
+        #
+        #                        //If the Index is Unique and a matching AK is not already found , mark it as Unique
+        #                        if(!sysDictIndex.allowDuplicates() && indexType != SysEDTMigrationIndexType::AlternateKey)
+        #                        {
+        #                            indexType = SysEDTMigrationIndexType::Unique;
+        #                            continue;
+        #                        }
+        #
+        #                        //the indexType is not already marked as PK or AK or Unique Index , then mark as NonUnique Index
+        #                        if(indexType != SysEDTMigrationIndexType::PrimaryKey && indexType != SysEDTMigrationIndexType::AlternateKey && indexType != SysEDTMigrationIndexType::Unique)
+        #                        {
+        #                            indexType = SysEDTMigrationIndexType::NonUnique;
+        #                            continue;
+        #                        }
+        #                    } // if fields are covered by index
+        #                    else if(indexType != SysEDTMigrationIndexType::PrimaryKey && indexType != SysEDTMigrationIndexType::AlternateKey && indexType != SysEDTMigrationIndexType::Unique)
+        #                    {
+        #                        indexType = SysEDTMigrationIndexType::Composite;
+        #                        continue;
+        #                    }
+        #                }
+        #            }
+        #        }
+        #    }
+        #    return indexType;
+        #}
+      ENDSOURCE
+      SOURCE #getRelatedTableCardinality
+        #/// <summary>
+        #/// Gets the cardinality of the related table in the relation.
+        #/// </summary>
+        #/// <param name="_tableName">
+        #/// The name of the table.
+        #/// </param>
+        #/// <param name="_fieldName">
+        #/// The name of the field.
+        #/// </param>
+        #/// <returns>
+        #/// The <c>Cardinality::ExactlyOne</c> enumeration value if the field is mandatory; otherwise, the
+        #/// <c>Cardinality::ZeroOne</c> enumeration value.
+        #/// </returns>
+        #private Cardinality getRelatedTableCardinality(str _tableName,str _fieldName)
+        #{
+        #    int                         ret;
+        #    SysDictTable                dictTable;
+        #    SysDictField                dictField;
+        #    dictTable = new SysDictTable(tablename2id(_tableName));
+        #    if(dictTable)
+        #    {
+        #        dictField = new SysDictField(dictTable.id(),fieldname2id(dictTable.id(), _fieldName));
+        #        if(dictField)
+        #        {
+        #            if(dictField.mandatory())
+        #            {
+        #                ret =  Cardinality::ExactlyOne;
+        #            }
+        #            else
+        #            {
+        #                ret =  Cardinality::ZeroOne;
+        #            }
+        #        }
+        #    }
+        #    return ret;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #isEDTUsedInDeleteAction
+        #/// <summary>
+        #/// Determines if the given extended data type relation is used in a delete action of the table.
+        #/// </summary>
+        #/// <param name="_sysEDTRelation">
+        #/// The extended data type relation that is used in the table.
+        #/// </param>
+        #/// <returns>
+        #/// true if the given extend data type relation is used in a delete action; otherwise, false.
+        #/// </returns>
+        #private boolean isEDTUsedInDeleteAction(SysEDTMigrationRelation _sysEDTRelation)
+        #{
+        #    SysEDTMigrationEDT      sysEDTInfo;
+        #    tableId         tableId;
+        #    tableId         relatedTableId;
+        #    SysDictTable    sysDictTable;
+        #    int             i;
+        #    int             daCnt;
+        #
+        #    if (_sysEDTRelation.RecId)
+        #    {
+        #        tableId = tablename2id(_sysEDTRelation.TableName);
+        #        sysEDTInfo = SysEDTMigrationEDT::findByRecId(_sysEDTRelation.RecId);
+        #        relatedTableId = tablename2id(sysEDTInfo.RelatedTableName);
+        #        sysDictTable = new SysDictTable(relatedTableId);
+        #
+        #        if (sysDictTable)
+        #        {
+        #            daCnt = sysDictTable.deleteActionCnt();
+        #            for (i=1; i<=daCnt; i++)
+        #            {
+        #                if (sysDictTable.deleteActionTableId(i) == tableId)
+        #                {
+        #                    return true;
+        #                }
+        #            }
+        #        }
+        #    }
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #markAsIgnoreEDTRelation
+        #/// <summary>
+        #/// Sets the <c>IgnoreEDTRelation</c> property of a field to Yes.
+        #/// </summary>
+        #/// <param name="_tableName">
+        #/// The name of the table.
+        #/// </param>
+        #/// <param name="_fieldName">
+        #/// The name of the field.
+        #/// </param>
+        #/// <returns>
+        #/// true if the field is successfully set; otherwise, false.
+        #/// </returns>
+        #public boolean markAsIgnoreEDTRelation(str _tableName,str _fieldName)
+        #{
+        #    TreeNode        tableNode;
+        #    TreeNode        fieldNode;
+        #    TreeNode        fieldsNode;
+        #
+        #    tableNode = TreeNode::findNode(strfmt('%1\\%2',#TablesPath,_tableName));
+        #    if(tableNode)
+        #    {
+        #        fieldsNode = tableNode.AOTfindChild(#Fields);
+        #        if (fieldsNode)
+        #        {
+        #            fieldNode = fieldsNode.AOTfindChild(_fieldName);
+        #            if(fieldNode && fieldNode.AOTgetProperty(#IgnoreEDTRelation) != enum2Symbol(enumNum(NoYes),1))
+        #            {
+        #                fieldNode.AOTsetProperty( #IgnoreEDTRelation, enum2Symbol(enumNum(NoYes),1));
+        #                this.writeLog(strfmt("@SYS334654",#IgnoreEDTRelation, _tableName,_fieldName));
+        #                info(strfmt("@SYS334654",#IgnoreEDTRelation, _tableName,_fieldName));
+        #                return true;
+        #            }
+        #        }
+        #    }
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #migrateToExistingRelation
+        #/// <summary>
+        #/// Migrates an extend data type relation to an existing relation in a table.
+        #/// </summary>
+        #/// <param name="_pkTable">
+        #/// The name of the related table.
+        #/// </param>
+        #/// <param name="_pkField">
+        #/// The name of the related field.
+        #/// </param>
+        #/// <param name="_fkTable">
+        #/// The name of the table.
+        #/// </param>
+        #/// <param name="_fkField">
+        #/// The name of the field.
+        #/// </param>
+        #/// <param name="_edtName">
+        #/// The name of the extended data type.
+        #/// </param>
+        #/// <returns>
+        #/// true if the migration is successful; otherwise, false.
+        #/// </returns>
+        #public boolean migrateToExistingRelation(tableName _pkTable,fieldName _pkField,tableName _fkTable, fieldName _fkField, Name _edtName)
+        #{
+        #    SysEDTMigrationStatus   retStatus = SysEDTMigrationStatus::NotMigrated;
+        #    tableId                 fkTableId = tablename2id(_fkTable);
+        #    tableId                 pkTableId = tablename2id(_pkTable);
+        #    fieldId                 fkFieldId = fieldname2id(fkTableId, _fkField);
+        #    fieldId                 pkFieldId = fieldname2id(pkTableId, _pkField);
+        #
+        #    SysDictTable            sysDictFKTable = new SysDictTable(fkTableId);
+        #    Set                     fkFields = sysDictFKTable.fields(false,false);
+        #
+        #    SysDictType             edtDictType = new SysDictType(extendedTypeName2Id(_edtName));
+        #
+        #    DictRelation            typeRelation;
+        #    tableName               externTable;
+        #    container               con;
+        #    boolean                 previousLineFound;
+        #    boolean                 lineFound;
+        #    int                     i;
+        #    int                     relationLineNum;
+        #
+        #    str                     lineFieldProperty;
+        #    str                     lineRelatedFieldProperty;
+        #    boolean                 ret = false;
+        #    TreeNode                fkTableNode;
+        #    TreeNode                relationsNode;
+        #    TreeNode                relationNode;
+        #    TreeNode                relationLine;
+        #    int                     typeRelLineCount;
+        #
+        #    if (!edtDictType || !edtDictType.relationObject())
+        #    {
+        #        error(strfmt("@SYS334655", _edtName));
+        #        return false;
+        #    }
+        #
+        #    typeRelation = edtDictType.relationObject();
+        #
+        #    fkTableNode = TreeNode::findNode(strfmt('%1\\%2',#TablesPath,_fkTable));
+        #    relationsNode = fkTableNode.AOTfindChild(#Relations);
+        #    relationNode = relationsNode.AOTfirstChild();
+        #
+        #    //loop through all the relations of the table to find the migration status of the given EDT
+        #    while (relationNode)
+        #    {
+        #        previousLineFound = false;
+        #        con = connull();
+        #
+        #        externTable = relationNode.AOTgetProperty(#Table);
+        #        //if the Table property on the relation matches with the PK table, explore the relation lines to see if the line matches the EDT relation
+        #        if (externTable == _pkTable)
+        #        {
+        #            previousLineFound = true;
+        #            typeRelLineCount = typeRelation.lines();
+        #            for (i=1; previousLineFound && i <= typeRelLineCount; i++)
+        #            {
+        #                lineFound = false;
+        #                relationLine = relationNode.AOTfirstChild();
+        #                relationLineNum = 0;
+        #                while (relationLine && !lineFound )
+        #                {
+        #                    relationLineNum++;
+        #                    //If the EDT relation and the Table relation are both Normal relations
+        #                    if (typeRelation.lineType(i) == TableRelation::Dataset &&
+        #                        (relationLine.treeNodeType().id() == #NT_DBNORMALREFERENCEFIELD || relationLine.treeNodeType().id() == #NT_PKFK))
+        #                    {
+        #                        lineFieldProperty = relationLine.AOTgetProperty(#Field);
+        #                        lineRelatedFieldProperty = relationLine.AOTgetProperty(#RelatedField);
+        #                        if( (lineFieldProperty == _fkField) && (lineRelatedFieldProperty == _pkField))
+        #                        {
+        #                            con += [relationLineNum];
+        #                            lineFound = true;
+        #                        }
+        #                    }
+        #                    // in case the EDT relation and the Table relation are both ExternFixed
+        #                    else if (typeRelation.lineType(i) == TableRelation::ExternFixed &&
+        #                        relationLine.treeNodeType().id() == #NT_DBEXTERNFIXEDREFERENCEFIELD &&
+        #                        int2str(typeRelation.lineTableValue(i)) == relationLine.AOTgetProperty(#Value) &&  // and extern values are the same
+        #                        tableid2name(typeRelation.table()) == relationLine.AOTgetProperty(#Table) && // the extern tables are the same
+        #                        fieldid2name(typeRelation.table(), typeRelation.lineExternTableValue(i)) == relationLine.AOTgetProperty(#RelatedField)) // and extern field are the same
+        #                    {
+        #                        con += [relationLineNum];
+        #                        lineFound = true;
+        #                    }
+        #                    relationLine = relationLine.AOTnextSibling();
+        #                }
+        #                previousLineFound = lineFound;
+        #            }
+        #        }
+        #
+        #        if (previousLineFound)
+        #        {
+        #            ret = true;
+        #            if(con)
+        #            {
+        #                i = 0;
+        #                relationLine = relationNode.AOTfirstChild();
+        #                while(relationLine)
+        #                {
+        #                    i++;
+        #                    if(confind(con,i) > 0)
+        #                    {
+        #                        relationLine.AOTsetProperty(#SourceEDT,_edtName);
+        #                    }
+        #                    relationLine = relationLine.AOTnextSibling();
+        #                }
+        #            }
+        #        }
+        #        relationNode = relationNode.AOTnextSibling();
+        #    }
+        #
+        #    if (ret)
+        #    {
+        #        fkTableNode.AOTsave();
+        #        appl.dbSynchronize(fkTableNode.applObjectId());
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #migrateToNewRelation
+        #/// <summary>
+        #/// Migrates an extended data type relation to a new table relation.
+        #/// </summary>
+        #/// <param name="_tableName">
+        #/// The name of the table that contains the new relation.
+        #/// </param>
+        #/// <param name="_fieldName">
+        #/// The name of the field that is associated with the extended data type.
+        #/// </param>
+        #/// <param name="_edtInfo">
+        #/// The record that contains the extended data type.
+        #/// </param>
+        #/// <param name="_deleteAction">
+        #/// A Boolean value that specifies whether the extended data type relation is used in a table delete
+        #/// action
+        #/// </param>
+        #/// <returns>
+        #/// true if the migration is successful; otherwise, false.
+        #/// </returns>
+        #public boolean migrateToNewRelation(tableName _tableName,fieldName _fieldName, SysEDTMigrationEDT _edtInfo, boolean _deleteAction)
+        #{
+        #    TreeNode                fkTableNode;
+        #    TreeNode                aotNode;
+        #
+        #    TreeNode                relationsNode;
+        #    TreeNode                relationNode;
+        #    TreeNode                edtNode;
+        #
+        #    TreeNode                relationChildNode;
+        #    TreeNode                moveAfterParent;
+        #
+        #    TreeNode                indexesNode;
+        #    TreeNode                fkIndexNode;
+        #    TreeNode                nextIndexNode;
+        #
+        #    Name                    newRelationName;
+        #    SysDictTable            fkDictTable;
+        #    SysDictRelation         fkDictRelation;
+        #    SysDictType             edtDictType;
+        #    DictRelation            edtDictRelation;
+        #    fieldName               delFieldName;
+        #
+        #    tableId                 fkTableId = tablename2id(_tableName);
+        #    tableId                 pkTableId;
+        #    int                     retryCnt = 0;
+        #    int                     i=0, cnt = 0;
+        #
+        #    Cardinality             newRelationCardinality;
+        #    RelationshipType        associationType;
+        #
+        #    boolean                 ret = false;
+        #
+        #    fkTableNode = TreeNode::findNode(strfmt('%1\\%2',#TablesPath,_tableName));
+        #    edtNode = TreeNode::findNode(strfmt('%1\\%2',#ExtendedDataTypesPath,_edtInfo.Name));
+        #
+        #    if (!edtNode)
+        #    {
+        #        edtNode = TreeNode::findNode(strFmt('%1\\%2', #SystemTypesPath, _edtInfo.Name));
+        #    }
+        #
+        #    if (!edtNode)
+        #    {
+        #        throw error(strfmt("@SYS334656",_edtInfo.Name));
+        #    }
+        #
+        #    if (!fkTableNode)
+        #    {
+        #        throw error(strfmt("@SYS334657",_tableName));
+        #    }
+        #
+        #    relationsNode = fkTableNode.AOTfindChild(#Relations);
+        #
+        #    fkDictTable = new SysDictTable(fkTableId);
+        #    fkDictRelation = new SysDictRelation(fkTableId);
+        #
+        #    if (fkDictTable.extends())
+        #    {
+        #        newRelationName = strfmt('%1_%2',_edtInfo.RelatedTableName,fkTableId);
+        #    }
+        #    else
+        #    {
+        #        newRelationName = _edtInfo.RelatedTableName;
+        #    }
+        #    retryCnt = 1;
+        #
+        #    while (pkTableId >0 || relationsNode.AOTfindChild(newRelationName) )
+        #    {
+        #        if(fkDictTable.extends())
+        #        {
+        #            newRelationName = strfmt('%1%2_%3',_edtInfo.RelatedTableName,retryCnt, fkTableId);
+        #        }
+        #        else
+        #        {
+        #            newRelationName = strfmt('%1%2',_edtInfo.RelatedTableName,retryCnt);
+        #        }
+        #        retryCnt++;
+        #        pkTableId = fkDictRelation.loadNameRelation(newRelationName);
+        #    }
+        #    // create the new relation node
+        #    relationNode = relationsNode.AOTadd(newRelationName);
+        #
+        #    if (relationNode)
+        #    {
+        #        relationNode.AOTsetProperty(#Table,_edtInfo.RelatedTableName);
+        #
+        #        switch (_edtInfo.IndexType)
+        #        {
+        #            //normal relation
+        #            case SysEDTMigrationIndexType::Unique:
+        #                relationChildNode = relationNode.AOTaddSubNode(#NT_DBNORMALREFERENCEFIELD);
+        #                relationChildNode.AOTsetProperty(#Field,_fieldName);
+        #                relationChildNode.AOTsetProperty(#RelatedField,_edtInfo.RelatedFieldName);
+        #                //Setting SourceEDT property
+        #                relationChildNode.AOTsetProperty(#SourceEDT,_edtInfo.Name);
+        #                break;
+        #
+        #            //PK-FK relation
+        #            case SysEDTMigrationIndexType::PrimaryKey:
+        #            case SysEDTMigrationIndexType::AlternateKey:
+        #
+        #                if (_edtInfo.IndexType == SysEDTMigrationIndexType::PrimaryKey)
+        #                {
+        #                    relationChildNode = relationNode.AOTaddSubNode(#NT_PKFK);
+        #                }
+        #                else if (_edtInfo.IndexType == SysEDTMigrationIndexType::AlternateKey)
+        #                {
+        #                    relationChildNode = relationNode.AOTaddSubNode(#NT_AKFK);
+        #                }
+        #                delFieldName =relationChildNode.AOTgetProperty(#Field);
+        #                relationChildNode.AOTsetProperty(#Field,_fieldName);
+        #                if (_edtInfo.IndexType == SysEDTMigrationIndexType::AlternateKey)
+        #                {
+        #                    relationChildNode.AOTsetProperty(#RelatedField,_edtInfo.RelatedFieldName);
+        #                }
+        #                relationChildNode.AOTsetProperty(#SourceEDT,_edtInfo.Name);
+        #
+        #                //Delete The Additional Field and Index that gets  created because of the PK/FK or AK/FK relation
+        #                indexesNode = fkTableNode.AOTfindChild(#Indexes);
+        #                if(indexesNode)
+        #                {
+        #                    fkIndexNode = indexesNode.AOTfirstChild();
+        #                    while(fkIndexNode)
+        #                    {
+        #                        nextIndexNode = fkIndexNode.AOTnextSibling();
+        #                        //Find all the Indexes which Contain the newly created field by kernel -DelFieldName and delete the Index.
+        #                        if(fkIndexNode.AOTfindChild(delFieldName))
+        #                        {
+        #                            fkIndexNode.AOTdelete();
+        #                        }
+        #                        fkIndexNode = nextIndexNode;
+        #                    }
+        #                }
+        #
+        #                aotNode = fkTableNode.AOTfindChild(#Fields);
+        #                aotNode = aotNode.AOTfindChild(delFieldName);
+        #                aotNode.AOTdelete();
+        #                break;
+        #        }//swtich
+        #
+        #        //If there are filters migrate them as FieldFixed Relations on the table.
+        #        if (relationChildNode && _edtInfo.HasRelationConstraints)
+        #        {
+        #            moveAfterParent = relationChildNode;
+        #            edtDictType = new SysDictType(extendedTypeName2Id(_edtInfo.Name));
+        #            edtDictRelation = edtDictType.relationObject();
+        #            if(edtDictRelation.lines() > 1)
+        #            {
+        #                cnt = edtDictRelation.lines();
+        #                for(i=1;i<=cnt;i++)
+        #                {
+        #                    if (edtDictRelation.lineType(i) == TableRelation::ExternFixed)
+        #                    {
+        #                        relationChildNode = relationNode.AOTaddSubNode(#NT_DBEXTERNFIXEDREFERENCEFIELD);
+        #                        relationChildNode.AOTsetProperty(#Value,edtDictRelation.lineTableValue(i));
+        #                        relationChildNode.AOTsetProperty(#RelatedField,fieldid2name(tablename2id(_edtInfo.RelatedTableName),edtDictRelation.lineExternTableValue(i)));
+        #
+        #                        //Setting SourceEDT property
+        #                        relationChildNode.AOTsetProperty(#SourceEDT,_edtInfo.Name);
+        #                        relationChildNode.AOTMove(relationNode,moveAfterParent);
+        #                        moveAfterParent = relationChildNode;
+        #                    }
+        #                }
+        #            }
+        #        }
+        #
+        #        //Cardinality
+        #        newRelationCardinality = this.getCardinality(_tableName,_fieldName);
+        #        relationNode.AOTsetProperty(#Cardinality,enum2Value(newRelationCardinality));
+        #
+        #        //RelatedTableCardinality
+        #        newRelationCardinality = this.getRelatedTableCardinality(_edtInfo.RelatedTableName,_edtInfo.RelatedFieldName);
+        #        relationNode.AOTsetProperty(#RelatedTableCardinality,enum2Value(newRelationCardinality));
+        #        relationNode.AOTsetProperty(#EDTRelation,enum2Symbol(enumNum(NoYes),1));
+        #
+        #        //AssociationType
+        #        associationType = this.getAssociationType(_tableName,_fieldName, _edtInfo, _deleteAction);
+        #        relationNode.AOTsetProperty(#RelationshipType,enum2Value(associationType));
+        #
+        #        ret = true;
+        #
+        #        fkTableNode.AOTsave();
+        #        appl.dbSynchronize(fkTableNode.applObjectId());
+        #    }
+        #    else
+        #    {
+        #        error(strfmt("@SYS334658",_edtInfo.Name, newRelationName, _tableName));
+        #    }
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #public void new(str _path)
+        #{
+        #    logFilePath = _path;
+        #}
+      ENDSOURCE
+      SOURCE #scanDataSets
+        #/// <summary>
+        #/// Populates the data sets that must be tested when extended data type relations are migrated.
+        #/// </summary>
+        #public void scanDataSets()
+        #{
+        #    SysEDTMigrationTestArtifact affectedDataset;
+        #    TreeNode                    datasetNode;
+        #    TreeNode                    datasetRootNode;
+        #    DataSet                     datasetObject;
+        #    FormBuildDataSource         fbds;
+        #    int                         i;
+        #
+        #    Map                         datasourceMap;
+        #    MapEnumerator               mapEnum;
+        #    Name                        datasetName;
+        #
+        #    container                   value;
+        #    tableId                     tableId;
+        #    tableId                     joinsourceid;
+        #    tableId                     joinTableId;
+        #
+        #    tableName                   tableName;
+        #    tableName                   relatedTableName;
+        #    Set                         relationSet;
+        #    Set                         rels;
+        #    SetEnumerator               setEnum;
+        #    int                         cnt;
+        #
+        #    delete_from affectedDataset where affectedDataset.ElementType == UtilElementType::DataSet;
+        #
+        #    datasetRootNode = TreeNode::findNode(#DataSets);
+        #    if(datasetRootNode)
+        #    {
+        #       datasetNode = datasetRootNode.AOTfirstChild();
+        #        while(datasetNode)
+        #        {
+        #            datasourceMap = new Map(Types::Integer,Types::Container);
+        #            datasetName =datasetNode.AOTname();
+        #            datasetObject = new DataSet(datasetName);
+        #            cnt = datasetObject.dataSourceCount();
+        #            if(datasetObject && cnt > 1)
+        #            {
+        #                for(i=1; i<=cnt;i++)
+        #                {
+        #                    fbds = datasetObject.dataSource(i);
+        #                    datasourceMap.insert(fbds.id(),[fbds.table(), fbds.joinSource()]);
+        #                }
+        #                if (!datasourceMap.empty())
+        #                {
+        #                    relationSet = new Set(Types::Int64);
+        #                    mapEnum = datasourceMap.getEnumerator();
+        #                    while(mapEnum.moveNext())
+        #                    {
+        #                        value = mapEnum.currentValue();
+        #                        tableId = conpeek(value,1);
+        #                        joinsourceid = conpeek(value,2);
+        #                        if (joinsourceid)
+        #                        {
+        #                            value = datasourceMap.lookup(joinsourceid);
+        #                            joinTableId = conpeek(value,1);
+        #                            tableName = tableid2name(joinTableId);
+        #                            relatedTableName = tableid2name(tableId);
+        #                            rels = this.getEDTRelationRecIds(tableName,relatedTableName);
+        #                            relationSet = Set::union(relationSet,rels);
+        #                        }
+        #                    }
+        #                    setEnum = relationSet.getEnumerator();
+        #                    while (setEnum.moveNext())
+        #                    {
+        #                        affectedDataset.clear();
+        #                        affectedDataset.Name = datasetName;
+        #                        affectedDataset.SysEDTMigrationRelation = setEnum.current();
+        #                        affectedDataset.ElementType = UtilElementType::DataSet;
+        #                        affectedDataset.insert();
+        #                    }
+        #                }
+        #            }
+        #            datasetNode = datasetNode.AOTnextSibling();
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #scanEDTs
+        #/// <summary>
+        #/// Populates the current extended data type into the <c>SysEDTMigrationEDT</c> table.
+        #/// </summary>
+        #public void scanEDTs()
+        #{
+        #    SysEDTMigrationEDT      sysEDTInfo;
+        #    Dictionary              dictionary = new Dictionary();
+        #    int                     edtId;
+        #    SysDictType             sysDictType;
+        #    SysDictRelation         sysDictRelation;
+        #    Set                     edtFields = new Set(Types::String);
+        #
+        #    tableId                 tableId;
+        #    fieldName               fieldName;
+        #    int                     i,cnt;
+        #
+        #    delete_from sysEDTInfo;
+        #
+        #    for (edtId = dictionary.typeNext(0); edtId; edtId = dictionary.typeNext(edtId))
+        #    {
+        #        sysDictType = new SysDictType(edtId);
+        #        if (sysDictType)
+        #        {
+        #            sysEDTInfo.clear();
+        #            sysEDTInfo.Name = sysDictType.name();
+        #
+        #            //ignore DEL_* EDT's
+        #            if (substr(sysEDTInfo.Name, 1,4) == #DELPrefix)
+        #            {
+        #                continue;
+        #            }
+        #            sysEDTInfo.HasRelationConstraints = NoYes::No;
+        #            sysDictRelation = sysDictType.relationObject();
+        #
+        #            if (sysDictRelation)
+        #            {
+        #                sysEDTInfo.HasRelations = NoYes::Yes;
+        #                tableId = sysDictRelation.table();
+        #                sysEDTInfo.RelatedTableName = tableid2name(tableId);
+        #                cnt = sysDictRelation.lines();
+        #                for (i = 1; i <= cnt; i++)
+        #                {
+        #                    fieldName = fieldid2name(tableId,sysDictRelation.lineExternTableValue(i));
+        #                    if (sysDictRelation.lineType(i) == TableRelation::Dataset )
+        #                    {
+        #                        sysEDTInfo.RelatedFieldName = fieldName;
+        #                    }
+        #                    edtFields.add(fieldName);
+        #                }
+        #                if (sysDictRelation.lines() > 1 )
+        #                {
+        #                    sysEDTInfo.HasRelationConstraints = NoYes::Yes;
+        #                }
+        #                sysEDTInfo.IndexType = this.getIndexType(sysEDTInfo.RelatedTableName, sysEDTInfo.RelatedFieldName, edtFields);
+        #            }
+        #            else
+        #            {
+        #                sysEDTInfo.HasRelations = NoYes::No;
+        #            }
+        #            if (sysDictType.arraySize() > 1)
+        #                sysEDTInfo.HasArrayElements = NoYes::Yes;
+        #            else
+        #                sysEDTInfo.HasArrayElements = NoYes::No;
+        #
+        #            sysEDTInfo.insert();
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #scanForms
+        #/// <summary>
+        #/// Populates the forms that must be tested when extended data type relations are migrated.
+        #/// </summary>
+        #public void scanForms()
+        #{
+        #    SysEDTMigrationTestArtifact affectedForm;
+        #    SysEDTMigrationTestArtifact affectedQuery;
+        #    TreeNode                    formsRoot;
+        #    TreeNode                    formNode;
+        #    TreeNode                    datasourcesNode;
+        #    Form                        formObject;
+        #    FormBuildDataSource         formDataSource;
+        #
+        #    Map                         datasourceMap;
+        #    MapEnumerator               mapEnum;
+        #
+        #    tableId                     tableId;
+        #    tableId                     joinTableId;
+        #    tableId                     joinSourceId;
+        #    tableName                   tableName;
+        #    tableName                   relatedTableName;
+        #
+        #    Name                        formName;
+        #    Name                        formQueryName;
+        #
+        #    int                         i,cnt;
+        #    container                   value;
+        #    Set                         relationSet;
+        #    Set                         rels;
+        #    SetEnumerator               setEnum;
+        #
+        #    delete_from affectedForm where affectedForm.ElementType == UtilElementType::Form;
+        #
+        #    formsRoot = TreeNode::findNode(#FormsPath);
+        #    formNode = formsRoot.AOTfirstChild();
+        #    //formNode = formsRoot.AOTfindChild('AifDocumentHistory');
+        #    while(formNode)
+        #    {
+        #        formName =formNode.AOTname();
+        #        datasourcesNode = formNode.AOTfindChild(#DataSources);
+        #        if(datasourcesNode)
+        #        {
+        #            //get the query of the datasource
+        #            formQueryName = datasourcesNode.AOTgetProperty(#Query);
+        #            if(formQueryName != '')
+        #            {
+        #                while select affectedQuery where affectedQuery.Name == formQueryName && affectedQuery.ElementType == UtilElementType::Query
+        #                {
+        #                    affectedForm.clear();
+        #                    affectedForm.Name = formName;
+        #                    affectedForm.SysEDTMigrationRelation = affectedQuery.SysEDTMigrationRelation;
+        #                    affectedForm.ElementType = UtilElementType::Form;
+        #                    affectedForm.insert();
+        #                }
+        #
+        #                //if the form uses the query, then we don't need to look at the datasources
+        #                formNode = formNode.AOTnextSibling();
+        #                continue;
+        #            }
+        #        }
+        #
+        #        datasourceMap = new Map(Types::Integer,Types::Container);
+        #        formObject = new Form(formName);
+        #        //We need to analyze forms which have more than 1 data source
+        #        cnt = formObject.dataSourceCount();
+        #        if(cnt> 1)
+        #        {
+        #            for(i=1; i<= cnt;i++)
+        #            {
+        #                formDataSource = formObject.dataSource(i);
+        #                datasourceMap.insert(formDataSource.id(),[formDataSource.table(),formDataSource.joinSource()]);
+        #            }
+        #        }
+        #        if (!datasourceMap.empty())
+        #        {
+        #            relationSet = new Set(Types::Int64);
+        #            mapEnum = datasourceMap.getEnumerator();
+        #            while(mapEnum.moveNext())
+        #            {
+        #                value = mapEnum.currentValue();
+        #                tableId = conpeek(value,1);
+        #                joinSourceId = conpeek(value,2);
+        #                if (joinSourceId)
+        #                {
+        #                    value = datasourceMap.lookup(joinSourceId);
+        #                    joinTableId = conpeek(value,1);
+        #
+        #                    tableName = tableid2name(joinTableId);
+        #                    relatedTableName = tableid2name(tableId);
+        #                    rels = this.getEDTRelationRecIds(tableName,relatedTableName);
+        #                    relationSet = Set::union(relationSet,rels);
+        #                }
+        #            }
+        #            setEnum = relationSet.getEnumerator();
+        #            while (setEnum.moveNext())
+        #            {
+        #                affectedForm.clear();
+        #                affectedForm.Name = formName;
+        #                affectedForm.ElementType = UtilElementType::Form;
+        #                affectedForm.SysEDTMigrationRelation = setEnum.current();
+        #                affectedForm.insert();
+        #            }
+        #        }
+        #        formNode = formNode.AOTnextSibling();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #scanQueries
+        #/// <summary>
+        #/// Populates the queries that must be tested when extended data type relations are migrated.
+        #/// </summary>
+        #public void scanQueries()
+        #{
+        #    SysEDTMigrationTestArtifact affectedQuery;
+        #    TreeNode                    queryNode;
+        #    TreeNode                    queryRootNode;
+        #    Query                       queryObject;
+        #    QueryBuildDataSource        qbds;
+        #    int                         i,cnt;
+        #
+        #    tableName                   tableName;
+        #    tableName                   relatedTableName;
+        #    Set                         relationSet;
+        #    Set                         rels;
+        #    SetEnumerator               setEnum;
+        #    Name                        queryName;
+        #
+        #    delete_from affectedQuery where affectedQuery.ElementType == UtilElementType::Query;
+        #
+        #    queryRootNode = TreeNode::findNode(#Queries);
+        #    if(queryRootNode)
+        #    {
+        #        queryNode = queryRootNode.AOTfirstChild();
+        #
+        #        while(queryNode)
+        #        {
+        #            queryName = queryNode.AOTname();
+        #            queryObject = new Query(queryName);
+        #            // only queries with 2 or more datasources can be affected
+        #            if (queryObject && queryObject.dataSourceCount() > 1)
+        #            {
+        #                relationSet = new Set(Types::Int64);
+        #                cnt = queryObject.dataSourceCount();
+        #                for (i=1; i<= cnt; i++)
+        #                {
+        #                    qbds = queryObject.dataSourceNo(i);
+        #                    if(qbds.embedded())
+        #                    {
+        #                        if(qbds.relations() && qbds.parentDataSource())
+        #                        {
+        #                            tableName = tableid2name(qbds.table());
+        #                            relatedTableName = tableid2name(qbds.parentDataSource().table());
+        #                            rels = this.getEDTRelationRecIds(tableName,relatedTableName);
+        #                            relationSet = Set::union(relationSet,rels);
+        #                        }
+        #                    }
+        #                }
+        #                setEnum = relationSet.getEnumerator();
+        #                while (setEnum.moveNext())
+        #                {
+        #                    affectedQuery.clear();
+        #                    affectedQuery.Name = queryName;
+        #                    affectedQuery.SysEDTMigrationRelation = setEnum.current();
+        #                    affectedQuery.ElementType = UtilElementType::Query;
+        #                    affectedQuery.insert();
+        #                }
+        #            }
+        #            queryNode = queryNode.AOTnextSibling();
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #scanRelations
+        #/// <summary>
+        #/// Populates the extended data type relations that are used in all tables in the system.
+        #/// </summary>
+        #public void scanRelations()
+        #{
+        #    SysEDTMigrationRelation sysEDTRelation1;
+        #    SysEDTMigrationRelation sysEDTRelation2;
+        #    SysEDTMigrationEDT      sysEDTInfo1;
+        #    SysEDTMigrationEDT      sysEDTInfo2;
+        #    Dictionary      dictionary = new Dictionary();
+        #    tableId         tableId;
+        #
+        #    delete_from sysEDTRelation1;
+        #
+        #    for (tableId = dictionary.tableNext(0); tableId; tableId = dictionary.tableNext(tableId))
+        #    {
+        #        this.scanRelationsForTable(tableId);
+        #    }
+        #
+        #    //setting the MultiRelation fields
+        #    update_recordset sysEDTRelation1
+        #        setting MultiRelation = NoYes::Yes
+        #        join sysEDTRelation2 where sysEDTRelation1.TableName == sysEDTRelation2.TableName && sysEDTRelation1.RecId!=sysEDTRelation2.RecId
+        #        join sysEDTInfo1 where sysEDTRelation1.SysEDTMigrationEDT == sysEDTInfo1.RecId
+        #        join sysEDTInfo2 where sysEDTRelation2.SysEDTMigrationEDT == sysEDTInfo2.RecId && sysEDTInfo1.RelatedTableName == sysEDTInfo2.RelatedTableName;
+        #}
+      ENDSOURCE
+      SOURCE #scanRelationsForTable
+        #/// <summary>
+        #/// Populates the existing extended data type relation in a table to the <c>SysEDTMigrationRelation</c>
+        #/// table.
+        #/// </summary>
+        #/// <param name="_tableId">
+        #/// The ID of the table.
+        #/// </param>
+        #private void scanRelationsForTable(tableId _tableId)
+        #{
+        #    SysEDTMigrationEDT      sysEDTInfo;
+        #    SysEDTMigrationRelation sysEDTrelation;
+        #    SysDictTable            sysDictTable;
+        #    SysDictTable            sysDictRelatedTable;
+        #    SysDictField            sysDictField;
+        #    SysDictType             sysDictType;
+        #    tableName               tableName;
+        #    tableId                 relatedTableId;
+        #    Set                     fields;
+        #    SetEnumerator           setEnumerator;
+        #
+        #    sysDictTable = new SysDictTable(_tableId);
+        #    if (!sysDictTable)
+        #    {
+        #        throw error(strfmt("@SYS55416",_tableId));
+        #    }
+        #    tableName = sysDictTable.name();
+        #
+        #    sysEDTrelation.clear();
+        #    sysEDTrelation.TableName = tableName;
+        #
+        #    // we only look at fields in the current table, not ones from base tables.
+        #    fields = sysDictTable.fields(false, false);
+        #    setEnumerator = fields.getEnumerator();
+        #
+        #    while (setEnumerator.moveNext())
+        #    {
+        #        sysDictField = setEnumerator.current();
+        #        if (!sysDictField.isSystem() &&
+        #            sysDictField.extendedFieldId() &&
+        #            !strStartsWith(sysDictField.name(),#DELPrefix))
+        #        {
+        #            sysDictType = new SysDictType(sysDictField.typeId());
+        #            if (sysDictType &&
+        #                sysDictType.arraySize() == 1 &&
+        #                sysDictType.relationObject())
+        #            {
+        #                sysEDTInfo = SysEDTMigrationEDT::findByName(sysDictType.name());
+        #
+        #                // if the EDT is not found in the SysEDTMigrationEDT, that means it is a kernel EDT
+        #                if (sysEDTInfo.RecId == 0)
+        #                {
+        #                    continue;
+        #                }
+        #                sysEDTrelation.FieldName = sysDictField.name();
+        #                sysEDTrelation.SysEDTMigrationEDT = sysEDTInfo.RecId;
+        #                sysEDTrelation.AssociationType = sysDictField.mandatory()? SysRelationType::OneAndOnlyOne : SysRelationType::ZeroOrOne;
+        #
+        #                //seting IsUsedInDeleteAction
+        #                relatedTableId = tablename2id(sysEDTInfo.RelatedTableName);
+        #                sysDictRelatedTable = new SysDictTable(relatedTableId);
+        #                sysEDTrelation.IsUsedInDeleteAction = NoYes::No;
+        #                if (this.isEDTUsedInDeleteAction(sysEDTrelation))
+        #                    sysEDTrelation.IsUsedInDeleteAction = NoYes::Yes;
+        #
+        #                //setting IsSelfRelation
+        #                if (sysEDTInfo.RelatedFieldName == sysEDTrelation.FieldName && sysEDTInfo.RelatedTableName == sysEDTrelation.TableName)
+        #                {
+        #                    sysEDTrelation.SelfRelation = NoYes::Yes;
+        #                }
+        #                else
+        #                {
+        #                    sysEDTrelation.SelfRelation = NoYes::No;
+        #                }
+        #                //MigrationStatus is set at runtime
+        #                sysEDTrelation.insert();
+        #            }
+        #        } // end of if (sysDictField ...)
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #scanTables
+        #/// <summary>
+        #/// Populates information about all tables and views in the system.
+        #/// </summary>
+        #public void scanTables()
+        #{
+        #    Dictionary      dictionary = new Dictionary();
+        #    tableId         tableId;
+        #    SysDictTable    sysDictTable;
+        #    SysEDTMigrationTable  sysTableInfo;
+        #    #define.DELPrefix('DEL_')
+        #    ;
+        #
+        #    delete_from sysTableInfo;
+        #
+        #    for (tableId = dictionary.tableNext(0); tableId; tableId = dictionary.tableNext(tableId))
+        #    {
+        #        sysTableInfo.clear();
+        #        sysDictTable = new SysDictTable(tableId);
+        #        if(sysDictTable && !sysDictTable .isMap())
+        #        {
+        #            sysTableInfo.Name = sysDictTable.name();
+        #            if(sysDictTable .isView())
+        #            {
+        #                sysTableInfo.IsView = NoYes::Yes;
+        #            }
+        #            else
+        #            {
+        #                sysTableInfo.IsView = NoYes::No;
+        #            }
+        #
+        #            // skip the "DEL_*" tables
+        #            if (!strStartsWith(sysTableInfo.Name,#DELPrefix))
+        #            {
+        #                sysTableInfo.insert();
+        #            }
+        #        }
+        #
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #scanXppReports
+        #/// <summary>
+        #/// Populates the X++ reports that must to be tested when extended data type relations are migrated.
+        #/// </summary>
+        #public void scanXppReports()
+        #{
+        #    SysEDTMigrationTestArtifact affectedReport;
+        #    TreeNode                    reportNode;
+        #    TreeNode                    reportRootNode;
+        #    Query                       queryObject;
+        #    QueryBuildDataSource        qbds;
+        #    int                         i,cnt;
+        #
+        #    tableName                   tableName;
+        #    tableName                   relatedTableName;
+        #    Set                         relationSet;
+        #    Set                         rels;
+        #    SetEnumerator               setEnum;
+        #    Name                        reportName;
+        #    Report                      reportObject;
+        #
+        #    delete_from affectedReport where affectedReport.ElementType == UtilElementType::Report;
+        #
+        #
+        #    reportRootNode = TreeNode::findNode(#Reports);
+        #    if(reportRootNode)
+        #    {
+        #        reportNode = reportRootNode.AOTfirstChild();
+        #        while(reportNode)
+        #        {
+        #            if (reportNode.treeNodeType().id() == #NT_REPORT)
+        #            {
+        #                reportName = reportNode.AOTname();
+        #                reportObject = new Report(reportName);
+        #                if (reportObject)
+        #                {
+        #                    queryObject = reportObject.query();
+        #                    //We need to analyze reports which have more than 1 data source
+        #                    cnt = queryObject.dataSourceCount();
+        #                    if(queryObject && cnt> 1)
+        #                    {
+        #                        relationSet = new Set(Types::Int64);
+        #                        for(i=1; i<=cnt;i++)
+        #                        {
+        #                            qbds = queryObject.dataSourceNo(i);
+        #                            if(qbds.embedded())
+        #                            {
+        #                                if(qbds.relations() && qbds.parentDataSource())
+        #                                {
+        #                                    tableName = tableid2name(qbds.table());
+        #                                    relatedTableName = tableid2name(qbds.parentDataSource().table());
+        #                                    rels = this.getEDTRelationRecIds(tableName,relatedTableName);
+        #                                    relationSet = Set::union(relationSet,rels);
+        #                                }
+        #                            }
+        #                        }
+        #                        setEnum = relationSet.getEnumerator();
+        #                        while (setEnum.moveNext())
+        #                        {
+        #                            affectedReport.clear();
+        #                            affectedReport.Name = reportName;
+        #                            affectedReport.SysEDTMigrationRelation = setEnum.current();
+        #                            affectedReport.ElementType = UtilElementType::Report;
+        #                            affectedReport.insert();
+        #                        }
+        #                    }
+        #                }
+        #            }
+        #            reportNode = reportNode.AOTnextSibling();
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #setLogFilePath
+        #/// <summary>
+        #/// Sets the path for the log file.
+        #/// </summary>
+        #/// <param name="_path">
+        #/// The path for the log file.
+        #/// </param>
+        #public void setLogFilePath(str _path)
+        #{
+        #    if(log)
+        #    {
+        #        // we are going to change the log path and have to close current log there,
+        #        // new one will be opened in writeLog() on 1st write
+        #        log.finalize();
+        #    }
+        #    logFilePath = _path;
+        #}
+      ENDSOURCE
+      SOURCE #writeLog
+        #/// <summary>
+        #/// Writes a message to the log file.
+        #/// </summary>
+        #/// <param name="_message">
+        #/// The log message to be written.
+        #/// </param>
+        #public void writeLog(str _message)
+        #{
+        #    if(!log)
+        #    {
+        #        log = new TextIo(logFilePath,'a');
+        #        if (log)
+        #        {
+        #            log.outRecordDelimiter('\r\n');
+        #            log.write(_message);
+        #        }
+        #    }
+        #    else
+        #    {
+        #        log.write(_message);
+        #    }
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END
