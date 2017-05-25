@@ -1,0 +1,809 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #SysTableBrowser
+  PROPERTIES
+    Name                #SysTableBrowser
+    Origin              #{D2400099-3D83-4C2E-AA5C-811CDEEA50DD}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #class FormRun extends ObjectRun
+      #{
+      #    tableId tableId;
+      #    Source sqlcmd;
+      #    DictTable dictTable;
+      #    // WIK - Vilmos Kintera - SysTableBrowser addition -->
+      #    QueryBuildRange             qbr;
+      #    // WIK - Vilmos Kintera - SysTableBrowser addition <--
+      #}
+    ENDSOURCE
+    SOURCE #createRecord
+      #/// <summary>
+      #/// Allows us to override which type will be created upon CTRL-N.
+      #/// </summary>
+      #/// <param name="_formDataSourceName">
+      #/// The name of the FormDataSource upon which create is being called.
+      #/// </param>
+      #/// <param name="_append">
+      #/// Whether to append the new record.
+      #/// </param>
+      #/// <remarks>
+      #/// This method allows the suppression of the CreateTypes dialog and forces
+      #/// only the current type to be created when it is non-abstract.
+      #/// Disallows polymorphic creates.
+      #/// </remarks>
+      #public void createRecord(str _formDataSourceName, boolean _append = false)
+      #{
+      #    Map typeToCreate = new Map(types::String, Types::String);
+      #    typeToCreate.insert(ds_ds.name(), tableId2name(ds_ds.table()));
+      #
+      #    //Create only the currently modeled table type, ignore derived types.
+      #    ds_ds.createTypes(typeToCreate, _append);
+      #}
+    ENDSOURCE
+    SOURCE #getRadioControl
+      #FormRadioControl getRadioControl()
+      #{
+      #    return element.control(element.controlId(formControlStr(SysTableBrowser, showFields)));
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #    super();
+      #    this.controlMethodOverload(true);
+      #}
+    ENDSOURCE
+    SOURCE #parmSQLStmt
+      #Source parmSQLStmt(Source _sql = SQL.text())
+      #{
+      #    SQL.text(_sql);
+      #    return SQL.text();
+      #}
+    ENDSOURCE
+    SOURCE #parmTableId
+      #tableId parmTableId(tableId _tableId = tableId)
+      #{
+      #    ;
+      #    tableId = _tableId;
+      #    return tableId;
+      #}
+    ENDSOURCE
+    SOURCE #run
+      #void run()
+      #{
+      #    super();
+      #    dictTable = new DictTable(tableId);
+      #    this.parmSQLStmt('SELECT * FROM '+tableid2name(tableId));
+      #}
+    ENDSOURCE
+    SOURCE #tableBrowserContainer_lookup
+      #public void tableBrowserContainer_lookup()
+      #{
+      #    FormStringControl   formStringControl = this.controlCallingMethod();
+      #    FormObjectSet       formObjectSet = element.dataSource(1);
+      #    Common              common = formObjectSet.cursor();
+      #    ;
+      #
+      #    conView(common.(formStringControl.dataField()),
+      #            strfmt("@SYS26868", element.design().caption(), strfmt("@SYS53184", formStringControl.name(), common.caption())));
+      #}
+      #
+    ENDSOURCE
+    SOURCE #task
+      #int task(int p1)
+      #{
+      #    #define.tab(2827)
+      #    #define.f5(2839)
+      #
+      #    FormControl cur = element.selectedControl();
+      #    int ret;
+      #
+      #    if ((p1 == #tab) && (cur.hWnd() == SQL.hWnd()))
+      #    {
+      #        SQL.pasteText('    ', true);
+      #        SQL.updateWindow();
+      #        ret = 0;
+      #    }
+      #    else if (p1 == #f5)
+      #    {
+      #        ExecuteSQL.clicked();
+      #        ret = 1;
+      #    }
+      #    else
+      #        ret = super(p1);
+      #
+      #    return ret;
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #ds
+          Table               #Common
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #active
+          #public int active()
+          #{
+          #    WIK_TmpSysTableBrowser  tmpSysTableBrowserLocal;
+          #    DictTable           dictTableLocal;
+          #    SysDictField        dictField;
+          #    int                 i;
+          #    int                 j;
+          #    int                 fieldCnt;
+          #    int                 ret;
+          #    int                 fieldId;
+          #    ;
+          #
+          #    ret = super();
+          #
+          #    element.lockWindowUpdate(true);
+          #
+          #    dictTableLocal  = new DictTable(ds.TableId);
+          #    fieldCnt        = dictTableLocal.fieldCnt();
+          #
+          #    for (i = 1; i <= fieldCnt; i++)
+          #    {
+          #        dictField   = new SysDictField(ds.TableId, dictTableLocal.fieldCnt2Id(i));
+          #
+          #        if (dictField && !dictField.visible())
+          #        {
+          #            if (dictField.arraySize() > 1)
+          #            {
+          #                for (j = 1; j <= dictField.arraySize(); j++)
+          #                {
+          #                    tmpSysTableBrowserLocal.clear();
+          #                    switch (dictField.baseType())
+          #                    {
+          #                        case Types::Enum :
+          #                            tmpSysTableBrowserLocal.StringValue  = strfmt('%1', ds.(fieldId2Ext(dictField.id(), j)));
+          #                            fieldId = fieldnum(WIK_TmpSysTableBrowser, StringValue);
+          #                            WIK_TmpSysTableBrowser_StringValue.visible(true);
+          #                            break;
+          #                        default :
+          #                    }
+          #
+          #                    tmpSysTableBrowserLocal.FieldName        = dictField.name(DbBackend::Native, j);
+          #                    tmpSysTableBrowserLocal.FieldLabel       = dictField.label(j);
+          #                    tmpSysTableBrowserLocal.DictTableId      = dictTableLocal.id();
+          #                    tmpSysTableBrowserLocal.FieldId          = fieldId2Ext(dictField.id(), j);
+          #                    tmpSysTableBrowserLocal.RefRecId         = ds.RecId;
+          #                    tmpSysTableBrowserLocal.HighlightFieldId = fieldId;
+          #                    tmpSysTableBrowserLocal.insert();
+          #                }
+          #            }
+          #            else
+          #            {
+          #                tmpSysTableBrowserLocal.clear();
+          #                switch (dictField.baseType())
+          #                {
+          #                    case Types::Integer :
+          #                        tmpSysTableBrowserLocal.IntegerValue    = ds.(dictField.id());
+          #                        fieldId = fieldnum(WIK_TmpSysTableBrowser, IntegerValue);
+          #                        WIK_TmpSysTableBrowser_IntegerValue.visible(true);
+          #                        break;
+          #                    case Types::Guid :
+          #                        tmpSysTableBrowserLocal.GuidValue       = ds.(dictField.id());
+          #                        fieldId = fieldnum(WIK_TmpSysTableBrowser, GuidValue);
+          #                        WIK_TmpSysTableBrowser_GuidValue.visible(true);
+          #                        break;
+          #                    case Types::Real :
+          #                        tmpSysTableBrowserLocal.RealValue       = ds.(dictField.id());
+          #                        fieldId = fieldnum(WIK_TmpSysTableBrowser, RealValue);
+          #                        WIK_TmpSysTableBrowser_RealValue.visible(true);
+          #                        break;
+          #                    case Types::Date :
+          #                        tmpSysTableBrowserLocal.DateValue       = ds.(dictField.id());
+          #                        fieldId = fieldnum(WIK_TmpSysTableBrowser, DateValue);
+          #                        WIK_TmpSysTableBrowser_DateValue.visible(true);
+          #                        break;
+          #                    case Types::Time :
+          #                        tmpSysTableBrowserLocal.TimeValue       = ds.(dictField.id());
+          #                        fieldId = fieldnum(WIK_TmpSysTableBrowser, TimeValue);
+          #                        WIK_TmpSysTableBrowser_TimeValue.visible(true);
+          #                        break;
+          #                    case Types::UtcDateTime :
+          #                        tmpSysTableBrowserLocal.DateTimeValue   = ds.(dictField.id());
+          #                        fieldId = fieldnum(WIK_TmpSysTableBrowser, DateTimeValue);
+          #                        WIK_TmpSysTableBrowser_DateTimeValue.visible(true);
+          #                        break;
+          #                    case Types::Int64 :
+          #                        tmpSysTableBrowserLocal.Int64Value   = ds.(dictField.id());
+          #                        fieldId = fieldnum(WIK_TmpSysTableBrowser, Int64Value);
+          #                        WIK_TmpSysTableBrowser_Int64Value.visible(true);
+          #                        break;
+          #                    case Types::Container :
+          #                        tmpSysTableBrowserLocal.StringValue  = con2str(ds.(dictField.id()));
+          #                        fieldId = fieldnum(WIK_TmpSysTableBrowser, StringValue);
+          #                        WIK_TmpSysTableBrowser_StringValue.visible(true);
+          #                        break;
+          #                    default :
+          #                        tmpSysTableBrowserLocal.StringValue  = strfmt('%1', ds.(Global::fieldId2Ext(dictField.id(), 1)));
+          #                        fieldId = fieldnum(WIK_TmpSysTableBrowser, StringValue);
+          #                        WIK_TmpSysTableBrowser_StringValue.visible(true);
+          #                }
+          #
+          #                tmpSysTableBrowserLocal.FieldName        = dictField.name();
+          #                tmpSysTableBrowserLocal.FieldLabel       = dictField.label();
+          #                tmpSysTableBrowserLocal.DictTableId      = dictTableLocal.id();
+          #                tmpSysTableBrowserLocal.FieldId          = dictField.id();
+          #                tmpSysTableBrowserLocal.RefRecId         = ds.RecId;
+          #                tmpSysTableBrowserLocal.HighlightFieldId = fieldId;
+          #                tmpSysTableBrowserLocal.insert();
+          #            }
+          #        }
+          #    }
+          #
+          #    if (tmpSysTableBrowserLocal)
+          #    {
+          #        qbr.value(SysQuery::value(ds.RecId));
+          #        DSTmpSysTableBrowser.setTmpData(tmpSysTableBrowserLocal);
+          #        DSTmpSysTableBrowser_ds.executeQuery();
+          #
+          #        TmpGrid.visible(true);
+          #        TmpGridGroup.visible(true);
+          #    }
+          #
+          #    element.lockWindowUpdate(false);
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #executeQuery
+          #void executeQuery()
+          #{
+          #    ExecutePermission executePermission;
+          #    ;
+          #
+          #    if (sqlcmd)
+          #    {
+          #        //assert
+          #        executePermission = new ExecutePermission();
+          #        executePermission.assert();
+          #        //BP Deviation Documented
+          #        runbuf(sqlcmd, this.cursor());
+          #    }
+          #    else
+          #    {
+          #        super();
+          #    }
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #DSTmpSysTableBrowser
+          Table               #WIK_TmpSysTableBrowser
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #displayOption
+          #// WIK - Vilmos Kintera - SysTableBrowser addition
+          #public void displayOption(Common _record, FormRowDisplayOption _options)
+          #{
+          #    WIK_TmpSysTableBrowser  tmpSysTableBrowser = _record;
+          #    FormGridcontrol         formGridControl = TmpGrid;
+          #    FormControl             formControl;
+          #    int                     i;
+          #    ;
+          #
+          #    for (i = 1; i <= formGridControl.controlCount(); i++)
+          #    {
+          #        formControl = formGridControl.controlNum(i);
+          #        if (Global::strReplace(formControl.name(), 'WIK_TmpSysTableBrowser_', '') == fieldid2name(tmpSysTableBrowser.TableId, tmpSysTableBrowser.HighlightFieldId))
+          #        {
+          #            break;
+          #        }
+          #    }
+          #
+          #    _options.affectedElementsByControl(formControl.id());
+          #    _options.backColor(WinAPI::rgb2int(200, 220, 220));
+          #
+          #    super(_record, _options);
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #// WIK - Vilmos Kintera - SysTableBrowser addition
+          #public void init()
+          #{
+          #    QueryBuildDataSource        qbds;
+          #    ;
+          #
+          #    super();
+          #
+          #    qbds    = DSTmpSysTableBrowser_ds.query().dataSourceTable(tablenum(WIK_TmpSysTableBrowser));
+          #    qbr     = SysQuery::findOrCreateRange(qbds, fieldnum(WIK_TmpSysTableBrowser, RefRecId));
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #@SYS54191
+      Columnspace         #0
+      ViewEditMode        #Edit
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL GRID
+        PROPERTIES
+          Name                #allFieldsGrid
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #536870911
+          DataSource          #ds
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #autoReportGrid
+          AutoDeclaration     #Yes
+          Visible             #No
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1073741822
+          DataSource          #ds
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #TmpGrid
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #TmpGridGroup
+          DataSource          #DSTmpSysTableBrowser
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Group
+          Left                #Right edge
+          ElementPosition     #1610612734
+          HierarchyParent     #SQLGrp
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #SQLGrp
+          Top                 #Bottom edge
+          Width               #Column width
+          VerticalSpacing     #0
+          ElementPosition     #1610612733
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #TmpGridGroup
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1342177277
+          FrameType           #None
+          Caption             #@SYS132838
+          FrameOptionButton   #Hide
+          OptionValue         #0
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #ExecuteSQL
+          AutoDeclaration     #Yes
+          HelpText            #@SYS57538
+          ElementPosition     #1073741823
+          HierarchyParent     #Group
+          ButtonDisplay       #Image only
+          NormalImage         #1094
+          ImageLocation       #EmbeddedResource
+          DisabledImage       #1094
+          DisabledImageLocation #EmbeddedResource
+          BackStyle           #Transparent
+          ForegroundColor     #Button face (3D)
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    XppCompiler compiler = new XppCompiler();
+            #    if (sql.text())
+            #    {
+            #        sqlcmd = 'void SQLSTMT('+dictTable.name()+' '+dictTable.name()+')\n{\n'+sql.text()+';\n}\n';
+            #        if (compiler.compile(sqlcmd))
+            #        {
+            #            ds_ds.executeQuery();
+            #        }
+            #        else
+            #        {
+            #            setprefix("@SYS57538");
+            #            info (sqlcmd);
+            #            error (compiler.errorText());
+            #        }
+            #    }
+            #    else
+            #    {
+            #        sqlcmd = '';
+            #        ds_ds.executeQuery();
+            #    }
+            #
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL DATEEDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_DateValue
+          AutoDeclaration     #Yes
+          Visible             #No
+          ElementPosition     #1651910490
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #DateValue
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GUIDEDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_GuidValue
+          AutoDeclaration     #Yes
+          Visible             #No
+          ElementPosition     #1486719441
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #GuidValue
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INT64EDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_Int64Value
+          AutoDeclaration     #Yes
+          Visible             #No
+          ElementPosition     #1156337343
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #Int64Value
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_FieldId
+          ElementPosition     #330382098
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #FieldId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_IntegerValue
+          AutoDeclaration     #Yes
+          Visible             #No
+          ElementPosition     #991146294
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #IntegerValue
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL RADIOBUTTON
+        PROPERTIES
+          Name                #ShowFields
+          AutoDeclaration     #Yes
+          ElementPosition     #1610612734
+          HierarchyParent     #Group
+          DisplayLength       #0
+          Text                
+            ARRAY INDEX Items 
+              #@SYS6047
+              #@SYS54220
+            ENDARRAY
+          Item                #2
+          Items               #2
+          Caption             #@SYS54219
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #selectionChange
+            #int selectionChange()
+            #{
+            #    int             ret;
+            #    ;
+            #
+            #    ret = super();
+            #
+            #    if (showFields.selection() == 0 )
+            #    {
+            #        allFieldsGrid.visible(true);
+            #        autoReportGrid.visible(false);
+            #    }
+            #    else
+            #    {
+            #        allFieldsGrid.visible(false);
+            #        autoReportGrid.visible(true);
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL REALEDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_RealValue
+          AutoDeclaration     #Yes
+          Visible             #No
+          ElementPosition     #1321528392
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #RealValue
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #SQL
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          HelpText            #@SYS57539
+          ElementPosition     #1073741823
+          HierarchyParent     #SQLGrp
+          MultiLine           #Yes
+          Font                #Courier New
+          FontSize            #9
+          Bold                #Normal
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_FieldLabel
+          ElementPosition     #660764196
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #FieldLabel
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_FieldName
+          ElementPosition     #495573147
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #FieldName
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_StringValue
+          AutoDeclaration     #Yes
+          Visible             #No
+          ElementPosition     #825955245
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #StringValue
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TIMEEDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_TimeValue
+          AutoDeclaration     #Yes
+          Visible             #No
+          ElementPosition     #1817101539
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #TimeValue
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL UTCDATETIMEEDIT
+        PROPERTIES
+          Name                #WIK_TmpSysTableBrowser_DateTimeValue
+          AutoDeclaration     #Yes
+          Visible             #No
+          ElementPosition     #1982292588
+          HierarchyParent     #TmpGrid
+          DataSource          #DSTmpSysTableBrowser
+          DataField           #DateTimeValue
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: END

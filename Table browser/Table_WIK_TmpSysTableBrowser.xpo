@@ -1,0 +1,206 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Microsoft Dynamics AX Table : WIK_TmpSysTableBrowser unloaded
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #WIK_TmpSysTableBrowser
+    EnforceFKRelation 0
+    PROPERTIES
+      Name                #WIK_TmpSysTableBrowser
+      Label               #@SYS3852
+      TableType           #InMemory
+      Systemtable         #Yes
+      SaveDataPerCompany  #No
+      Origin              #{8257C302-D404-4A60-BDEB-AAF7CFAA5E8F}
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #DateTimeValue
+        DATETIME
+        PROPERTIES
+          Name                #DateTimeValue
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{5B4B8897-79A1-4FDF-9991-FE985EE63AEA}
+          ExtendedDataType    #UTCTimestamp
+        ENDPROPERTIES
+        
+      FIELD #DateValue
+        DATE
+        PROPERTIES
+          Name                #DateValue
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{E42934DD-4439-4F49-B703-D71FF1856221}
+          ExtendedDataType    #SysDate
+        ENDPROPERTIES
+        
+      FIELD #DictTableId
+        INT
+        PROPERTIES
+          Name                #DictTableId
+          Mandatory           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #No
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{A137EBD5-8EA2-44AE-B20A-41DCEA1EF07F}
+          ExtendedDataType    #RefTableId
+        ENDPROPERTIES
+        
+      FIELD #FieldId
+        INT
+        PROPERTIES
+          Name                #FieldId
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{69A33354-071C-4748-B8EA-E73B4C271CCB}
+          ExtendedDataType    #FieldId
+        ENDPROPERTIES
+        
+      FIELD #FieldLabel
+        STRING
+        PROPERTIES
+          Name                #FieldLabel
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{F182F052-FB4A-451A-8AC3-5C306AF5373E}
+          ExtendedDataType    #FieldLabel
+          StringSize          #250
+        ENDPROPERTIES
+        
+      FIELD #FieldName
+        STRING
+        PROPERTIES
+          Name                #FieldName
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{350B494E-97C2-4223-A9DB-454613A128DF}
+          ExtendedDataType    #FieldName
+          StringSize          #40
+        ENDPROPERTIES
+        
+      FIELD #GuidValue
+        GUID
+        PROPERTIES
+          Name                #GuidValue
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{752E24EF-3132-4CB9-85AF-842F0F01C358}
+          ExtendedDataType    #SysGuid
+        ENDPROPERTIES
+        
+      FIELD #HighlightFieldId
+        INT
+        PROPERTIES
+          Name                #HighlightFieldId
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{3EBB0296-30EA-4635-A516-104688354EF3}
+          ExtendedDataType    #FieldId
+        ENDPROPERTIES
+        
+      FIELD #Int64Value
+        INT64
+        PROPERTIES
+          Name                #Int64Value
+          HelpText            #@SYS73441
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{5C8CC0DB-638E-47E7-87D9-208A05112DE2}
+          ExtendedDataType    #SysInt64
+        ENDPROPERTIES
+        
+      FIELD #IntegerValue
+        INT
+        PROPERTIES
+          Name                #IntegerValue
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{561B80E6-5549-488D-BA27-AE4C09AEAFC0}
+          ExtendedDataType    #Integer
+        ENDPROPERTIES
+        
+      FIELD #RealValue
+        REAL
+        PROPERTIES
+          Name                #RealValue
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{AAA6CBCC-5165-43B6-85CE-6FF2E9B29187}
+          ExtendedDataType    #RealBase
+        ENDPROPERTIES
+        
+      FIELD #RefRecId
+        INT64
+        PROPERTIES
+          Name                #RefRecId
+          Mandatory           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #No
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{87F2FF72-0854-49F5-801C-77B1315DDD24}
+          ExtendedDataType    #RefRecId
+        ENDPROPERTIES
+        
+      FIELD #StringValue
+        STRING
+        PROPERTIES
+          Name                #StringValue
+          HelpText            #@SYS73443
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{CA0D418B-9978-4057-B749-84D6057607CC}
+          ExtendedDataType    #String255
+          StringSize          #255
+        ENDPROPERTIES
+        
+      FIELD #TimeValue
+        TIME
+        PROPERTIES
+          Name                #TimeValue
+          Table               #WIK_TmpSysTableBrowser
+          Origin              #{87C4FFB9-ECE2-480D-A5ED-D744F2867721}
+          ExtendedDataType    #TimeOfDay
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+    ENDGROUPS
+    
+    INDICES
+    ENDINDICES
+    FULLTEXTINDICES
+    ENDFULLTEXTINDICES
+    REFERENCES
+      REFERENCE #DataSourceRel
+        PROPERTIES
+          Name                #DataSourceRel
+          Table               #Common
+          Validate            #No
+          RelatedTableCardinality   #ExactlyOne
+          Cardinality         #ExactlyOne
+          RelationshipType    #Association
+          UseDefaultRoleNames #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Field               #RefRecId
+            RelatedField        #RecId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END
