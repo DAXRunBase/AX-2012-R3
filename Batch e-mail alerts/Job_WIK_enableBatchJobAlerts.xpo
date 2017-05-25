@@ -1,0 +1,61 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_enableBatchJobAlerts unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_enableBatchJobAlerts
+    #static void WIK_enableBatchJobAlerts(Args _args)
+    #{
+    #    #Batch
+    #    Map             alertsMap;
+    #    Map             alertsEntity;
+    #    BatchJob        batchJob;
+    #    BatchJobAlerts  batchJobAlerts;
+    #
+    #    while select batchJob
+    #        where (batchJob.Status      == BatchStatus::Executing
+    #            || batchJob.Status      == BatchStatus::Waiting)
+    #            // Optional filtering for dedicated batch service account only
+    #            && batchJob.createdBy   == 'axbatchuserid'
+    #        notexists join batchJobAlerts
+    #            where  batchJobAlerts.BatchJobId    == batchJob.RecId
+    #                // Include all batch jobs where e-mail alert is disabled for our account
+    #                && batchJobAlerts.UserId        == batchJob.createdBy
+    #                && batchJobAlerts.Email         == NoYes::Yes
+    #    {
+    #        // This can be called any number of times to alert multiple users even with different settings
+    #        alertsMap = BatchJobAlerts::addAlertsToMap(
+    #            batchJob.createdBy, // Whom to alert
+    #            NoYes::No,          // Ended
+    #            NoYes::Yes,         // Error
+    #            NoYes::Yes,         // Canceled
+    #            NoYes::No,          // Popup
+    #            NoYes::Yes          // E-mail
+    #            );
+    #
+    #        BatchJobAlerts::saveAlerts(batchJob.RecId, alertsMap);
+    #
+    #        alertsEntity = alertsMap.lookup(batchJob.createdBy);
+    #
+    #        info(strFmt('Enabling alert (Ended=%1 Error=%2 Canceled=%3 Popup=%4 E-mail=%5) for user <%6> and batch <%7>',
+    #            enum2Symbol(enumNum(NoYes), alertsEntity.lookup(#batchJobEnded)),
+    #            enum2Symbol(enumNum(NoYes), alertsEntity.lookup(#batchJobError)),
+    #            enum2Symbol(enumNum(NoYes), alertsEntity.lookup(#batchJobCanceled)),
+    #            enum2Symbol(enumNum(NoYes), alertsEntity.lookup(#popup)),
+    #            enum2Symbol(enumNum(NoYes), alertsEntity.lookup(#email)),
+    #            batchJob.createdBy,
+    #            batchJob.Caption
+    #            ));
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{12D2BF63-2039-48C0-AC97-0E3221C8B4BC}
+  ENDPROPERTIES
+  
+
+***Element: END
