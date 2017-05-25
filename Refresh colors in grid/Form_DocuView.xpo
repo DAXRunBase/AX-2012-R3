@@ -1,0 +1,2223 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #DocuView
+  PROPERTIES
+    Name                #DocuView
+    Origin              #{5E006764-379B-42B4-A9F2-7679A4411809}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #final class FormRun extends ObjectRun
+      #{
+      #    #ISOCountryRegionCodes
+      #
+      #    QueryBuildRange             criteriaRefCompanyId;
+      #    QueryBuildRange             criteriaRefTableId;
+      #    QueryBuildRange             criteriaRefRecId;
+      #    QueryBuildRange             criteriaCreatedBy;
+      #    // <GBR>
+      #    QueryBuildRange             criteriaTypeId_BR;
+      #    // </GBR>
+      #
+      #    CompanyId                   concreteCompanyId;
+      #    CompanyId                   actualCompanyId;
+      #    tableId                     actualTableId;
+      #    recId                       actualRecId;
+      #
+      #    recId                       docuLinkId;
+      #
+      #    boolean                     creating;
+      #    boolean                     locked;
+      #    boolean                     sysLocked;      // Locked by docu. system
+      #    boolean                     rfqExternalLocked;
+      #
+      #    DocuOptionView              optionView;
+      #
+      #    SysFormSplitter_Y           formSplitter_Y;
+      #
+      #    TextBuffer                  textBuffer;
+      #    boolean                     paintErrorText;
+      #    str                         errorText;
+      #    DocuTypeId                  docuTypeIdFile;
+      #
+      #    boolean                     onlyEditInternal;
+      #    str                         curUrl;
+      #    boolean                     allowEditBasedOnActualForm;
+      #    boolean                     allowEditBasedOnTableSecurity;
+      #    UserInfo                    userInfo;
+      #    TableName                   fromPrimaryTable;
+      #    boolean                     allowView;
+      #
+      #    Microsoft.Dynamics.Framework.UI.WinForms.Controls.MessageBar messageBar;
+      #}
+    ENDSOURCE
+    SOURCE #activate
+      #public void activate(boolean _active)
+      #{
+      #    ;
+      #
+      #    super(_active);
+      #
+      #    if(_active && '' != concreteCompanyId)
+      #    {
+      #        // concreteCompanyId will be blank when the form is "Unlinked"
+      #        appl.setDefaultCompany(concreteCompanyId, false);
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #actualTableId
+      #tableId actualTableId()
+      #{
+      #    return actualTableId;
+      #}
+    ENDSOURCE
+    SOURCE #clear
+      #void clear()
+      #{
+      #    if (locked || sysLocked)
+      #        return;
+      #
+      #    if (creating)
+      #        return;
+      #
+      #    concreteCompanyId = '';
+      #    actualCompanyId = '';
+      #    actualTableId   = 0;
+      #    actualRecId     = 0;
+      #    DocuRef::multiSelectRecordDelete();
+      #
+      #    docuRef_ds.executeQuery();
+      #
+      #    this.setCaption("@SYS26830");
+      #    this.setEnabled();
+      #    this.showMessageBar(false);
+      #}
+    ENDSOURCE
+    SOURCE #close
+      #public void close()
+      #{
+      #    FormRun         frm = infolog.parmLastActivatedForm().object();
+      #    FormDataSource  fds;
+      #
+      #    DocuRef::multiSelectRecordDelete();
+      #
+      #    SysHelp::initWebBrowser(htmlView);
+      #    curUrl = "";
+      #
+      #    super();
+      #
+      #    if (infolog.docu() && infolog.docu().docuView() && infolog.docu().docuView().object())
+      #    {
+      #        infolog.docu().clearDocuView(); //ensure that form is removed from infolog object
+      #    }
+      #
+      #    if (frm
+      #        && frm.form().name() == formStr(VendTrans))
+      #    {
+      #        fds = frm.dataSource(1);
+      #        fds.clearDisplayOption(fds.cursor());
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #docuRef_ds
+      #FormDataSource docuRef_ds()
+      #{
+      #    return docuRef_ds;
+      #}
+    ENDSOURCE
+    SOURCE #doReSearch
+      #/// <summary>
+      #/// Do a research on the form when necessary, set caption of the form,
+      #/// disable or enable controls on the form.
+      #/// </summary>
+      #/// <param name="actualFormRun">
+      #/// The form that needs research.
+      #/// </param>
+      #void doReSearch(FormRun actualFormRun)
+      #{
+      #    #define.ctrlBuildAdd('ctrlAdd')
+      #
+      #    Common          testCursor  = actualFormRun.docCursor();
+      #    Common          tmpCursor;
+      #    FormDataSource  testDs      = testCursor.dataSource();
+      #    SysDictTable    testDictTable = new SysDictTable(testCursor.TableId);
+      #    DocuTypeSearch  search;
+      #    boolean         tableIdChanged;
+      #    Map             map;
+      #    tableName       primaryTable;
+      #    int64           templateLibraryCount;
+      #    // <GEERU>
+      #    boolean         allowEdit;
+      #    // </GEERU>
+      #    CustTable       custTable;
+      #    container       allowViewResult;
+      #    str             allowViewMessage;
+      #
+      #    void setControl(boolean enabled)
+      #    {
+      #        FormControlName                 controlName;
+      #        FormStringControl               control;
+      #        FormMenuButtonControl           menuCtrl;
+      #        FormFunctionButtonControl       itemButtonCtrl;
+      #        int                             controlId;
+      #        primaryTable = tableId2name(testCursor.TableId);
+      #        controlName = search.docuType().TypeId;
+      #
+      #        if (controlName)
+      #        {
+      #            // Use the element lock to avoid property changed events while creating the controls.
+      #            element.lock();
+      #            control = element.design().controlName(controlName);
+      #            if (control)
+      #            {
+      #                control.enabled(enabled);
+      #            }
+      #            else
+      #            {
+      #                // Determine if there is more than one template library
+      #                templateLibraryCount = DocuType::getTemplateLibraryCount();
+      #
+      #                controlId = element.controlId(#ctrlBuildAdd);
+      #                menuCtrl = element.control(controlId);
+      #
+      #                // If the primary table changed we need hide the existing documents(menu item buttons)
+      #                if (fromPrimaryTable != primaryTable)
+      #                {
+      #                    // Update the existing menu item buttons hiding the controls
+      #                    this.updateMenuButtons(menuCtrl, controlName, templateLibraryCount, fromPrimaryTable, false);
+      #                }
+      #
+      #                // Update/Add new menu item buttons
+      #                this.updateMenuButtons(menuCtrl, controlName, templateLibraryCount, primaryTable, true);
+      #            }
+      #        }
+      #        else
+      #        {
+      #            error(strfmt("@SYS62788",controlName));
+      #        }
+      #        element.unLock();
+      #    }
+      #
+      #    allowView = true;
+      #
+      #    // Check the table to see if viewing of attachments is allowed for the current record.
+      #    if (tableHasInstanceMethod(testDictTable, identifierStr(docuAllowView)))
+      #    {
+      #        allowViewResult = testCursor.docuAllowView();
+      #
+      #        if (allowViewResult)
+      #        {
+      #            allowView = conPeek(allowViewResult, 1);
+      #
+      #            if (!allowView)
+      #            {
+      #                if (conLen(allowViewResult) > 1)
+      #                {
+      #                    allowViewMessage = conPeek(allowViewResult, 2);
+      #                }
+      #
+      #                if (!allowViewMessage)
+      #                {
+      #                    allowViewMessage = "@SYS4010280";
+      #                }
+      #            }
+      #        }
+      #    }
+      #
+      #    element.showMessageBar(!allowView, allowViewMessage);
+      #
+      #    if (locked || sysLocked || !testCursor)
+      #    {
+      #        return;
+      #    }
+      #
+      #    if (creating && testCursor.TableId == tablenum(DocuType))
+      #    {
+      #        return;
+      #    }
+      #
+      #    if (testCursor.TableId == tablenum(DocuRef) || testCursor.TableId == tablenum(DocuOpenFile)
+      #        || testCursor.TableId == tablenum(DocuValue))
+      #    {
+      #        return;
+      #    }
+      #
+      #    if (testCursor.DataAreaId   == actualCompanyId  &&
+      #        testCursor.TableId      == actualTableId    &&
+      #        testCursor.RecId        == actualRecId)
+      #    {
+      #        return;
+      #    }
+      #
+      #    tableIdChanged  = actualTableId != testCursor.TableId;
+      #
+      #    concreteCompanyId = testCursor.company();
+      #    actualCompanyId = testCursor.DataAreaId;
+      #    actualTableId   = testCursor.TableId;
+      #    actualRecId     = testCursor.RecId;
+      #
+      #    //loop through all selected records and save in map
+      #    for (tmpCursor = testDs.getFirst(1); tmpCursor.RecId; tmpCursor = testDs.getNext())
+      #    {
+      #        if (!map)
+      #        {
+      #            map = new Map(typeName2Type(extendedtypestr(recId)), Types::Record);
+      #        }
+      #        map.insert(tmpCursor.RecId, null);
+      #    }
+      #    if (map)
+      #    {   //save map for docuref create and update
+      #        DocuRef::multiSelectRecords(map);
+      #    }
+      #    else
+      #    {   //- or delete existing map...
+      #        DocuRef::multiSelectRecordDelete();
+      #    }
+      #
+      #    element.setCaption(testCursor.caption());
+      #
+      #    // Set the access rights of the DocuRef datasource. First check the access rights of table
+      #    // on which document handling has been invoked. Secondly check the access rights of the
+      #    // DocuRef table.
+      #    // <GEERU>
+      #    if (tableHasMethod(testDictTable, identifierStr(docuAllowEdit_W)))
+      #    {
+      #        allowEdit = testCursor.docuAllowEdit_W();
+      #    }
+      #    else
+      #    {
+      #        allowEdit = testDs.allowEdit();
+      #    }
+      #    allowEditBasedOnActualForm = (allowEdit || this.isContentForm(actualFormRun));
+      #
+      #    // Determine if the user has edit access on the table.
+      #    allowEditBasedOnTableSecurity = isTableUserEnabled(testDs.table(), AccessType::Edit);
+      #    // </GEERU>
+      #
+      #    if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoNO]) &&
+      #       (testCursor.TableId == tablenum(CustInvoiceJour) || testCursor.TableId == tablenum(ProjInvoiceJour)))
+      #    {
+      #        switch (testCursor.TableId)
+      #        {
+      #            case tablenum(CustInvoiceJour):
+      #                custTable = CustTable::find(CustInvoiceJour::findRecId(testCursor.RecId).InvoiceAccount, false);
+      #                break;
+      #            case tablenum(ProjInvoiceJour):
+      #                custTable = CustTable::find(ProjInvoiceJour::findRecId(testCursor.RecId).InvoiceAccount, false);
+      #                break;
+      #        }
+      #
+      #        if (custTable.EInvoice)
+      #        {
+      #            allowEditBasedOnActualForm = true;
+      #        }
+      #    }
+      #
+      #    if (!allowEditBasedOnActualForm && testCursor.TableId == tableNum(PurchReqTable))
+      #    {
+      #        allowEditBasedOnActualForm = true;
+      #    }
+      #
+      #    if (allowView && (allowEditBasedOnActualForm || infolog.docu().isTableEnabledAllowEditAlways(testDs.table())))
+      #    {
+      #        // Only true if we enter through allowEditAlways
+      #        onlyEditInternal = !allowEditBasedOnActualForm;
+      #
+      #        //
+      #        // The access rights of the Docuref table were ignored. Now they are used, but only
+      #        // when the controlling table allows editing.
+      #        //
+      #
+      #        docuRef_ds.allowCreate( isTableUserEnabled(docuRef_ds.table(), AccessType::Add) );
+      #        docuRef_ds.allowDelete( isTableUserEnabled(docuRef_ds.table(), AccessType::Delete) );
+      #        docuRef_ds.allowEdit(   isTableUserEnabled(docuRef_ds.table(), AccessType::Edit) );
+      #    }
+      #    else
+      #    {
+      #        onlyEditInternal = false;
+      #
+      #        docuRef_ds.allowCreate(false);
+      #        docuRef_ds.allowDelete(false);
+      #        docuRef_ds.allowEdit(false);
+      #    }
+      #
+      #    docuRef_ds.object(fieldnum(DocuRef, Restriction)).allowEdit(!onlyEditInternal);
+      #
+      #    docuRef_ds.executeQuery();
+      #    this.setEnabled();
+      #    docuRef_ds.refresh();
+      #    SysHelp::initWebBrowser(htmlView);
+      #    curUrl = "";
+      #
+      #    if (tableIdChanged)
+      #    {
+      #        search = DocuTypeSearch::newNeglect(actualTableId, true);
+      #        while (search.next())
+      #        {
+      #            setControl(false);
+      #        }
+      #
+      #        search = DocuTypeSearch::newTable(actualTableId);
+      #        while (search.next())
+      #        {
+      #            setControl(true);
+      #        }
+      #
+      #        // Track the table that was used to determine which menu item buttons are currently active on the docuView form
+      #        fromPrimaryTable = tableId2name(actualTableId);
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #getControlNameWithTemplateID
+      #/// <summary>
+      #/// Builds a control name based on the combination of the library (DocuTypeId) and document (TemplateName).
+      #/// </summary>
+      #/// <param name="_typeID">
+      #/// The Library that should be associated with the TemplateID.
+      #/// </param>
+      #/// <param name="_templateID">
+      #/// The document that should be associated with the TypeID.
+      #/// </param>
+      #/// <returns>
+      #/// The concatenated string of relating to the DocuTypeId and TemplateName with a unit seperator character.
+      #/// </returns>
+      #private str getControlNameWithTemplateID(DocuTypeId _typeID, TemplateName _templateID)
+      #{
+      #    #define.TemplateIDSeperator('\x001F')
+      #    return (_typeID + #TemplateIDSeperator + _templateID);
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #void init()
+      #{
+      #    #define.ctrlBuildAdd('ctrlAdd')
+      #
+      #    DocuType                            docuType;
+      #    DocuTemplate                        docuTemplate;
+      #    FormBuildMenuButtonControl          menuCtrl;
+      #    FormBuildFunctionButtonControl      itemButtonCtrl;
+      #    FormRun                             formRun;
+      #    tableName                           primaryTable;
+      #    int64                               templateLibraryCount;
+      #
+      #    allowView = true;
+      #
+      #    // Determine if there is more than one template library
+      #    templateLibraryCount = docuType::getTemplateLibraryCount();
+      #
+      #    if (! infolog.parmDocuHandlingActive())
+      #    {
+      #        throw(error("@SYS60737"));
+      #    }
+      #
+      #    if (infolog.parmDocu().isDocuViewSet())
+      #    {
+      #        infolog.parmDocu().setActive();
+      #        throw Exception::Info;
+      #    }
+      #
+      #    optionView = new DocuOptionView();
+      #    optionView.getLast();
+      #
+      #    DocuType::createDefaults();
+      #    docuTypeIdFile = DocuType::typeFile();
+      #
+      #    formRun  = infolog.parmLastActivatedForm().object();
+      #    primaryTable = tableId2name(formRun.docCursor().TableId);
+      #
+      #    select language from userInfo
+      #        where UserInfo.id == curUserId();
+      #
+      #    menuCtrl = this.form().design().control(#ctrlBuildAdd);
+      #    while select @TypeId,ActionClassId from docuType
+      #        index TypeIdx
+      #        where docuType.ActionClassId != classNum(DocuLibrary)
+      #
+      #    {
+      #        // <GBR>
+      #        if (BrazilParameters::isEnabled()
+      #            && BrazilParameters::find().FiscalDocumentTextDocuTypeId
+      #            && docuType.TypeId == BrazilParameters::find().FiscalDocumentTextDocuTypeId)
+      #        {
+      #            continue;
+      #        }
+      #        // </GBR>
+      #        itemButtonCtrl = menuCtrl.addControl(FormControlType::MenuFunctionButton,docuType.TypeId);
+      #        itemButtonCtrl.menuItemType(MenuItemType::Action);
+      #        itemButtonCtrl.menuItemName(menuitemactionstr(DocuActionNew));
+      #        itemButtonCtrl.text(docuType.TypeId);
+      #    }
+      #    // Now add the menu item buttons associated with the template libraries (this list is dynamic based on record selection)
+      #    // We are adding them at the end to ensure we reduce the visual impact as controls appear/disappear when record selection changes.
+      #    while select @TypeId,ActionClassId from docuType
+      #        index TypeIdx
+      #        where docuType.ActionClassId == classNum(DocuLibrary)
+      #    {
+      #        while select TypeID, TemplateID from docuTemplate
+      #            where docuTemplate.TypeID == DocuType.TypeId
+      #                    && DocuTemplate.Enabled == NoYes::Yes
+      #                    && docuTemplate.PrimaryTable == primaryTable
+      #                    && (docuTemplate.LanguageID   == userInfo.Language
+      #                    || docuTemplate.LanguageID == '')
+      #
+      #        {
+      #            itemButtonCtrl = menuCtrl.addControl(FormControlType::MenuFunctionButton, this.getControlNameWithTemplateID(docuTemplate.TypeID, docuTemplate.TemplateID));
+      #            itemButtonCtrl.menuItemType(MenuItemType::Action);
+      #            itemButtonCtrl.menuItemName(menuitemactionstr(DocuActionNew));
+      #
+      #            // If documents are being stored in more than 1 Template library(TypeID) append the Template library name to the button.
+      #            if (templateLibraryCount > 1)
+      #            {
+      #                if (currentSessionLanguageRTL())
+      #                {
+      #                    itemButtonCtrl.text(DocuType.TypeID + " - " + docuTemplate.TemplateID);
+      #                }
+      #                else
+      #                {
+      #                    itemButtonCtrl.text(docuTemplate.TemplateID + " - " + DocuType.TypeID);
+      #                }
+      #            }
+      #            else
+      #            {
+      #                itemButtonCtrl.text(docuTemplate.TemplateID);
+      #            }
+      #        }
+      #    }
+      #
+      #    super();
+      #
+      #    link.enabled(false);
+      #    multiPaste.enabled(false);
+      #
+      #    formSplitter_Y = new SysFormSplitter_Y(grpSplit,grpRefGrid,this);
+      #    fromPrimaryTable = primaryTable;
+      #}
+    ENDSOURCE
+    SOURCE #isActualFound
+      #boolean isActualFound()
+      #{
+      #    return actualCompanyId && actualTableId && actualRecId;
+      #}
+    ENDSOURCE
+    SOURCE #isContentForm
+      #private boolean isContentForm(FormRun actualFormRun)
+      #{
+      #    FormDesign formDesign = actualFormRun.design();
+      #    ;
+      #
+      #    return formDesign &&
+      #        (formDesign.windowType() == FormWindowType::ListPage || formDesign.windowType() == FormWindowType::ContentPage || formDesign.style() == FormStyle::ListPage);
+      #}
+    ENDSOURCE
+    SOURCE #loadFile
+      #/// <summary>
+      #/// Set helptext and visibility of several controls, after a new <c>DocuRef</c>
+      #/// record is selected or when form is initialized.
+      #/// </summary>
+      #void loadFile()
+      #{
+      #    element.lockWindowUpdate(true);
+      #
+      #    paintErrorText = false;
+      #
+      #    htmlView.visible(false);
+      #    textView.visible(false);
+      #
+      #    docuRef_Notes.visible(!showImage.value() || !docuRef.isValueAttached());
+      #
+      #    if (docuRef_Notes.visible())
+      #    {
+      #        // URL of a document.
+      #        if (docuRef.docuType().TypeGroup == DocuTypeGroup::URL)
+      #            docuRef_Notes.helpText("@SYS319544");
+      #        SysHelp::initWebBrowser(htmlView);
+      #        curUrl = "";
+      #    }
+      #    else  //do not show file or nothing attached
+      #    {
+      #        htmlView.visible(true);
+      #        if (! element.loadHtmlFile())
+      #        {
+      #            htmlView.visible(false);
+      #            textView.visible(true);
+      #            textView.text("@SYS26665"); //"@SYS19358";
+      #        }
+      #    }
+      #    element.lockWindowUpdate(false);
+      #}
+    ENDSOURCE
+    SOURCE #loadHtmlFile
+      #boolean loadHtmlFile()
+      #{
+      #    container   con;
+      #
+      #    URL url;
+      #
+      #    if (docuRef.docuValue().File)
+      #    {
+      #        //file in database
+      #        DocuFileWatchDog::create(); //update old files
+      #
+      #        url = DocuActionFile::saveTempFile(docuRef);
+      #        htmlView.navigate(url);
+      #
+      #        DocuOpenFile::add(docuRef, url);
+      #        curUrl = url;
+      #        DocuFileWatchDog::createDelayed(); //ensure that watchdog is started
+      #    }
+      #    else
+      #    {
+      #        url = docuRef.completeFilename();
+      #        con = WinAPI::findFirstFile(url);
+      #        if (!conpeek(con, 2) && conpeek(con, 1) == -1)
+      #            return false;
+      #
+      #        htmlView.navigate(url);
+      #        curUrl = url;
+      #    }
+      #
+      #    return true;
+      #}
+    ENDSOURCE
+    SOURCE #print
+      #public void print()
+      #{
+      #    DocuAction      docuAction = docuRef.docuAction();
+      #    MenuFunction    menuFunction;
+      #    Args            arg;
+      #;
+      #    if (docuAction && docuRef.RecId != 0 && docuAction.hasPrint())
+      #    {
+      #        arg = new Args();
+      #        arg.record(docuRef);
+      #
+      #        menuFunction = new MenuFunction(menuitemactionstr(DocuActionPrint), MenuItemType::Action);
+      #        if (menuFunction)
+      #            menuFunction.run(arg);
+      #    }
+      #    else
+      #    {
+      #        super();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #refreshAfterSelect
+      #/// <summary>
+      #/// Refresh the form after user select an existing document file.
+      #/// </summary>
+      #void refreshAfterSelect()
+      #{
+      #    docuRef_ds.executeQuery();
+      #}
+    ENDSOURCE
+    SOURCE #rfqExternalLocked
+      #public boolean rfqExternalLocked()
+      #{
+      #    PurchRFQCaseTable localPurchRFQCaseTable;
+      #    PurchRFQCaseLine  localPurchRFQCaseLine;
+      #    PurchRFQAmendment localPurchRFQAmendment;
+      #    PurchRFQStatus    rfqStatus;
+      #    boolean           isRfqInAmendedMode, isRfqPublished, externalLocked, isRFQTable;
+      #
+      #    if (actualTableId
+      #        && (isConfigurationKeyEnabled(configurationKeyNum(PublicSector))
+      #            || PurchRFQParameters::find().LockRFQOnSend))
+      #    {
+      #        if(actualTableId == tablenum(PurchRFQCaseTable))
+      #        {
+      #            localPurchRFQCaseTable = PurchRFQCaseTable::findRecId(actualRecId);
+      #            rfqStatus = localPurchRFQCaseTable.StatusHigh;
+      #            isRFQTable = true;
+      #        }
+      #        else if(actualTableId == tablenum(PurchRFQCaseLine))
+      #        {
+      #            localPurchRFQCaseLine = PurchRFQCaseLine::findRecId(actualRecId);
+      #            localPurchRFQCaseTable = PurchRFQCaseTable::find(localPurchRFQCaseLine.RFQCaseId);
+      #            rfqStatus = localPurchRFQCaseLine.StatusHigh;
+      #            isRFQTable = true;
+      #        }
+      #        else if (actualTableId == tablenum(PurchRFQAmendment))
+      #        {
+      #            localPurchRFQAmendment = PurchRFQAmendment::findRecId(actualRecId);
+      #            localPurchRFQCaseTable = PurchRFQCaseTable::findRecId(localPurchRFQAmendment.PurchRFQCaseTable);
+      #            rfqStatus = localPurchRFQCaseTable.StatusHigh;
+      #            isRFQTable = true;
+      #        }
+      #
+      #        if (isRFQTable)
+      #        {
+      #            isRfqInAmendedMode = localPurchRFQCaseTable.isAmended;
+      #            isRfqPublished = PurchRFQPublishTable_PSN::isRFQCasePublised(localPurchRFQCaseTable.RecId);
+      #            externalLocked = (rfqStatus >= PurchRFQStatus::Sent || isRfqPublished)  && !isRfqInAmendedMode;
+      #        }
+      #    }
+      #
+      #    return externalLocked;
+      #}
+    ENDSOURCE
+    SOURCE #run
+      #void run()
+      #{
+      #    element.setCaption("@SYS26830");
+      #
+      #    filter.selection(optionView.parmShowAllUser());
+      #    showOnlyRef.value(optionView.parmShowOnlyRef());
+      #    showImage.value(optionView.parmShowImage());
+      #    this.setShowRef();
+      #    this.setShowImage();
+      #
+      #    super();
+      #}
+    ENDSOURCE
+    SOURCE #setCaption
+      #void setCaption(str caption)
+      #{
+      #    element.design().caption(strfmt("@SYS25696",caption));
+      #}
+    ENDSOURCE
+    SOURCE #setCreating
+      #void setCreating(boolean _creating)
+      #{
+      #    creating = _creating;
+      #}
+    ENDSOURCE
+    SOURCE #setEnabled
+      #/// <summary>
+      #/// Enable or disable buttons on the form, after a new attachment is selected.
+      #/// </summary>
+      #void setEnabled()
+      #{
+      #    boolean     exist       = docuRef.RecId != 0;
+      #    DocuAction  docuAction  = docuRef.docuAction();
+      #
+      #    ctrlAdd.enabled(element.isActualFound() && docuRef_ds.allowCreate());
+      #    if (docuAction)
+      #    {
+      #        //Syp Modifications - SP3 [JEPPEOML][HQ-253-237-XL2S] - BEGIn
+      #        //open.enabled(   exist && docuAction.hasOpen() && docuRef_ds.allowEdit());
+      #        open.enabled( exist &&
+      #                      docuAction.hasOpen() &&
+      #                      isTableUserEnabled(docuRef_ds.table(), AccessType::View) &&
+      #                      (docuAction.defaultDocuTypeGroup() != DocuTypeGroup::URL ||
+      #                            (docuAction.defaultDocuTypeGroup() == DocuTypeGroup::URL && docuRef.Notes != "")) );
+      #        //Syp Modifications - SP3 [JEPPEOML][HQ-253-237-XL2S] - ENd
+      #
+      #        // use toolbar print - control not visible
+      #        printout.enabled( exist && docuAction.hasPrint() );
+      #    }
+      #    else
+      #    {
+      #        open.enabled(false);
+      #        printout.enabled(false); //use toolbar print - control not visible
+      #    }
+      #    lockUnlock.enabled(     exist);
+      #
+      #    if(element.rfqExternalLocked()
+      #       && docuRef.Restriction == DocuRestriction::External)
+      #    {
+      #       beginEndLink.enabled(false);
+      #       link.enabled(false);
+      #    }
+      #    else
+      #    {
+      #        beginEndLink.enabled(exist);
+      #        link.enabled((docuLinkId != 0 && docuRef_ds.allowCreate()) ? true : false);
+      #    }
+      #
+      #    multiPaste.enabled((docuLinkId != 0 &&
+      #                        DocuRef::multiSelectRecords() &&
+      #                        docuRef_ds.allowCreate()) ? true : false);
+      #    selectDocument.enabled(exist &&
+      #                        docuRef_ds.allowEdit() &&
+      #                        (DocuType::find(docuRef.TypeId).TypeGroup == DocuTypeGroup::URL ||
+      #                        DocuType::find(docuRef.TypeId).TypeGroup == DocuTypeGroup::File));
+      #}
+    ENDSOURCE
+    SOURCE #setRangeCreateId
+      #void setRangeCreateId(AllUser _allUser = filter.selection())
+      #{
+      #    switch (_allUser)
+      #    {
+      #        case AllUser::All:
+      #            criteriaCreatedBy.value(SysQuery::valueUnlimited());
+      #            break;
+      #        case AllUser::User:
+      #            criteriaCreatedBy.value(queryValue(curuserid()));
+      #            break;
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #setShowImage
+      #void setShowImage()
+      #{
+      #    element.lockWindowUpdate(true);
+      #    element.loadFile();
+      #    element.lockWindowUpdate(false);
+      #}
+    ENDSOURCE
+    SOURCE #setShowRef
+      #void setShowRef()
+      #{
+      #    element.lockWindowUpdate(true);
+      #
+      #    buttonGroup.visible(! showOnlyRef.value());
+      #    tab.showTabs(! showOnlyRef.value());
+      #    general.visible(! showOnlyRef.value());
+      #    if (showOnlyRef.value())
+      #    {
+      #        overview.bottomMarginMode(AutoMode::Fixed);
+      #        overview.bottomMarginValue(0);
+      #        overview.topMarginMode(AutoMode::Fixed);
+      #        overview.topMarginValue(0);
+      #
+      #        general.topMarginMode(AutoMode::Fixed);
+      #        general.topMarginValue(0);
+      #        general.bottomMarginMode(AutoMode::Fixed);
+      #        general.bottomMarginValue(0);
+      #    }
+      #    else
+      #    {
+      #        overview.topMarginMode(AutoMode::Auto);
+      #        overview.bottomMarginMode(AutoMode::Auto);
+      #        general.topMarginMode(AutoMode::Auto);
+      #        general.bottomMarginMode(AutoMode::Auto);
+      #    }
+      #
+      #    filter.visible(! showOnlyRef.value());
+      #    element.lockWindowUpdate(false);
+      #}
+    ENDSOURCE
+    SOURCE #setSysLocked
+      #void setSysLocked(boolean _locked)
+      #{
+      #    sysLocked = _locked;
+      #}
+    ENDSOURCE
+    SOURCE #showMessageBar
+      #/// <summary>
+      #/// Shows or hides the message bar.
+      #/// </summary>
+      #/// <param name="_show">
+      #/// A Boolean value indicating whether or not to show or hide the message bar.
+      #/// </param>
+      #/// <param name="_text">
+      #/// The text to display in the message bar if it is shown.
+      #/// </param>
+      #/// <remarks>
+      #/// If shown, the message bar will have a type of <c>InformationOnly</c>.
+      #/// </remarks>
+      #private void showMessageBar(boolean _show, str _text = "")
+      #{
+      #    Microsoft.Dynamics.Framework.UI.WinForms.Controls.MessagePane messagePane = messagePaneHost.control();
+      #
+      #    if (_show)
+      #    {
+      #        if (!messageBar)
+      #        {
+      #            messageBar = new Microsoft.Dynamics.Framework.UI.WinForms.Controls.MessageBar();
+      #            messageBar.set_MessageBarType(Microsoft.Dynamics.Framework.UI.WinForms.Controls.MessageBarType::InformationOnly);
+      #            messageBar.set_Enabled(false);
+      #            messagePane.Add(messageBar);
+      #        }
+      #
+      #        messageBar.set_Text(_text);
+      #    }
+      #
+      #    messagePaneHost.visible(_show);
+      #}
+    ENDSOURCE
+    SOURCE #task
+      #public int task(int _taskId)
+      #{
+      #    #Task
+      #
+      #    DocuRef localDocuRef;
+      #    int     retValue = 1;
+      #
+      #    if (rfqExternalLocked && _taskId == #taskDeleteRecord)
+      #    {
+      #        if (docuref_DS.anyMarked())
+      #        {
+      #            localDocuRef = docuref_DS.getFirst(true);
+      #            while(localDocuRef.RecId)
+      #            {
+      #                if (localDocuRef.Restriction == DocuRestriction::External)
+      #                {
+      #                    error("@SYP4950095");
+      #                    retValue = 0;
+      #                    break;
+      #                }
+      #
+      #                localDocuRef = docuref_DS.getNext();
+      #            }
+      #        }
+      #        else
+      #        {
+      #            if (docuRef.Restriction == DocuRestriction::External)
+      #            {
+      #                error("@SYP4950095");
+      #                retValue = 0;
+      #            }
+      #        }
+      #    }
+      #
+      #    if (retValue)
+      #    {
+      #        // Handle every other task as normal
+      #        retValue = super(_taskId);
+      #    }
+      #
+      #    return retValue;
+      #}
+    ENDSOURCE
+    SOURCE #updateMenuButtons
+      #/// <summary>
+      #/// Update or Add the appropriate Menu Item Buttons for the given table. Based on the vibility flag the controls for a given table
+      #/// are made visible or not. If the control doesn't exist and is intended on being visible add the control and mark the visible flag.
+      #/// </summary>
+      #/// <param name="_menuCtrl">
+      #/// The menu control to add the menu item buttons to.
+      #/// </param>
+      #/// <param name="_docuType">
+      #/// The Type of document being managed.
+      #/// </param>
+      #/// <param name="_templateLibraryCount">
+      #/// The number of template librarys that exist. If more than one the TypeID (type of document) is appended to the document (TemplateID) name.
+      #/// </param>
+      #/// <param name="_primaryTable">
+      #/// The primary table that the documents are associated with.
+      #/// </param>
+      #/// <param name="_visibility">
+      #/// Flag that determines if the control should be visible or not.
+      #/// </param>
+      #private void updateMenuButtons(FormMenuButtonControl _menuCtrl, DocuTypeId _docuType, int64 _templateLibraryCount, tableName _primaryTable, boolean _visibility)
+      #{
+      #    DocuTemplate docuTemplate;
+      #    FormFunctionButtonControl itemButtonCtrl;
+      #    FormStringControl control;
+      #
+      #    // Update the menu item button controls relating to this primary table
+      #    while select TypeID, TemplateID, PrimaryTable from docuTemplate
+      #        where docuTemplate.TypeID == _docuType
+      #            && docuTemplate.Enabled == NoYes::Yes
+      #            && docuTemplate.PrimaryTable == _primaryTable
+      #            && (docuTemplate.LanguageID  == userInfo.language
+      #                || docuTemplate.LanguageID == '')
+      #    {
+      #        control = element.design().controlName(this.getControlNameWithTemplateID(docuTemplate.TypeID, docuTemplate.TemplateID));
+      #
+      #        if (control)
+      #        {
+      #            // The control already exists because of a previous creation, so just change its visible flag.
+      #            control.visible(_visibility);
+      #        }
+      #        else if (_visibility)
+      #        {
+      #            // The control did not exist and we need to make it visible.
+      #            // Create the control and add it now.
+      #
+      #            itemButtonCtrl = _menuCtrl.addControl(FormControlType::MenuFunctionButton, this.getControlNameWithTemplateID(docuTemplate.TypeID, docuTemplate.TemplateID));
+      #            itemButtonCtrl.menuItemType(MenuItemType::Action);
+      #            itemButtonCtrl.menuItemName(menuitemactionstr(DocuActionNew));
+      #            itemButtonCtrl.visible(true);
+      #
+      #            // If documents are being stored in more than 1 Template library(TypeID) append the Template library name to the button.
+      #            if (_templateLibraryCount > 1)
+      #            {
+      #                if (currentSessionLanguageRTL())
+      #                {
+      #                    itemButtonCtrl.text(docuTemplate.TypeID + " - " + docuTemplate.TemplateID);
+      #                }
+      #                else
+      #                {
+      #                    itemButtonCtrl.text(docuTemplate.TemplateID + " - " + docuTemplate.TypeID);
+      #                }
+      #            }
+      #            else
+      #            {
+      #                itemButtonCtrl.text(docuTemplate.TemplateID);
+      #            }
+      #        }
+      #    }
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #DocuRef
+          Table               #DocuRef
+          Index               #RefIdx
+          StartPosition       #Last
+          AutoQuery           #No
+          LinkType            #Passive
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+          DATAFIELD TypeId
+            PROPERTIES
+            ENDPROPERTIES
+            
+            METHODS
+              SOURCE #modified
+                #void modified()
+                #{
+                #    boolean         add;
+                #    Args            args;
+                #    FormDataSource  datasource;
+                #    DocuType        docuType;
+                #    boolean         check;
+                #
+                #    super();
+                #
+                #    add = creating && ! docuRef.RecId;
+                #
+                #    if (add)
+                #    {
+                #        docuType = DocuType::find(docuRef.TypeId);
+                #        try
+                #        {
+                #            check = (!docuType || !docuType.verifyParameters(true)); //Check parameters and throw on errors
+                #        }
+                #        catch (Exception::Error)
+                #        {
+                #            return; //do not throw from here...
+                #        }
+                #        if (check)
+                #            return;
+                #
+                #        datasource = docuRef.dataSource();
+                #        datasource.write();
+                #        datasource.refresh();
+                #
+                #        args = new Args();
+                #        args.caller(element);
+                #        args.record(docuRef);
+                #        args.parmEnum(DocuCode::Add);
+                #        args.parm('1');
+                #        DocuAction::main(args);
+                #
+                #        element.setCreating(false);
+                #    }
+                #}
+                #
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD Notes
+            PROPERTIES
+            ENDPROPERTIES
+            
+            METHODS
+              SOURCE #modified
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    // When attachment is URL type, disable or enable the open button according
+                #    // to whether Notes field is empty.
+                #    if (docuRef && docuRef.docuAction() && docuRef.docuAction().defaultDocuTypeGroup() == DocuTypeGroup::URL)
+                #    {
+                #        open.enabled(docuRef.Notes != "");
+                #    }
+                #
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #initValue
+          #void initValue()
+          #{
+          #;
+          #    docuRef.TypeId = optionView.parmDefaultTypeId();
+          #
+          #    super();
+          #
+          #    // <GBR>
+          #    if (BrazilParameters::isEnabled()
+          #        && BrazilParameters::find().FiscalDocumentTextDocuTypeId)
+          #    {
+          #        docuRef.RefCompanyId    = actualCompanyId;
+          #        docuRef.RefTableId      = actualTableId;
+          #        docuRef.RefRecId        = actualRecId;
+          #    }
+          #    // </GBR>
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #void init()
+          #{
+          #    Query           q;
+          #    QueryBuildDataSource qB;
+          #
+          #    super();
+          #
+          #    q = new Query();
+          #    qB = q.addDataSource(tablenum(DocuRef));
+          #    criteriaRefCompanyId    = qB.addRange(fieldnum(DocuRef,RefCompanyId));
+          #    criteriaRefCompanyId.status(RangeStatus::Locked);
+          #    criteriaRefTableId      = qB.addRange(fieldnum(DocuRef,RefTableId));
+          #    criteriaRefTableId.status(RangeStatus::Locked);
+          #    criteriaRefRecId        = qB.addRange(fieldnum(DocuRef,RefRecId));
+          #    criteriaRefRecId.status(RangeStatus::Locked);
+          #    criteriaCreatedBy       = qB.addRange(fieldnum(DocuRef,CreatedBy));
+          #    criteriaCreatedBy.status(RangeStatus::Locked);
+          #    // <GBR>
+          #    if (BrazilParameters::isEnabled()
+          #        && BrazilParameters::find().FiscalDocumentTextDocuTypeId)
+          #    {
+          #        criteriaTypeId_BR   = qB.addRange(fieldnum(DocuRef,@TypeId));
+          #        criteriaTypeId_BR.status(RangeStatus::Locked);
+          #    }
+          #    // </GBR>
+          #    element.setRangeCreateId(optionView.parmShowAllUser());
+          #    this.query(q);
+          #
+          #    this.cacheAddMethod(tablemethodstr(DocuRef, isValueAttached));
+          #}
+        ENDSOURCE
+        SOURCE #executeQuery
+          #void executeQuery()
+          #{
+          #    TableId baseTableId;
+          #
+          #    if (allowView && element.isActualFound())
+          #    {
+          #        // Check the base table reference for documents
+          #        baseTableId = DocuRef::GetRootTableID(actualTableId);
+          #
+          #        criteriaRefCompanyId.value(queryValue(actualCompanyId));
+          #        criteriaRefTableId.value(queryValue(baseTableId));
+          #        criteriaRefRecId.value(queryValue(actualRecId));
+          #        // <GBR>
+          #        if (BrazilParameters::isEnabled()
+          #            && BrazilParameters::find().FiscalDocumentTextDocuTypeId
+          #            && criteriaTypeId_BR)
+          #        {
+          #            criteriaTypeId_BR.value(queryNotValue(BrazilParameters::find().FiscalDocumentTextDocuTypeId));
+          #        }
+          #        // </GBR>
+          #    }
+          #    else
+          #    {
+          #        criteriaRefCompanyId.value(queryValue(naStr()));
+          #        criteriaRefTableId.value(queryValue(naInt()));
+          #        criteriaRefRecId.value(queryValue(naInt()));
+          #    }
+          #
+          #    super();
+          #
+          #    rfqExternalLocked = element.rfqExternalLocked();
+          #}
+        ENDSOURCE
+        SOURCE #delete
+          #void delete()
+          #{
+          #    if (docuLinkId == docuRef.RecId)
+          #        docuLinkId = 0;
+          #
+          #    super();
+          #
+          #    element.setCreating(false);
+          #    element.setEnabled();
+          #    infolog.docu().resetLastSearchValue(); //make sure that button is updated
+          #    element.setEnabled();
+          #}
+        ENDSOURCE
+        SOURCE #create
+          #void create(boolean append = false)
+          #{
+          #    if (! element.isActualFound())
+          #        return;
+          #
+          #    infolog.docu().resetLastSearchValue(); //make sure that button is updated
+          #    element.setCreating(true);
+          #
+          #    super(append);
+          #}
+        ENDSOURCE
+        SOURCE #active
+          #int active()
+          #{
+          #    int                 ret;
+          #
+          #    ret = super();
+          #
+          #    // The user can edit if they have proper security access on the table and they either have edit
+          #    // rights through the form or document edits are always enabled on the table via document managment configuration.
+          #    this.allowEdit(allowEditBasedOnTableSecurity && (allowEditBasedOnActualForm || onlyEditInternal) && (docuRef.Restriction != DocuRestriction::External || !onlyEditInternal));
+          #
+          #    element.setEnabled();
+          #    element.loadFile();
+          #
+          #    DocuRef_DS.object(fieldNum(DocuRef, Restriction)).enabled(!rfqExternalLocked);
+          #    DocuRef_DS.allowEdit(!rfqExternalLocked || DocuRef.Restriction == DocuRestriction::Internal);
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #@SYS22623
+      SetCompany          #No
+      HideIfEmpty         #No
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #626349396
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ButtonGroup
+          AutoDeclaration     #Yes
+          ElementPosition     #1610612733
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #NewDeleteGroup
+          ElementPosition     #1073741822
+          HierarchyParent     #ActionPaneTab
+          DataSource          #DocuRef
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GrpRefGrid
+          VisibleRows         #4
+          DataSource          #DocuRef
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Create
+          ElementPosition     #1288490187
+          HierarchyParent     #General
+          DataSource          #DocuRef
+          DataGroup           #Create
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Group
+          ElementPosition     #1717986916
+          HierarchyParent     #General
+          Caption             #@SYS26552
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GrpRefGrid
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #100
+          VerticalSpacing     #0
+          ElementPosition     #613566756
+          HierarchyParent     #Overview
+          FrameType           #None
+          BottomMargin        #0
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GrpSetup
+          AutoDeclaration     #Yes
+          ElementPosition     #1252698792
+          FrameType           #None
+          ArrangeMethod       #Horizontal, flush right
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GrpSplit
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #4
+          VerticalSpacing     #0
+          AlignControl        #Yes
+          ElementPosition     #920350134
+          HierarchyParent     #Overview
+          FrameType           #None
+          TopMargin           #0
+          BottomMargin        #0
+          HideIfEmpty         #No
+          AlignChild          #No
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #mouseDown
+            #int mouseDown(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int ret;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    return formSplitter_Y.mouseDown(x, y, button, ctrl, shift);
+            #}
+          ENDSOURCE
+          SOURCE #mouseMove
+            #int mouseMove(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int ret;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    return formSplitter_Y.mouseMove(x,y,button,ctrl,shift);
+            #}
+          ENDSOURCE
+          SOURCE #mouseUp
+            #int mouseUp(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int ret;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    return formSplitter_Y.mouseUp(x, y, button, ctrl, shift);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Identification
+          ElementPosition     #858993458
+          HierarchyParent     #General
+          DataSource          #DocuRef
+          DataGroup           #Identification
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #MessagePaneGroup
+          Width               #Column width
+          Skip                #Yes
+          ElementPosition     #939524094
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MANAGEDHOST
+        PROPERTIES
+          Name                #MessagePaneHost
+          Width               #Column width
+          Skip                #Yes
+          ElementPosition     #1431655764
+          HierarchyParent     #MessagePaneGroup
+          TypeName            #Microsoft.Dynamics.Framework.UI.WinForms.Controls.MessagePane
+          AssemblyName        #Microsoft.Dynamics.Framework.UI.WinForms.Controls, Version=1.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL
+          Sizing              #SizeToContent
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUBUTTON
+        PROPERTIES
+          Name                #ctrlAdd
+          AutoDeclaration     #Yes
+          Enabled             #No
+          HelpText            #@SYS91397
+          ElementPosition     #1207959549
+          HierarchyParent     #NewDeleteGroup
+          Text                #@SYS22575
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Primary             #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    if (! docuRef_ds.allowCreate())
+            #        return;
+            #
+            #    showImage.value(false);
+            #    element.setShowImage();
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUBUTTON
+        PROPERTIES
+          Name                #Functions
+          HelpText            #@SYS28903
+          ElementPosition     #1610612730
+          HierarchyParent     #ButtonGroup
+          Text                #@SYS10340
+          SaveRecord          #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUBUTTON
+        PROPERTIES
+          Name                #Queries
+          HelpText            #@SYS28904
+          ElementPosition     #1879048185
+          HierarchyParent     #ButtonGroup
+          Text                #@SYS3850
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUBUTTON
+        PROPERTIES
+          Name                #Setup
+          HelpText            #@SYS28902
+          ElementPosition     #1342177275
+          HierarchyParent     #ButtonGroup
+          Text                #@SYS2186
+          SaveRecord          #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TAB
+        PROPERTIES
+          Name                #Tab
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1879048190
+          Tabs                #2
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #General
+          AutoDeclaration     #Yes
+          Width               #Column width
+          ElementPosition     #1610612734
+          HierarchyParent     #Tab
+          Caption             #@SYS2952
+          Columns             #2
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #Overview
+          AutoDeclaration     #Yes
+          ElementPosition     #1073741823
+          HierarchyParent     #Tab
+          Caption             #@SYS9039
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIVEX
+        PROPERTIES
+          Name                #HtmlView
+          Visible             #No
+          AllowEdit           #No
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #0
+          ElementPosition     #2080374782
+          HierarchyParent     #Overview
+          Caption             #Microsoft Web Browser
+          ClassName           #{8856F961-340A-11D0-A96B-00C04FD705A2}
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #onEvent_onclick
+            #//
+            #boolean onEvent_onclick()
+            #{
+            #    ;
+            #    return SysHelp::onEvent_onclick(this);
+            #}
+          ENDSOURCE
+          SOURCE #onEvent_oncontextmenu
+            #//
+            #boolean onEvent_oncontextmenu()
+            #{
+            #    ;
+            #    return SysHelp::onEvent_oncontextmenu();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+        BINARY 0
+          
+        ENDBINARY
+        BINARY 1
+          00
+        ENDBINARY
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #BeginEndLink
+          AutoDeclaration     #Yes
+          Enabled             #No
+          HelpText            #@SYS91395
+          ElementPosition     #920350134
+          HierarchyParent     #Functions
+          Text                #@SYS16210
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    docuLinkId  = docuRef.RecId;
+            #    link.enabled(docuRef_ds.allowCreate() ? true : false);
+            #    multiPaste.enabled(DocuRef::multiSelectRecords() ? true : false);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #Link
+          AutoDeclaration     #Yes
+          HelpText            #@sys91396
+          ElementPosition     #1227133512
+          HierarchyParent     #Functions
+          Text                #@SYS63237
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    DocuRef::create(docuLinkId,actualTableId,actualRecId);
+            #    docuRef_ds.research();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #LockUnlock
+          AutoDeclaration     #Yes
+          Enabled             #No
+          HelpText            #@SYS91394
+          ElementPosition     #613566756
+          HierarchyParent     #Functions
+          Text                #@SYS2675
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    locked = ! locked;
+            #
+            #    if (locked)
+            #    {
+            #        this.text("@SYS25662");
+            #    }
+            #    else
+            #    {
+            #        this.text("@SYS2675");
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #MultiPaste
+          AutoDeclaration     #Yes
+          HelpText            #@SYS75049
+          ElementPosition     #1533916890
+          HierarchyParent     #Functions
+          Text                #@SYS74091
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    DocuRef localDocuRef;
+            #;
+            #    super();
+            #
+            #    if (DocuRef::multiSelectRecords())
+            #    {
+            #        localDocuRef = DocuRef::findRecId(docuLinkId);
+            #        if (localDocuRef.RecId)
+            #        {
+            #            DocuRef::multiSelectRecordCreate(localDocuRef, actualTableId);
+            #        }
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #IsValueAttached
+          ElementPosition     #1610612730
+          HierarchyParent     #Grid
+          BackgroundColor     #Window background
+          DataSource          #DocuRef
+          DataMethod          #IsValueAttached
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #ShowImage
+          AutoDeclaration     #Yes
+          HelpText            #@SYS54225
+          ElementPosition     #1717986916
+          HierarchyParent     #GrpSetup
+          Label               #@SYS54224
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    element.setShowImage();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #ShowOnlyRef
+          AutoDeclaration     #Yes
+          HelpText            #@SYS28737
+          ElementPosition     #1288490187
+          HierarchyParent     #GrpSetup
+          Label               #@SYS25399
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    element.setShowRef();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMBOBOX
+        PROPERTIES
+          Name                #DocuRef_Restriction
+          ElementPosition     #1342177275
+          HierarchyParent     #Grid
+          DataSource          #DocuRef
+          DataField           #Restriction
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMBOBOX
+        PROPERTIES
+          Name                #Filter
+          AutoDeclaration     #Yes
+          HelpText            #@SYS28738
+          ElementPosition     #858993458
+          HierarchyParent     #GrpSetup
+          Label               #@SYS2245
+          EnumType            #AllUser
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #selectionChange
+            #int selectionChange()
+            #{
+            #    int ret;
+            #
+            #    ret = super();
+            #
+            #    element.setRangeCreateId();
+            #    docuRef_ds.executeQuery();
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #DeleteButton
+          ElementPosition     #1610612733
+          HierarchyParent     #NewDeleteGroup
+          Text                #@sys14425
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10121
+          ImageLocation       #EmbeddedResource
+          SaveRecord          #No
+          Primary             #Yes
+          Command             #2832
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #New
+          Visible             #No
+          HelpText            #@SYS91397
+          ElementPosition     #805306366
+          HierarchyParent     #NewDeleteGroup
+          Text                #@SYS22575
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Command             #260
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INT64EDIT
+        PROPERTIES
+          Name                #Identification_RefRecId
+          ElementPosition     #1431655764
+          HierarchyParent     #Identification
+          DataSource          #DocuRef
+          DataField           #RefRecId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #DocuRef_RefRecId
+          Visible             #No
+          ElementPosition     #1879048185
+          HierarchyParent     #Grid
+          DataSource          #DocuRef
+          DataField           #RefRecId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #Identification_RefTableId
+          ElementPosition     #1073741823
+          HierarchyParent     #Identification
+          DataSource          #DocuRef
+          DataField           #RefTableId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #DocuOpenFile
+          ElementPosition     #1610612733
+          HierarchyParent     #Queries
+          SaveRecord          #No
+          MenuItemName        #DocuOpenFile
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #Open
+          AutoDeclaration     #Yes
+          Enabled             #No
+          ElementPosition     #715827880
+          HierarchyParent     #ButtonGroup
+          MenuItemType        #Action
+          MenuItemName        #DocuActionOpen
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #// Syp Modifications - SP3 [JEPPEOML][HQ-445-157-BCKZ] - BEGIn
+            #
+            #// Handles the click event from the Open button on the DocuView form. The main task
+            #// performed is to check whether the user has editing rights - if not then the file attributes
+            #// of the file in question are changed to read-only. Otherwise the attributes are set to normal.
+            #void clicked()
+            #{
+            #    // Macros & defines used in conjunction with the Win32 APi
+            #    #WINAPI
+            #
+            #    // Data
+            #    Filename fname;
+            #    ;
+            #
+            #    if(docuRef.docuType().FilePlace != DocuFilePlace::Database && docuRef.docuValue().Type != DocuValueType::URL)
+            #    {
+            #        // Get the file name from the DocuRef table
+            #        fname = docuRef.completeFilename();
+            #
+            #        if (htmlview && (fname == curUrl))
+            #        {
+            #            showImage.value(0);
+            #            showImage.checked(false);
+            #            element.setShowImage();
+            #            Box::info("@SYS99516");
+            #        }
+            #
+            #        // Does the data source allow editing (i.e. allowEdit)
+            #        if( !isTableUserEnabled(docuRef_ds.table(), AccessType::Edit) )
+            #        {
+            #            // Set read-only file attribute
+            #            WinAPI::setFileAttributes(fname, #FILE_ATTRIBUTE_READONLY);
+            #
+            #            // Display a warning that the file is readonly
+            #            Box::infoOnceEx("@SYS57813", "@SYS82313",formstr(syslastvalue), "@SYS22719", false);
+            #
+            #        }
+            #        else
+            #            WinAPI::setFileAttributes(fname, #FILE_ATTRIBUTE_NORMAL);
+            #    }
+            #
+            #    // Continue with opening the document - calls \Classes\DocuAction\main
+            #    super();
+            #
+            #}
+            #// Syp Modifications - SP3 [JEPPEOML][HQ-445-157-BCKZ] - END
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #Option
+          ElementPosition     #1431655764
+          HierarchyParent     #Setup
+          SaveRecord          #No
+          MenuItemName        #DocuOptionView
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    optionView.getLast();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #Printout
+          AutoDeclaration     #Yes
+          Visible             #No
+          Enabled             #No
+          ElementPosition     #1073741820
+          HierarchyParent     #ButtonGroup
+          SaveRecord          #No
+          MenuItemType        #Action
+          MenuItemName        #DocuActionPrint
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #References
+          ElementPosition     #1073741822
+          HierarchyParent     #Queries
+          SaveRecord          #No
+          MenuItemName        #DocuReference
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #SelectDocument
+          AutoDeclaration     #Yes
+          ElementPosition     #1840700268
+          HierarchyParent     #Functions
+          Text                #@SYS319534
+          DataSource          #DocuRef
+          OpenMode            #View
+          MenuItemName        #DocumentFileList
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #CompleteFilename
+          AllowEdit           #No
+          ElementPosition     #1610612733
+          HierarchyParent     #Group
+          DataSource          #DocuRef
+          DataMethod          #CompleteFilename
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #DocuRef_Name
+          ElementPosition     #1073741820
+          HierarchyParent     #Grid
+          DataSource          #DocuRef
+          DataField           #Name
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #DocuRef_Notes
+          AutoDeclaration     #Yes
+          Visible             #No
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #0
+          ElementPosition     #1227133512
+          HierarchyParent     #Overview
+          MultiLine           #Yes
+          ShowLabel           #No
+          DataSource          #DocuRef
+          DataField           #Notes
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #DocuRef_Type
+          ElementPosition     #805306365
+          HierarchyParent     #Grid
+          DataSource          #DocuRef
+          DataField           #TypeId
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #lookup
+            #void lookup()
+            #{
+            #;
+            #    element.setSysLocked(true);
+            #    DocuType::lookupTypeId(this,actualTableId);
+            #    element.setSysLocked(false);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #FileType
+          AllowEdit           #No
+          ElementPosition     #1073741822
+          HierarchyParent     #Group
+          DisplayLength       #5
+          DataSource          #DocuRef
+          DataMethod          #FileType
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #Identification_RefCompanyId
+          ElementPosition     #1789569705
+          HierarchyParent     #Identification
+          DataSource          #DocuRef
+          DataField           #RefCompanyId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #Identification_TypeId
+          ElementPosition     #715827882
+          HierarchyParent     #Identification
+          DataSource          #DocuRef
+          DataField           #TypeId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #TextView
+          AutoDeclaration     #Yes
+          Visible             #No
+          AllowEdit           #No
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #0
+          ElementPosition     #1533916890
+          HierarchyParent     #Overview
+          MultiLine           #Yes
+          ShowLabel           #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL UTCDATETIMEEDIT
+        PROPERTIES
+          Name                #DocuRef_CreateDateTime
+          AllowEdit           #No
+          Skip                #Yes
+          ElementPosition     #536870910
+          HierarchyParent     #Grid
+          DataSource          #DocuRef
+          DataField           #createdDateTime
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: END
