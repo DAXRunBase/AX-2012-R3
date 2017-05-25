@@ -1,0 +1,2691 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SysCompilerOutput unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SysCompilerOutput
+    PROPERTIES
+      Name                #SysCompilerOutput
+      Extends             #xCompilerOutput
+      RunOn               #Client
+      Origin              #{2D1113CC-0000-1000-F357-0912E9940AEE}
+      LegacyId            #5068
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #bestPracticesCount
+        #public int64 bestPracticesCount()
+        #{
+        #    return bestPracticesCount;
+        #}
+      ENDSOURCE
+      SOURCE #bestPracticesParm
+        #public SysBPParameters bestPracticesParm()
+        #{
+        #    return parameter;
+        #}
+      ENDSOURCE
+      SOURCE #buildPopupMenu
+        #public void buildPopupMenu(HWND _hwnd, TmpCompilerOutput _tmp)
+        #{
+        #    PopupMenu   popupMenu = new PopupMenu(_hwnd);
+        #    int         selection;
+        #    int         editIdx;
+        #    int         resetIdx;
+        #    int         reCompileIdx;
+        #    int         reCompileAllIdx;
+        #    int         exportIdx;
+        #    int         importIdx;
+        #    ;
+        #    editIdx         = popupMenu.insertItem("@SYS453");
+        #                      popupMenu.insertBreak();
+        #    resetIdx        = popupMenu.insertItem("@SYS3073");
+        #                      popupMenu.insertBreak();
+        #    reCompileIdx    = popupMenu.insertItem("@SYS70441");
+        #    reCompileAllIdx = popupMenu.insertItem("@SYS70442");
+        #                      popupMenu.insertBreak();
+        #    exportIdx       = popupMenu.insertItem("@SYS14863");
+        #    importIdx       = popupMenu.insertItem("@SYS1052");
+        #
+        #    selection = popupMenu.draw();
+        #
+        #    switch (selection)
+        #    {
+        #        case editIdx:
+        #            this.editElement(_tmp.TreeNodePath, _tmp.Line, _tmp.Column, _tmp.SysPropertyName);
+        #            break;
+        #
+        #        case resetIdx:
+        #            this.reset(true);
+        #            break;
+        #
+        #        case reCompileIdx:
+        #            this.reCompileElement(_tmp.TreeNodePath);
+        #            break;
+        #
+        #        case reCompileAllIdx:
+        #            this.reCompileElement();
+        #            break;
+        #
+        #        case exportIdx:
+        #            this.xmlExport();
+        #            break;
+        #
+        #        case importIdx:
+        #            this.xmlImport();
+        #            break;
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #canCloseForm
+        #public boolean canCloseForm(boolean _canCloseForm = false)
+        #{
+        #    canCloseForm = _canCloseForm;
+        #    return canCloseForm;
+        #}
+      ENDSOURCE
+      SOURCE #cilGenerationOutput
+        #public void cilGenerationOutput(str _msg, str _path = #DefaultXppILPath, int _severity = #DefaultCILOutput, int _line = #DefaultLineNum, int _col = #DefaultColumnNum)
+        #{
+        #    if(_severity == #DefaultCILOutput)
+        #    {
+        #        this.updateStatusCompileTxt(_msg, true);
+        #    }
+        #    else
+        #    {
+        #        this.compilerOutputMessage(_path,#CILGenerationMsgCode,_line,_col,_severity,_msg, "");
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+        #class SysCompilerOutput extends xCompilerOutput implements SysCompilationResultProvider
+        #{
+        #    #ResAppl
+        #    #SysCompilerOutput
+        #    #XppIL
+        #
+        #    #define.xmlStart('<AxaptaCompilerOutput>')
+        #    #define.xmlEnd('</AxaptaCompilerOutput>')
+        #    #define.compileAllFileName('\\AxCompileAll.html')
+        #
+        #    int                     callerHwnd;
+        #    int                     compileAllPass;
+        #
+        #    FormRun                 formRun;
+        #    boolean                 compilationContext;
+        #
+        #    FormDataSource          errors_ds;
+        #
+        #    FormStringControl       buildText;
+        #    FormButtonControl       statusErrorTxt;
+        #    FormButtonControl       statusWarningTxt;
+        #    FormButtonControl       statusToDoTxt;
+        #    FormButtonControl       statusBestPracticesTxt;
+        #
+        #    FormButtonControl       resetBtn;
+        #    FormButtonControl       compileBtn;
+        #    FormButtonControl       reCompileBtn;
+        #    FormButtonControl       editBtn;
+        #    FormButtonControl       exportBtn;
+        #    FormButtonControl       pinBtn;
+        #    FormGroupControl        mainGroup;
+        #
+        #    TmpCompilerOutput       tmpCompilerOutput;
+        #
+        #    int64                   errorCount;
+        #    int64                   warningCount;
+        #    int64                   toDoCount;
+        #    int64                   bestPracticesCount;
+        #
+        #    int64                   errorCountTotal;
+        #    int64                   warningCountTotal;
+        #    int64                   toDoCountTotal;
+        #    int64                   bestPracticesCountTotal;
+        #
+        #    SysUtilElementType      utilElementType;
+        #    SysUtilElementName      utilElementName;
+        #
+        #    boolean                 multiCompile;
+        #    boolean                 singleCompile;
+        #
+        #    boolean                 calledFromAot;
+        #    boolean                 calledFromEditor;
+        #
+        #    boolean                 updatingXref;
+        #    boolean                 tmpUpdatingXref;
+        #
+        #    boolean                 canCloseForm;
+        #
+        #    recId                   lastEditRecId;
+        #
+        #    int                     updateTime;
+        #
+        #    Map                     treeNodeWindowHwndMap;
+        #
+        #    Imagelist               imageListStatus;
+        #
+        #    CompilerWarningLevel    compilerWarningLevel;
+        #    SysBPParameters         parameter;
+        #    SysBPCheck              bpCheck;
+        #
+        #    boolean                 isPartialCompileAll;
+        #    int                     hideTimeoutHdl;
+        #
+        #    int                     maxLinesInBuildStatus;
+        #    TextBuffer              buildStatusTextBuffer;
+        #    str                     lastUpdateStatusCompileTxt;
+        #
+        #    int imageIdxError;
+        #    int imageIdxWarning;
+        #    int imageIdxTodo;
+        #    int imageIdxBPError;
+        #    int imageIdxBPWarning;
+        #    int imageIdxBPInfo;
+        #
+        #    int updateTimeForStatus;
+        #    int updateDelay;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #compilerOutput
+        #public TmpCompilerOutput compilerOutput()
+        #{
+        #    return tmpCompilerOutput;
+        #}
+      ENDSOURCE
+      SOURCE #compilerOutputForm
+        #public FormRun compilerOutputForm()
+        #{
+        #    Args args;
+        #
+        #    if (formRun &&
+        #        errors_ds &&
+        #        statusErrorTxt &&
+        #        statusWarningTxt &&
+        #        statusToDoTxt &&
+        #        statusBestPracticesTxt &&
+        #        buildText &&
+        #        resetBtn &&
+        #        compileBtn &&
+        #        reCompileBtn &&
+        #        editBtn &&
+        #        exportBtn &&
+        #        pinBtn &&
+        #        mainGroup)
+        #    {
+        #        if (!formRun.design().visible())
+        #        {
+        #            formRun.design().visible(true);
+        #            infolog.yield();
+        #
+        #            if (calledFromEditor && singleCompile)
+        #            {
+        #                this.setWindowFocus(callerHwnd);
+        #            }
+        #        }
+        #    }
+        #    else
+        #    {
+        #        args = new Args(formStr(sysCompilerOutput));
+        #        args.caller(this);
+        #
+        #        formRun = ClassFactory::formRunClassOnClient(args);
+        #        formRun.init();
+        #
+        #        if (errors_ds &&
+        #            statusErrorTxt &&
+        #            statusWarningTxt &&
+        #            statusToDoTxt &&
+        #            statusBestPracticesTxt &&
+        #            buildText &&
+        #            resetBtn &&
+        #            compileBtn &&
+        #            reCompileBtn &&
+        #            editBtn &&
+        #            exportBtn &&
+        #            pinBtn &&
+        #            mainGroup)
+        #        {
+        #            formRun.run();
+        #            formRun.detach();
+        #
+        #            this.updateErrorStateText();
+        #            this.updateWarningStateText();
+        #            this.updateBestPracticesStateText();
+        #            this.updateToDoStateText();
+        #        }
+        #        else
+        #        {
+        #            formRun.close();
+        #            this.compilerOutputFormClosing();
+        #        }
+        #    }
+        #
+        #    return formRun;
+        #}
+      ENDSOURCE
+      SOURCE #compilerOutputFormClosing
+        #public void compilerOutputFormClosing()
+        #{
+        #    errors_ds               = null;
+        #
+        #    statusErrorTxt          = null;
+        #    statusWarningTxt        = null;
+        #    statusToDoTxt           = null;
+        #    statusBestPracticesTxt  = null;
+        #
+        #    resetBtn                = null;
+        #    compileBtn              = null;
+        #    reCompileBtn            = null;
+        #    editBtn                 = null;
+        #    exportBtn               = null;
+        #    pinBtn                  = null;
+        #    mainGroup               = null;
+        #
+        #
+        #    if (formRun)
+        #    {
+        #        this.canCloseForm(true);
+        #        formRun.closeCancel();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #compilerOutputMessage
+        #public void compilerOutputMessage(str _path, int _errorCode, int _line, int _col, int _severity, str _errorString, str _propertyName, SysCompilerOutputTab  _sysCompilerOutputTab = SysCompilerOutputTab::Error)
+        #{
+        #    #define.elementMethodStruct('\%1: \%2')
+        #    #define.elementPropertyStruct('\%1 - \%2')
+        #
+        #    TreeNodePath            tmpPath;
+        #    TreeNodePath            path                    = _path;
+        #    SysPropertyName         sysPropertyName         = _propertyName;
+        #    SysCompilerOutputTab    sysCompilerOutputTab    = _sysCompilerOutputTab;
+        #    SysCompileErrorMessage  sysCompileErrorMessage  = _errorString;
+        #    SysCompilerSeverity     sysCompilerSeverity     = _severity;
+        #    boolean                 addCnt                  = true;
+        #    boolean                 addTotalCnt             = true;
+        #    boolean                 getErrorMessage;
+        #    SysAotMethodName        methodName;
+        #    SysAotMethodName        tmpName;
+        #    int                     position;
+        #    TreeNode                currentNode;
+        #
+        #    this.compilerOutputForm();
+        #
+        #    if (!compileAllPass ||
+        #        ((compileAllPass == 1 || compileAllPass == 2) &&
+        #         sysCompilerSeverity  !=  SysCompilerSeverity::Error &&
+        #         sysCompilerOutputTab ==  SysCompilerOutputTab::Error) ||
+        #        (compileAllPass == 2 &&
+        #         sysCompilerSeverity  !=  SysCompilerSeverity::Error &&
+        #         sysCompilerOutputTab !=  SysCompilerOutputTab::Error) ||
+        #        compileAllPass >= 3)
+        #    {
+        #        if (sysCompilerOutputTab != SysCompilerOutputTab::BestPractices)
+        #        {
+        #            getErrorMessage = true;
+        #
+        #            switch (_errorCode)
+        #            {
+        #                case #compileBestPracticesWarningMemberName,
+        #                     #compileBestPracticesWarningMethodName:
+        #                    sysCompilerOutputTab = SysCompilerOutputTab::BestPractices;
+        #                    sysCompilerSeverity  = SysCompilerSeverity::WarningLevel1;
+        #
+        #                    if (parameter.WarningLevel == SysBPWarningLevel::Error)
+        #                    {
+        #                        return;
+        #                    }
+        #                    break;
+        #                case #compileToDo:
+        #                    sysCompilerOutputTab = SysCompilerOutputTab::ToDo;
+        #                    break;
+        #                default:
+        #                    break;
+        #            }
+        #        }
+        #
+        #        if (getErrorMessage)
+        #        {
+        #            sysCompileErrorMessage    = this.getErrorMessage(_errorCode, sysCompilerSeverity, _errorString);
+        #        }
+        #        else
+        #        {
+        #            sysCompileErrorMessage    = _errorString;
+        #        }
+        #
+        #        if (sysPropertyName)
+        #        {
+        #            methodName = sysPropertyName;
+        #        }
+        #        else
+        #        {
+        #            methodName = SysTreeNode::pathName(_path);
+        #        }
+        #
+        #        if (!utilElementType)
+        #        {
+        #            utilElementName = SysTreeNode::applObjectName(_path);
+        #            utilElementType = UtilElementType::ClassInstanceMethod;
+        #        }
+        #
+        #        if (utilElementType == UtilElementType::Form ||
+        #            utilElementType == UtilElementType::Report ||
+        #            utilElementType == UtilElementType::ReportSectionTemplate ||
+        #            utilElementType == UtilElementType::ReportTemplate ||
+        #            utilElementType == UtilElementType::ViewQuery ||
+        #            utilElementType == UtilElementType::WebForm ||
+        #            utilElementType == UtilElementType::Query ||
+        #            utilElementType == UtilElementType::Table ||
+        #            utilElementType == UtilElementType::ViewQuery)
+        #        {
+        #            if (!_propertyName)
+        #            {
+        #                tmpPath = strDel(path, strLen(path), -(strLen(methodName) + 1));
+        #                tmpName = SysTreeNode::pathName(tmpPath);
+        #                tmpPath = strDel(tmpPath, strLen(tmpPath), -(strLen(tmpName) + 1));
+        #            }
+        #
+        #            tmpName     = SysTreeNode::pathName(tmpPath);
+        #            if (tmpName &&
+        #                utilElementName != tmpName)
+        #            {
+        #                position    = strFind(tmpName, ':', strLen(tmpName), -strLen(tmpName));
+        #                if (position)
+        #                {
+        #                    tmpName = strDel(tmpName, 1, position);
+        #                }
+        #                tmpName     = strRem(tmpName, '[]');
+        #
+        #                if (_propertyName)
+        #                {
+        #                    methodName  = strFmt(#elementPropertyStruct, tmpName, methodName);
+        #                }
+        #                else
+        #                {
+        #                    methodName  = strFmt(#elementMethodStruct, tmpName, methodName);
+        #                }
+        #            }
+        #        }
+        #
+        #        select firstonly forupdate tmpCompilerOutput
+        #            index PathIdx
+        #            where tmpCompilerOutput.TreeNodePath            == path
+        #               && tmpCompilerOutput.CompileErrorCode        == _errorCode
+        #               && tmpCompilerOutput.Line                    == _line
+        #               && tmpCompilerOutput.Column                  == _col
+        #               && tmpCompilerOutput.SysPropertyName         == sysPropertyName
+        #               && tmpCompilerOutput.SysCompilerSeverity     == sysCompilerSeverity
+        #               && tmpCompilerOutput.SysCompilerOutputTab    == sysCompilerOutputTab;
+        #
+        #        if (tmpCompilerOutput)
+        #        {
+        #            if (tmpCompilerOutput.LatestCompile)
+        #            {
+        #                addCnt = false;
+        #            }
+        #            addTotalCnt = false;
+        #        }
+        #        else
+        #        {
+        #            tmpCompilerOutput.clear();
+        #
+        #            // Set the PK fields
+        #            tmpCompilerOutput.TreeNodePath              = path;
+        #            tmpCompilerOutput.CompileErrorCode          = _errorCode;
+        #            tmpCompilerOutput.Line                      = _line;
+        #            tmpCompilerOutput.Column                    = _col;
+        #            tmpCompilerOutput.SysPropertyName           = sysPropertyName;
+        #            tmpCompilerOutput.SysCompilerSeverity       = sysCompilerSeverity;
+        #            tmpCompilerOutput.SysCompilerOutputTab      = sysCompilerOutputTab;
+        #        }
+        #
+        #        // Set the remaining fields
+        #        try
+        #        {
+        #            tmpCompilerOutput.SysUtilElementName = SysTreeNode::applObjectName(_path);
+        #            if (!tmpCompilerOutput.SysUtilElementName)
+        #                tmpCompilerOutput.SysUtilElementName = SysTreeNode::pathName(_path);
+        #        }
+        #        catch
+        #        {
+        #            // We get here if SysModelMetaData.init() cannot compile.
+        #            // The compiler output must be robust enough to handle this.
+        #            exceptionTextFallThrough();
+        #        }
+        #
+        #        tmpCompilerOutput.UtilElementType           = utilElementType;
+        #        tmpCompilerOutput.SysAotMethodName          = methodName;
+        #        tmpCompilerOutput.SysCompileErrorMessage    = sysCompileErrorMessage;
+        #        tmpCompilerOutput.CompileErrorImage         = this.getCompileImage(sysCompilerOutputTab, sysCompilerSeverity);
+        #        tmpCompilerOutput.CompileErrorString        = _errorString;
+        #        currentNode = TreeNode::findNode(_path);
+        #        if (currentNode
+        #            && currentNode.treeNodeType()
+        #            && currentNode.treeNodeType().isLayerAware())
+        #        {
+        #            tmpCompilerOutput.WIK_UtilEntryLevel    = strFmt('%1', SysTreeNode::getHighestLayer(currentNode));
+        #        }
+        #        tmpCompilerOutput.LatestCompile             = true;
+        #        tmpCompilerOutput.write();
+        #    }
+        #    if (addCnt)
+        #    {
+        #        this.incrementCount(sysCompilerOutputTab, sysCompilerSeverity, addTotalCnt);
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #compilerStatus
+        #protected void compilerStatus(UtilElementType _utilElementType, str _utilElementName)
+        #{
+        #    LabelType       labelType;
+        #    SysDictTable    sysDictTable;
+        #
+        #    if (enum2str(_utilElementType) == '')
+        #    {
+        #        return;
+        #    }
+        #
+        #    utilElementType = _utilElementType;
+        #    utilElementName = _utilElementName;
+        #
+        #    switch (utilElementType)
+        #    {
+        #        case UtilElementType::Table:
+        #            sysDictTable = new SysDictTable(tableName2id(_utilElementName));
+        #            if (sysDictTable)
+        #            {
+        #                utilElementType = sysDictTable.utilElementType();
+        #            }
+        #            break;
+        #        default:
+        #            break;
+        #    }
+        #
+        #    if (updatingXref)
+        #    {
+        #        labelType = "@SYS70834";
+        #    }
+        #    else
+        #    {
+        #        labelType = "@SYS70407";
+        #    }
+        #
+        #    this.updateStatusCompileTxt(strFmt(labelType, enum2str(_utilElementType), _utilElementName));
+        #
+        #}
+      ENDSOURCE
+      SOURCE #createImageList
+        #private Imagelist createImageList()
+        #{
+        #    int width = 16;//Hardcoded to avoid issues with OS settings
+        #    int height = 16;
+        #    Imagelist imagelist = new Imagelist(width, height);
+        #
+        #    int addImageWithOverlay(int _imageIdx, int _overlayIdx)
+        #    {
+        #        Image image = new Image(_imageIdx);
+        #        Image oImage = new Image(_overlayIdx);
+        #        int x, y;
+        #        int overlaySize = 10;
+        #        int offset = width - overlaySize;
+        #
+        #        oImage.resize(overlaysize, overlaysize, InterpolationMode::InterpolationModeHighQuality);
+        #
+        #        for (x=offset; x < width; x++)
+        #        {
+        #            for (y=offset; y < height; y++)
+        #            {
+        #                if (oImage.getPixel(x-offset, y-offset))
+        #                {
+        #                    image.setPixel(x, y, oImage.getPixel(x-offset, y-offset));
+        #                }
+        #            }
+        #        }
+        #
+        #        return imagelist.add(image);
+        #    }
+        #
+        #    imageIdxError = imagelist.add(new Image(929));
+        #    imageIdxWarning = imagelist.add(new Image(928));
+        #    imageIdxTodo = imagelist.add(new Image(10864));
+        #    imageIdxBPError = addImageWithOverlay(868, 929);
+        #    imageIdxBPWarning = addImageWithOverlay(868, 928);
+        #    imageIdxBPInfo = addImageWithOverlay(868, 927);
+        #
+        #    return imagelist;
+        #}
+      ENDSOURCE
+      SOURCE #createProject
+        #public void createProject()
+        #{
+        #    TreeNode treeNode;
+        #    UtilElements utilElements;
+        #    boolean added;
+        #    ProjectNode projectNode;
+        #    PrivateProjectName projectName = this.createProjectPromptForName();
+        #    SysProjectFilterRunBase projectFilter;
+        #    TmpCompilerOutput compilerOutput;
+        #
+        #    if (!projectName)
+        #    {
+        #        return;
+        #    }
+        #
+        #    startLengthyOperation();
+        #
+        #    SysUpgradeProject::delete(projectName, ProjectSharedPrivate::ProjPrivate);
+        #
+        #    projectNode = SysTreeNode::createProject(projectName);
+        #    projectFilter = new SysProjectFilterRunBase();
+        #    projectFilter.parmProjectNode(projectNode);
+        #    projectFilter.grouping(SysProjectGrouping::AOT);
+        #
+        #    compilerOutput = errors_ds.getFirst(errors_ds.mark());
+        #
+        #    while(compilerOutput)
+        #    {
+        #        added = false;
+        #        treeNode = TreeNode::findNode(SysTreeNode::applObjectPath(compilerOutput.TreeNodePath));
+        #
+        #        if (treeNode &&
+        #            treeNode.handle() != classNum(ProjectNode))
+        #        {
+        #            utilElements = xUtilElements::findTreeNode(treeNode, true);
+        #            if (utilElements.Name)
+        #            {
+        #                added = true;
+        #                projectFilter.doUtilElements(utilElements);
+        #            }
+        #        }
+        #
+        #        if (!added)
+        #        {
+        #            info(strFmt("@SYS316339", SysTreeNode::applObjectPath(compilerOutput.TreeNodePath)));
+        #        }
+        #
+        #        compilerOutput = errors_ds.getNext();
+        #    }
+        #
+        #    projectFilter.write();
+        #}
+      ENDSOURCE
+      SOURCE #createProjectPromptForName
+        #private PrivateProjectName createProjectPromptForName()
+        #{
+        #    #define.defaultName('CompilerOutput')
+        #
+        #    Dialog dialog = new Dialog("@SYS28969", this);
+        #    DialogField projectNameField = dialog.addField(extendedTypeStr(PrivateProjectName));
+        #
+        #    projectNameField.value(#defaultName);
+        #    dialog.windowType(FormWindowType::Workspace);
+        #
+        #    if (dialog.run())
+        #    {
+        #        if (!projectNameField.value())
+        #        {
+        #            warning(strFmt("@SYS50104", "@SYS6663"));
+        #        }
+        #        return projectNameField.value();
+        #    }
+        #    return '';
+        #}
+      ENDSOURCE
+      SOURCE #editElement
+        #public void editElement(TreeNodePath _treeNodePath, Line _line, Column _column, SysPropertyName _sysPropertyName)
+        #{
+        #    TreeNode    parentNode  = infolog.findNode(SysTreeNode::applObjectPath(_treeNodePath));
+        #    TreeNode    treeNode    = infolog.findNode(_treeNodePath);
+        #
+        #    if (parentNode && _treeNodePath != parentNode.treeNodePath())
+        #    {
+        #        if (treeNodeWindowHwndMap.exists(parentNode.treeNodePath()) &&
+        #            WinAPI::isWindow(treeNodeWindowHwndMap.lookup(parentNode.treeNodePath())))
+        #        {
+        #            WinAPI::bringWindowToTop(treeNodeWindowHwndMap.lookup(parentNode.treeNodePath()));
+        #        }
+        #        else if (!SysTreeNode::hasSource(treeNode))
+        #        {
+        #            treeNodeWindowHwndMap.insert(parentNode.treeNodePath(), parentNode.AOTnewWindow());
+        #        }
+        #    }
+        #
+        #    if (treeNode)
+        #    {
+        #        if (_sysPropertyName)
+        #        {
+        #            treeNode.AOTshowProperties();
+        #        }
+        #        else
+        #        {
+        #            treeNode.AOTedit(_line, _column);
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #endBPCheckContext
+        #void endBPCheckContext()
+        #{
+        #    this.endCompilation();
+        #}
+      ENDSOURCE
+      SOURCE #endCILGenerationOutput
+        #public void endCILGenerationOutput()
+        #{
+        #    compilationContext = false;
+        #    this.updateCounters();
+        #
+        #    this.updateErrorStateText();
+        #    this.updateWarningStateText();
+        #    this.updateToDoStateText();
+        #    this.updateBestPracticesStateText();
+        #
+        #    select firstonly tmpCompilerOutput
+        #        index TabSeverityIdx
+        #        where tmpCompilerOutput.LatestCompile;
+        #
+        #    if (tmpCompilerOutput)
+        #    {
+        #        errors_ds.findRecord(tmpCompilerOutput);
+        #    }
+        #
+        #
+        #    this.updateDataSources();
+        #    singleCompile = false;
+        #    multiCompile = false;
+        #
+        #    this.setActiveBtn();
+        #    this.setEndFocus();
+        #    CompileOutputInfos::NotifyChanges();
+        #}
+      ENDSOURCE
+      SOURCE #endCompilation
+        #// AosRunMode::Client
+        #public void endCompilation()
+        #{
+        #    if (!compilationContext)
+        #    {
+        #        if (singleCompile ||
+        #            multiCompile)
+        #        {
+        #            this.updateCounters();
+        #
+        #            this.updateErrorStateText();
+        #            this.updateWarningStateText();
+        #            this.updateToDoStateText();
+        #            this.updateBestPracticesStateText();
+        #
+        #
+        #            //
+        #            // Set focus on a record that was just discovered.
+        #            //
+        #            select firstonly tmpCompilerOutput
+        #                index TabSeverityIdx
+        #                where tmpCompilerOutput.LatestCompile;
+        #
+        #            if (tmpCompilerOutput)
+        #            {
+        #                errors_ds.findRecord(tmpCompilerOutput);
+        #            }
+        #
+        #
+        #            this.updateDataSources();
+        #
+        #            if (singleCompile)
+        #            {
+        #                switch (true)
+        #                {
+        #                    case errorCount > 0:
+        #                        this.updateStatusCompileTxt(strFmt("@SYS70408", enum2str(utilElementType), utilElementName), true);
+        #                        break;
+        #                    case warningCount > 0:
+        #                        this.updateStatusCompileTxt(strFmt("@SYS70450", enum2str(utilElementType), utilElementName), true);
+        #                        break;
+        #                    case bestPracticesCount > 0:
+        #                        this.updateStatusCompileTxt(strFmt("@SYS70462", enum2str(utilElementType), utilElementName), true);
+        #                        break;
+        #                    case todoCount > 0:
+        #                        this.updateStatusCompileTxt(strFmt("@SYS70451", enum2str(utilElementType), utilElementName), true);
+        #                        break;
+        #                    default:
+        #                        this.updateStatusCompileTxt(strFmt("@SYS70409", enum2str(utilElementType), utilElementName), true);
+        #                        break;
+        #                }
+        #            }
+        #            else if (multiCompile)
+        #            {
+        #                switch (true)
+        #                {
+        #                    case errorCount > 0 || errorCountTotal > 0:
+        #                        this.updateStatusCompileTxt("@SYS70403", true);
+        #                        break;
+        #                    case warningCount > 0 || warningCountTotal > 0:
+        #                        this.updateStatusCompileTxt("@SYS74428", true);
+        #                        break;
+        #                    case bestPracticesCount > 0 || bestPracticesCountTotal > 0:
+        #                        this.updateStatusCompileTxt("@SYS74429", true);
+        #                        break;
+        #                    case todoCount > 0 || toDoCountTotal > 0:
+        #                        this.updateStatusCompileTxt("@SYS74430", true);
+        #                        break;
+        #                    default:
+        #                        this.updateStatusCompileTxt("@SYS11281", true);
+        #                        break;
+        #                }
+        #            }
+        #
+        #            if (compileAllPass)
+        #            {
+        #                compileAllPass  = 0;
+        #                this.xmlExport(xInfo::AOTLogDirectory() + #compileAllFileName);
+        #            }
+        #            singleCompile = false;
+        #            multiCompile = false;
+        #
+        #            this.setActiveBtn();
+        #            this.setEndFocus();
+        #        }
+        #    }
+        #
+        #    // Notify the editors to allow them to update markings
+        #    CompileOutputInfos::NotifyChanges();
+        #}
+      ENDSOURCE
+      SOURCE #endCompilationContext
+        #public void endCompilationContext()
+        #{
+        #    compilationContext = false;
+        #    this.endCompilation();
+        #}
+      ENDSOURCE
+      SOURCE #endCompilationObject
+        #protected void endCompilationObject(str _path)
+        #{
+        #    super(_path);
+        #
+        #    if (isPartialCompileAll)
+        #        return;
+        #
+        #    if (!compileAllPass ||
+        #        compileAllPass >= 2)
+        #    {
+        #        this.startBPCheck(_path);
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #endExport
+        #protected void endExport()
+        #{
+        #    this.updateStatusCompileTxt("@SYS70406");
+        #    this.endCompilation();
+        #}
+      ENDSOURCE
+      SOURCE #endImport
+        #protected void endImport()
+        #{
+        #    this.updateStatusCompileTxt("@SYS70405");
+        #    this.endCompilation();
+        #}
+      ENDSOURCE
+      SOURCE #errorCount
+        #public int64 errorCount()
+        #{
+        #    return errorCount;
+        #}
+      ENDSOURCE
+      SOURCE #exportOutput
+        #protected void exportOutput(str _buffer)
+        #{
+        #    this.updateStatusCompileTxt(_buffer);
+        #}
+      ENDSOURCE
+      SOURCE #finalize
+        #public void finalize()
+        #{
+        #    this.compilerOutputFormClosing();
+        #}
+      ENDSOURCE
+      SOURCE #findCompileType
+        #public void findCompileType()
+        #{
+        #    if (!multiCompile)
+        #    {
+        #        if (singleCompile)
+        #        {
+        #            singleCompile = false;
+        #            multiCompile  = true;
+        #        }
+        #        else
+        #        {
+        #            singleCompile = true;
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #findNextError
+        #private void findNextError(FormDataSource _firstDataSource, FormDataSource _secondDataSource)
+        #{
+        #    RecId               recId = lastEditRecId;
+        #    TmpCompilerOutput   tmp;
+        #
+        #    tmp = _firstDataSource.cursor() as TmpCompilerOutput;
+        #    if (tmp)
+        #    {
+        #        if (tmp.RecId == lastEditRecId)
+        #        {
+        #            if (!_firstDataSource.prev())
+        #            {
+        #                _firstDataSource.last();
+        #            }
+        #
+        #            tmp   = _firstDataSource.cursor() as TmpCompilerOutput;
+        #            recId = tmp.RecId;
+        #        }
+        #        else
+        #        {
+        #            recId = tmp.RecId;
+        #        }
+        #    }
+        #    else
+        #    {
+        #        tmp = _secondDataSource.cursor() as TmpCompilerOutput;
+        #        if (tmp)
+        #        {
+        #            if (tmp.RecId == lastEditRecId)
+        #            {
+        #                if (!_secondDataSource.prev())
+        #                {
+        #                    _secondDataSource.last();
+        #                }
+        #
+        #                tmp   = _secondDataSource.cursor() as TmpCompilerOutput;
+        #                recId = tmp.RecId;
+        #            }
+        #            else
+        #            {
+        #                recId = tmp.RecId;
+        #            }
+        #        }
+        #        else
+        #        {
+        #            recId = 0;
+        #        }
+        #    }
+        #
+        #    if (recId)
+        #    {
+        #        select firstonly tmpCompilerOutput
+        #            index recId
+        #            where tmpCompilerOutput.RecId == recId;
+        #
+        #        if (tmpCompilerOutput)
+        #        {
+        #            this.editElement(tmpCompilerOutput.TreeNodePath, tmpCompilerOutput.Line, tmpCompilerOutput.Column, tmpCompilerOutput.SysPropertyName);
+        #        }
+        #        else
+        #        {
+        #            recId = 0;
+        #        }
+        #    }
+        #
+        #    if (!recId)
+        #    {
+        #        this.updateStatusCompileTxt("@SYS70404");
+        #    }
+        #    else
+        #    {
+        #        this.updateStatusCompileTxt("@SYS70403");
+        #    }
+        #
+        #    lastEditRecId = recId;
+        #}
+      ENDSOURCE
+      SOURCE #getBPCheck
+        #public SysBPCheck getBPCheck()
+        #{
+        #    return bpCheck;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getBPParm
+        #public SysBPParameters getBPParm()
+        #{
+        #    return parameter;
+        #}
+      ENDSOURCE
+      SOURCE #getCompileImage
+        #private ImageRes getCompileImage(SysCompilerOutputTab _tab, SysCompilerSeverity _severity)
+        #{
+        #    switch (_tab)
+        #    {
+        #        case SysCompilerOutputTab::Error:
+        #            switch (_severity)
+        #            {
+        #                case SysCompilerSeverity::Error:
+        #                    return imageIdxError;
+        #
+        #                default:
+        #                    return imageIdxWarning;
+        #            }
+        #            break;
+        #
+        #        case SysCompilerOutputTab::ToDo:
+        #            return imageIdxTodo;
+        #
+        #        case SysCompilerOutputTab::BestPractices:
+        #            switch (_severity)
+        #            {
+        #                case SysCompilerSeverity::Error:
+        #                    return imageIdxBPError;
+        #
+        #                case SysCompilerSeverity::WarningLevel1:
+        #                case SysCompilerSeverity::WarningLevel2:
+        #                case SysCompilerSeverity::WarningLevel3:
+        #                    return imageIdxBPWarning;
+        #
+        #                default:
+        #                    return imageIdxBPInfo;
+        #            }
+        #            break;
+        #    }
+        #    return 0;
+        #}
+      ENDSOURCE
+      SOURCE #getCompilerWarningLevel
+        #public CompilerWarningLevel getCompilerWarningLevel()
+        #{
+        #    return compilerWarningLevel;
+        #}
+      ENDSOURCE
+      SOURCE #getErrorCnt
+        #public int64 getErrorCnt()
+        #{
+        #    return errorCount;
+        #}
+      ENDSOURCE
+      SOURCE #getErrorMessage
+        #public str getErrorMessage(int _errorCode, int _severity, str _errorString)
+        #{
+        #    #define.comma(',')
+        #    str ret;
+        #
+        #    str deleteErrorCodeName(str _errorStr, str _errorName, int _offsetMax = 5)
+        #    {
+        #        int strLength = strLen(_errorStr);
+        #        int position;
+        #
+        #        if (strLength)
+        #        {
+        #            position = strScan(_errorStr, _errorName, 1, strLength);
+        #
+        #            if (position && position <= _offsetMax)
+        #            {
+        #                _errorStr = strDel(_errorStr, 1, position + strLen(_errorName));
+        #                _errorStr = strLTrim(_errorStr);
+        #            }
+        #        }
+        #        return _errorStr;
+        #    }
+        #
+        #    ret = super(_errorCode, _severity, _errorString);
+        #
+        #    switch (_errorCode)
+        #    {
+        #        case #compileToDo :
+        #            ret = deleteErrorCodeName(ret, #compileMessagePrefix);
+        #            ret = deleteErrorCodeName(ret, #compileToDoName, strLen(ret));
+        #            break;
+        #
+        #        case #compileBestPractices, #compileBestPracticesWarningMemberName :
+        #            ret = strDel(ret, 1, strFind(ret, #comma, 1, strLen(ret)));
+        #            ret = strLTrim(ret);
+        #            ret = deleteErrorCodeName(ret, #compileBestPracticesName);
+        #            break;
+        #
+        #        default:
+        #            ret = strDel(ret, 1, strFind(ret, #comma, 1, strLen(ret)));
+        #            ret = strLTrim(ret);
+        #            break;
+        #    }
+        #
+        #    return ret;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getParm
+        #void getParm()
+        #{
+        #    compilerWarningLevel = xUserInfo::compilerWarningLevel();
+        #    updatingXref         = xUserInfo::debugInfo_XReferences();
+        #
+        #    parameter = SysBPParameters::find();
+        #    bpCheck   = SysBPCheck::newCompilerOutput(this);
+        #
+        #    if (bpCheck)
+        #        bpCheck.parmParameters(parameter);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getSquiggleInfo
+        #public container getSquiggleInfo(str treeNodePath)
+        #{
+        #    container squiggleInfo;
+        #    TreeNodePath tmpPath = treeNodePath;
+        #
+        #    if (treeNodePath)
+        #    {
+        #        while select tmpCompilerOutput where tmpCompilerOutput.TreeNodePath == tmpPath
+        #        {
+        #            squiggleInfo += [[
+        #                enum2int(tmpCompilerOutput.SysCompilerOutputTab),
+        #                enum2int(tmpCompilerOutput.SysCompilerSeverity),
+        #                tmpCompilerOutput.TreeNodePath,
+        #                tmpCompilerOutput.SysCompileErrorMessage,
+        #                tmpCompilerOutput.Line,
+        #                tmpCompilerOutput.Column]];
+        #        }
+        #    }
+        #    else
+        #    {
+        #        while select tmpCompilerOutput
+        #        {
+        #            squiggleInfo += [[
+        #                enum2int(tmpCompilerOutput.SysCompilerOutputTab),
+        #                enum2int(tmpCompilerOutput.SysCompilerSeverity),
+        #                tmpCompilerOutput.TreeNodePath,
+        #                tmpCompilerOutput.SysCompileErrorMessage,
+        #                tmpCompilerOutput.Line,
+        #                tmpCompilerOutput.Column]];
+        #        }
+        #    }
+        #
+        #    return squiggleInfo;
+        #}
+      ENDSOURCE
+      SOURCE #getTmpCompilerOutput
+        #TmpCompilerOutput getTmpCompilerOutput()
+        #{
+        #    return tmpCompilerOutput;
+        #}
+      ENDSOURCE
+      SOURCE #getXMLErrorCount
+        #public int64 getXMLErrorCount()
+        #{
+        #    RecId   errors;
+        #
+        #    select count(RecId) from tmpCompilerOutput
+        #     where tmpCompilerOutput.SysCompilerSeverity == SysCompilerSeverity::Error &&
+        #           tmpCompilerOutput.SysCompilerOutputTab == SysCompilerOutputTab::Error;
+        #    errors = tmpCompilerOutput.RecId;
+        #
+        #    return errors;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #importOutput
+        #protected void importOutput(str _buffer)
+        #{
+        #    ;
+        #    if (!multiCompile)
+        #    {
+        #        if (singleCompile)
+        #        {
+        #            singleCompile = false;
+        #            multiCompile  = true;
+        #        }
+        #        else
+        #        {
+        #            singleCompile = true;
+        #        }
+        #    }
+        #
+        #    this.updateStatusCompileTxt(strFmt("@SYS70399", _buffer));
+        #}
+      ENDSOURCE
+      SOURCE #incrementCount
+        #private void incrementCount(
+        #    SysCompilerOutputTab _sysCompilerOutputTab,
+        #    SysCompilerSeverity  _sysCompilerSeverity,
+        #    boolean              _addTotalCount)
+        #{
+        #    boolean updateCount;
+        #
+        #    switch (_sysCompilerOutputTab)
+        #    {
+        #        case SysCompilerOutputTab::Error:
+        #            if (_sysCompilerSeverity)
+        #            {
+        #                warningCount++;
+        #                if (_addTotalCount)
+        #                {
+        #                    warningCountTotal++;
+        #                }
+        #            }
+        #            else
+        #            {
+        #                errorCount++;
+        #                if (_addTotalCount)
+        #                {
+        #                    errorCountTotal++;
+        #                }
+        #            }
+        #            break;
+        #        case SysCompilerOutputTab::BestPractices:
+        #            bestPracticesCount++;
+        #            if (_addTotalCount)
+        #            {
+        #                bestPracticesCountTotal++;
+        #            }
+        #            break;
+        #        case SysCompilerOutputTab::ToDo:
+        #            toDoCount++;
+        #            if (_addTotalCount)
+        #            {
+        #                toDoCountTotal++;
+        #            }
+        #            break;
+        #    }
+        #
+        #    if (timeNow() > (updateTime + 1))
+        #    {
+        #        updateCount   = true;
+        #        updateTime  = timeNow();
+        #    }
+        #
+        #    if (updateCount)
+        #    {
+        #        this.updateToDoStateText();
+        #        this.updateWarningStateText();
+        #        this.updateErrorStateText();
+        #        this.updateBestPracticesStateText();
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #init
+        #private void init()
+        #{
+        #    singleCompile       = false;
+        #    multiCompile        = false;
+        #    calledFromAot       = false;
+        #    calledFromEditor    = false;
+        #}
+      ENDSOURCE
+      SOURCE #initContext
+        #private void initContext()
+        #{
+        #    compileAllPass = 0;
+        #    this.init();
+        #}
+      ENDSOURCE
+      SOURCE #makeFormInvisible
+        #private void makeFormInvisible()
+        #{
+        #    formRun.design().visible(false);
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #public void new()
+        #{
+        #    super();
+        #
+        #    buildStatusTextBuffer = new TextBuffer();
+        #    treeNodeWindowHwndMap = new Map(Types::String, Types::Integer);
+        #    imageListStatus = this.createImageList();
+        #    this.getParm();
+        #    maxLinesInBuildStatus = xUserInfo::find().MessageLimit;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #nextError
+        #protected void nextError()
+        #{
+        #    if (errors_ds)
+        #    {
+        #        this.findNextError(errors_ds, errors_ds);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #parmBuildText
+        #public void parmBuildText(FormStringControl _buildText)
+        #{
+        #    buildText = _buildText;
+        #}
+      ENDSOURCE
+      SOURCE #parmCompileBtn
+        #public void parmCompileBtn(FormButtonControl _formButtonControl)
+        #{
+        #    compileBtn = _formButtonControl;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmEditBtn
+        #public void parmEditBtn(FormButtonControl _formButtonControl)
+        #{
+        #    ;
+        #    editBtn = _formButtonControl;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmErrors_ds
+        #public void parmErrors_ds(FormDataSource _formDataSource)
+        #{
+        #    ;
+        #    errors_ds = _formDataSource;
+        #}
+      ENDSOURCE
+      SOURCE #parmExportBtn
+        #public void parmExportBtn(FormButtonControl _formButtonControl)
+        #{
+        #    ;
+        #    exportBtn = _formButtonControl;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmImageListStatus
+        #public Imagelist parmImageListStatus()
+        #{
+        #    return imageListStatus;
+        #}
+      ENDSOURCE
+      SOURCE #parmMainGroup
+        #public void parmMainGroup(FormGroupControl _mainGroup)
+        #{
+        #    mainGroup = _mainGroup;
+        #}
+      ENDSOURCE
+      SOURCE #parmPinBtn
+        #public FormButtonControl parmPinBtn(FormButtonControl _pinBtn = pinBtn)
+        #{
+        #    pinBtn = _pinBtn;
+        #    return pinBtn;
+        #}
+      ENDSOURCE
+      SOURCE #parmReCompileBtn
+        #public void parmReCompileBtn(FormButtonControl _formButtonControl)
+        #{
+        #    reCompileBtn = _formButtonControl;
+        #}
+        #
+        #
+        #
+      ENDSOURCE
+      SOURCE #parmResetBtn
+        #public void parmResetBtn(FormButtonControl _formButtonControl)
+        #{
+        #    resetBtn = _formButtonControl;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmStatusBestPracticesTxt
+        #public void parmStatusBestPracticesTxt(FormButtonControl _formButtonControl)
+        #{
+        #    statusBestPracticesTxt = _formButtonControl;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmStatusErrorTxt
+        #public void parmStatusErrorTxt(FormButtonControl _formButtonControl)
+        #{
+        #    statusErrorTxt = _formButtonControl;
+        #}
+      ENDSOURCE
+      SOURCE #parmStatusToDoTxt
+        #public void parmStatusToDoTxt(FormButtonControl _formButtonControl)
+        #{
+        #    statusToDoTxt = _formButtonControl;
+        #}
+      ENDSOURCE
+      SOURCE #parmStatusWarningTxt
+        #public void parmStatusWarningTxt(FormButtonControl _formButtonControl)
+        #{
+        #    statusWarningTxt = _formButtonControl;
+        #}
+      ENDSOURCE
+      SOURCE #reCompileElement
+        #public void reCompileElement(TreeNodePath _treeNodePath = '')
+        #{
+        #    Set                 compileSet  = new Set(Types::String);
+        #    SetEnumerator       enum;
+        #    TreeNode            treeNode;
+        #    TreeNodePath        likePath;
+        #    TmpCompilerOutput   tmp;
+        #
+        #    void compileSetInsert(TreeNodePath _path)
+        #    {
+        #        compileSet.add(SysTreeNode::applObjectPath(_path));
+        #    }
+        #
+        #    tmp.setTmpData(tmpCompilerOutput);
+        #
+        #    this.startCompilationContext();
+        #
+        #    if (_treeNodePath)
+        #    {
+        #        likePath = SysCompilerOutput::buildLikePath(_treeNodePath);
+        #    }
+        #    else
+        #    {
+        #        likePath = SysCompilerOutput::buildLikePath('\\');
+        #    }
+        #
+        #    while select forupdate tmpCompilerOutput
+        #        group by UtilElementType, SysUtilElementName
+        #        where tmpCompilerOutput.TreeNodePath like likePath
+        #    {
+        #        compileSetInsert(tmpCompilerOutput.TreeNodePath);
+        #    }
+        #
+        #    if (_treeNodePath)
+        #    {
+        #        this.removeExistingCompileErrors(_treeNodePath);
+        #        this.reset(false);
+        #    }
+        #    else
+        #    {
+        #        this.reset(true);
+        #    }
+        #
+        #    enum = compileSet.getEnumerator();
+        #    while (enum.moveNext())
+        #    {
+        #        treeNode = TreeNode::findNode(enum.current());
+        #        if (treeNode)
+        #        {
+        #            treeNode.AOTcompile();
+        #            this.startBPCheck(treeNode.treeNodePath());
+        #        }
+        #    }
+        #    this.endCompilationContext();
+        #}
+      ENDSOURCE
+      SOURCE #removeExistingCompileErrors
+        #private void removeExistingCompileErrors(TreeNodePath _treeNodePath)
+        #{
+        #    TreeNodePath likePath;
+        #
+        #    delete_from tmpCompilerOutput
+        #        index PathIdx
+        #        where tmpCompilerOutput.TreeNodePath == _treeNodePath &&
+        #              tmpCompilerOutput.SysCompilerOutputTab != SysCompilerOutputTab::BestPractices;
+        #
+        #    likePath = SysCompilerOutput::buildLikePath(_treeNodePath);
+        #    likePath = strReplace(likePath, '*', @'\\\\*');
+        #
+        #    delete_from tmpCompilerOutput
+        #        index PathIdx
+        #        where tmpCompilerOutput.TreeNodePath like likePath &&
+        #              tmpCompilerOutput.SysCompilerOutputTab != SysCompilerOutputTab::BestPractices;
+        #}
+      ENDSOURCE
+      SOURCE #reset
+        #public void reset(boolean _all)
+        #{
+        #    #resAppl
+        #    Common      empty;
+        #
+        #    if (_all)
+        #    {
+        #        tmpCompilerOutput.setTmpData(empty);
+        #        this.updateDataSources();
+        #
+        #        // Do not notify editors if we are doing a full build
+        #        if (!compileAllPass)
+        #        {
+        #            CompileOutputInfos::NotifyChanges();
+        #        }
+        #    }
+        #    else
+        #    {
+        #        if (!compileAllPass)
+        #        {
+        #            while select forupdate tmpCompilerOutput
+        #                index LatestCompileIdx
+        #                where tmpCompilerOutput.LatestCompile
+        #            {
+        #                tmpCompilerOutput.LatestCompile = false;
+        #                tmpCompilerOutput.update();
+        #            }
+        #        }
+        #    }
+        #
+        #    this.updateCounters();
+        #
+        #    buildStatusTextBuffer = new TextBuffer();
+        #    this.updateStatusCompileTxt('');
+        #
+        #    errorCount         = 0;
+        #    warningCount       = 0;
+        #    toDoCount          = 0;
+        #    bestPracticesCount = 0;
+        #
+        #    updateDelay = 0;
+        #    lastUpdateStatusCompileTxt = '';
+        #
+        #    this.setActiveBtn();
+        #
+        #    this.updateErrorStateText();
+        #    this.updateWarningStateText();
+        #    this.updateToDoStateText();
+        #    this.updateBestPracticesStateText();
+        #}
+      ENDSOURCE
+      SOURCE #resizeBuildPane
+        #public void resizeBuildPane(boolean _hide = false)
+        #{
+        #    int preferredSize;
+        #    #Define.BuildPaneWidthExpanded(350)
+        #    #Define.BuildPaneWidthCollapsed(10)
+        #
+        #    if (pinBtn &&
+        #        !pinBtn.toggleValue() &&
+        #        maxLinesInBuildStatus > 0 )
+        #    {
+        #        // not pinned
+        #        if (_hide)
+        #        {
+        #            preferredSize = formRun.design().widthValue() - #BuildPaneWidthCollapsed;
+        #            hideTimeoutHdl = 0;
+        #        }
+        #        else
+        #        {
+        #            preferredSize = formRun.design().widthValue() - #BuildPaneWidthExpanded;
+        #            // Cancel any queued events.
+        #            if (hideTimeoutHdl)
+        #            {
+        #                formRun.cancelTimeOut(hideTimeoutHdl);
+        #            }
+        #            //Reschedule a new event 3 secs from now.
+        #            hideTimeoutHdl = formRun.setTimeOut(identifierStr(hideOnTimeOut), 3000, false);
+        #        }
+        #        if (mainGroup.widthValue() != preferredSize)
+        #        {
+        #            mainGroup.width(preferredSize);
+        #            mainGroup.updateWindow();
+        #            infolog.yield();
+        #        }
+        #    }
+        #    else
+        #    {
+        #        hideTimeoutHdl = 0;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #setActiveBtn
+        #public void setActiveBtn(int _activeTab = 0)
+        #{
+        #    if (formRun)
+        #    {
+        #        if (errorCountTotal ||
+        #            warningCountTotal ||
+        #            toDoCountTotal ||
+        #            bestPracticesCountTotal)
+        #        {
+        #            resetBtn.enabled(true);
+        #            reCompileBtn.enabled(true);
+        #            exportBtn.enabled(true);
+        #            compileBtn.enabled(true);
+        #            editBtn.enabled(true);
+        #        }
+        #        else
+        #        {
+        #            resetBtn.enabled(false);
+        #            reCompileBtn.enabled(false);
+        #            exportBtn.enabled(false);
+        #            compileBtn.enabled(false);
+        #            editBtn.enabled(false);
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #setEndFocus
+        #private void setEndFocus()
+        #{
+        #    if (calledFromAot)
+        #    {
+        #        if (errorCount   ||
+        #            warningCount ||
+        #            toDoCount    ||
+        #            bestPracticesCount)
+        #        {
+        #            if (formRun)
+        #            {
+        #                formRun.setActive();
+        #            }
+        #        }
+        #        else
+        #        {
+        #            this.setWindowFocus(callerHwnd);
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #setPartialCompileAll
+        #public void setPartialCompileAll(boolean fValue)
+        #{
+        #    isPartialCompileAll = fValue;
+        #    compileAllPass = 3;
+        #}
+      ENDSOURCE
+      SOURCE #setWindowFocus
+        #void setWindowFocus(int _hwnd)
+        #{
+        #    if (infolog)
+        #        infolog.activateWindow(_hwnd);
+        #}
+      ENDSOURCE
+      SOURCE #showBPInfo
+        #public void showBPInfo(int _code)
+        #{
+        #    // Making always the code positive to calculate the URL.
+        #    if (_code < 0)
+        #    {
+        #        _code += 10000;
+        #    }
+        #
+        #    WinAPI::shellExecute(strFmt(@"http://go.microsoft.com/fwlink/?linkid=214319#BP%1", _code));
+        #}
+      ENDSOURCE
+      SOURCE #showErrorInfo
+        #public void showErrorInfo(int _code)
+        #{
+        #    // Making always the code positive to calculate the URL.
+        #    if (_code < 0)
+        #    {
+        #        _code += 10000;
+        #    }
+        #
+        #    WinAPI::shellExecute(strFmt(@"http://go.microsoft.com/fwlink/?linkid=214319#%1", _code));
+        #}
+      ENDSOURCE
+      SOURCE #startBPCheck
+        #public void startBPCheck(str _treeNodePath)
+        #{
+        #    if (compilerWarningLevel == CompilerWarningLevel::Level4)
+        #    {
+        #        this.startBPCheckObject(_treeNodePath);
+        #        bpCheck.check(_treeNodePath);
+        #        singleCompile = true;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #startBPCheckContext
+        #void startBPCheckContext()
+        #{
+        #    this.compilerOutputForm();
+        #    this.initContext();
+        #    this.reset(false);
+        #    singleCompile = true;
+        #    if (!this.bestPracticesParm())
+        #    {
+        #        parameter = SysBPParameters::find();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #startBPCheckObject
+        #void startBPCheckObject(TreeNodePath _treeNodePath)
+        #{
+        #    TreeNodePath likePath;
+        #
+        #    this.findCompileType();
+        #
+        #    delete_from tmpCompilerOutput
+        #        index PathIdx
+        #        where tmpCompilerOutput.TreeNodePath         == _treeNodePath
+        #           && tmpCompilerOutput.SysCompilerOutputTab == SysCompilerOutputTab::BestPractices;
+        #
+        #    likePath = SysCompilerOutput::buildLikePath(_treeNodePath);
+        #    likePath = strReplace(likePath, '*', '\\\\\\\\*');
+        #
+        #    delete_from tmpCompilerOutput
+        #        index PathIdx
+        #        where tmpCompilerOutput.TreeNodePath like likePath
+        #           && tmpCompilerOutput.SysCompilerOutputTab == SysCompilerOutputTab::BestPractices;
+        #
+        #
+        #    utilElementType = SysTreeNode::path2ApplObjectType(_treeNodePath);
+        #    utilElementName = SysTreeNode::applObjectName(_treeNodePath);
+        #
+        #    this.updateStatusCompileTxt(strFmt("@SYS76699",
+        #                                       enum2str(utilElementType),
+        #                                       utilElementName));
+        #}
+      ENDSOURCE
+      SOURCE #startCILGenerationOutput
+        #public void startCILGenerationOutput()
+        #{
+        #    this.compilerOutputForm();
+        #    compilationContext  = true;
+        #    this.initContext();
+        #    this.reset(true);
+        #    singleCompile = true;
+        #}
+      ENDSOURCE
+      SOURCE #startCompilation
+        #protected void startCompilation(int _flag, str _compilePath, int _hwnd)
+        #{
+        #    #define.PARM_XReferences(0x10)
+        #
+        #    boolean     resetOutputForm;
+        #
+        #    this.compilerOutputForm();
+        #
+        #    if (!compilationContext)
+        #    {
+        #        this.init();
+        #
+        #        if (_flag & #compileAll)
+        #        {
+        #            switch (compileAllPass)
+        #            {
+        #                case 0:
+        #                    resetOutputForm = true;
+        #                    break;
+        #            }
+        #            compileAllPass++;
+        #            multiCompile = true;
+        #
+        #        }
+        #        else
+        #        {
+        #            if(_flag & #compileMulti)
+        #            {
+        #                multiCompile    = true;
+        #            }
+        #
+        #            if (_flag & #compileSingle)
+        #            {
+        #                singleCompile   = true;
+        #            }
+        #        }
+        #
+        #        if(_flag & #compileAot)
+        #        {
+        #            calledFromAot = true;
+        #            formRun.setActive();
+        #        }
+        #
+        #        if(_flag & #compileEditor)
+        #        {
+        #            calledFromEditor = true;
+        #        }
+        #
+        #        callerHwnd = _hwnd;
+        #        this.reset(resetOutputForm);
+        #    }
+        #    maxLinesInBuildStatus = xUserInfo::find().MessageLimit;
+        #    this.resizeBuildPane();
+        #
+        #    if (calledFromAot &&
+        #        _compilePath &&
+        #        singleCompile &&
+        #        callerHwnd)
+        #    {
+        #        try
+        #        {
+        #            treeNodeWindowHwndMap.insert(SysTreeNode::applObjectPath(_compilePath), callerHwnd);
+        #        }
+        #        catch
+        #        {
+        #            exceptionTextFallThrough();
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #startCompilationContext
+        #public void startCompilationContext()
+        #{
+        #    this.compilerOutputForm();
+        #    compilationContext  = true;
+        #    this.initContext();
+        #    this.reset(false);
+        #}
+      ENDSOURCE
+      SOURCE #startCompilationObject
+        #protected void startCompilationObject(str _path)
+        #{
+        #    #Aot
+        #    if (compilationContext)
+        #    {
+        #        this.findCompileType();
+        #    }
+        #
+        #    if (_path != #AOTRootPath)
+        #    {
+        #        this.removeExistingCompileErrors(_path);
+        #        this.updateCounters();
+        #    }
+        #
+        #    super(_path);
+        #
+        #}
+      ENDSOURCE
+      SOURCE #startExport
+        #protected void startExport()
+        #{
+        #    this.compilerOutputForm();
+        #    this.updateStatusCompileTxt("@SYS70400");
+        #}
+      ENDSOURCE
+      SOURCE #startImport
+        #protected void startImport()
+        #{
+        #    singleCompile       = false;
+        #    multiCompile        = false;
+        #    calledFromAot       = false;
+        #    calledFromEditor    = false;
+        #
+        #    this.compilerOutputForm();
+        #    this.updateStatusCompileTxt("@SYS28609");
+        #}
+      ENDSOURCE
+      SOURCE #toDoCount
+        #public int64 toDoCount()
+        #{
+        #    return todoCount;
+        #}
+      ENDSOURCE
+      SOURCE #updateBestPracticesStateText
+        #public void updateBestPracticesStateText()
+        #{
+        #    if (statusBestPracticesTxt)
+        #    {
+        #        if (bestPracticesCountTotal == 1)
+        #        {
+        #            statusBestPracticesTxt.text("@SYS344654");
+        #        }
+        #        else
+        #        {
+        #            statusBestPracticesTxt.text(strFmt("@SYS344655", bestPracticesCountTotal));
+        #        }
+        #        statusBestPracticesTxt.updateWindow();
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #updateCounters
+        #public void updateCounters()
+        #{
+        #    errorCountTotal         = 0;
+        #    warningCountTotal       = 0;
+        #    toDoCountTotal          = 0;
+        #    bestPracticesCountTotal = 0;
+        #
+        #    // Errors
+        #    select count(RecId) from tmpCompilerOutput
+        #         index TabSeverityIdx
+        #         where tmpCompilerOutput.SysCompilerOutputTab   == SysCompilerOutputTab::Error
+        #            && tmpCompilerOutput.SysCompilerSeverity    == SysCompilerSeverity::Error;
+        #
+        #    errorCountTotal           = tmpCompilerOutput.RecId;
+        #
+        #    // Warnings
+        #    select count(RecId) from tmpCompilerOutput
+        #         index TabSeverityIdx
+        #         where tmpCompilerOutput.SysCompilerOutputTab   == SysCompilerOutputTab::Error
+        #            && tmpCompilerOutput.SysCompilerSeverity    != SysCompilerSeverity::Error;
+        #
+        #    warningCountTotal         = tmpCompilerOutput.RecId;
+        #
+        #    // Tasks
+        #    select count(RecId) from tmpCompilerOutput
+        #         index TabSeverityIdx
+        #         where tmpCompilerOutput.SysCompilerOutputTab   == SysCompilerOutputTab::ToDo;
+        #
+        #    toDoCountTotal            = tmpCompilerOutput.RecId;
+        #
+        #    // Best Practices
+        #    select count(RecId) from tmpCompilerOutput
+        #         index TabSeverityIdx
+        #         where tmpCompilerOutput.SysCompilerOutputTab   == SysCompilerOutputTab::BestPractices;
+        #
+        #    bestPracticesCountTotal   = tmpCompilerOutput.RecId;
+        #}
+      ENDSOURCE
+      SOURCE #updateCursor
+        #private void updateCursor(FormDataSource formDataSource, TmpCompilerOutput _newCursor)
+        #{
+        #    TmpCompilerOutput   cursor = formDataSource.cursor() as TmpCompilerOutput;
+        #
+        #    cursor.setTmpData(_newCursor);
+        #}
+      ENDSOURCE
+      SOURCE #updateDataSources
+        #private void updateDataSources()
+        #{
+        #    if (errors_ds)
+        #    {
+        #        this.updateCursor(errors_ds, tmpCompilerOutput);
+        #        errors_ds.research();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #updateErrorStateText
+        #public void updateErrorStateText()
+        #{
+        #    if (statusErrorTxt)
+        #    {
+        #        if (errorCountTotal == 1)
+        #        {
+        #            statusErrorTxt.text("@SYS344642");
+        #        }
+        #        else
+        #        {
+        #            statusErrorTxt.text(strFmt("@SYS344649", errorCountTotal));
+        #        }
+        #        statusErrorTxt.updateWindow();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #updateStatusCompileTxt
+        #private void updateStatusCompileTxt(str _statusText, boolean _force = false)
+        #{
+        #    str message;
+        #    int lines;
+        #    int ticks;
+        #
+        #    if (_statusText == lastUpdateStatusCompileTxt)
+        #    {
+        #        return;
+        #    }
+        #    lastUpdateStatusCompileTxt = _statusText;
+        #
+        #    if (buildText &&
+        #        pinBtn &&
+        #        maxLinesInBuildStatus > 0)
+        #    {
+        #        if (compileAllPass)
+        #        {
+        #            message = strFmt("@SYS70452", int2str(compileAllPass), _statusText);
+        #        }
+        #        else
+        #        {
+        #            message = _statusText;
+        #        }
+        #        buildStatusTextBuffer.appendText(message ? message + '\n' : message);
+        #
+        #        if (buildStatusTextBuffer.numLines() > maxLinesInBuildStatus)
+        #        {
+        #            // Delete until the first newline after character 100,
+        #            // i.e. delete the first few lines
+        #            buildStatusTextBuffer.find('\n', 100);
+        #            buildStatusTextBuffer.delete(1, buildStatusTextBuffer.matchPos());
+        #        }
+        #
+        #        ticks = WinAPI::getTickCount();
+        #        if (_force ||
+        #            ticks > updateTimeForStatus + updateDelay)
+        #        {
+        #            if (_force)
+        #            {
+        #                updateDelay = 0;
+        #            }
+        #            else
+        #            {
+        #                updateDelay += 100;
+        #            }
+        #            this.resizeBuildPane();
+        #
+        #            //Update the control while it is not redrawn
+        #            formRun.lock();
+        #            buildText.text(buildStatusTextBuffer.getText());
+        #            lines = buildText.getLineCount();
+        #            buildText.lineScroll(1, lines);
+        #            formRun.unLock(false);
+        #
+        #            //Update the control - this avoids flickering
+        #            buildText.lineScroll(1, lines);
+        #
+        #            updateTimeForStatus = ticks;
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #updateToDoStateText
+        #public void updateToDoStateText()
+        #{
+        #    if (statusToDoTxt)
+        #    {
+        #        if (toDoCountTotal == 1)
+        #        {
+        #            statusToDoTxt.text("@SYS344652");
+        #        }
+        #        else
+        #        {
+        #            statusToDoTxt.text(strFmt("@SYS344653", toDoCountTotal));
+        #        }
+        #        statusToDoTxt.updateWindow();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #updateWarningStateText
+        #public void updateWarningStateText()
+        #{
+        #    if (statusWarningTxt)
+        #    {
+        #        if (warningCountTotal == 1)
+        #        {
+        #            statusWarningTxt.text("@SYS344650");
+        #        }
+        #        else
+        #        {
+        #            statusWarningTxt.text(strFmt("@SYS344651", warningCountTotal));
+        #        }
+        #        statusWarningTxt.updateWindow();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #warningCount
+        #public int64 warningCount()
+        #{
+        #    return warningCount;
+        #}
+      ENDSOURCE
+      SOURCE #xmlExport
+        #// AOSRunMode::Client
+        #public boolean xmlExport(Filename _filename = '')
+        #{
+        #    #AviFiles
+        #    #WinAPI
+        #    #File
+        #    #define.compileXmlStart('<?xml version="1.0" encoding="UTF-8"?>')
+        #    #define.BufferChunks(500)
+        #    #define.xslfileext('.xsl')
+        #
+        #    #localMacro.htmlStart
+        #    '<HTML>' + '\n' +
+        #    '<HEAD>' + '\n' +
+        #    '    <META http-equiv="x-ua-compatible" content="IE=9"/>' + '\n' +
+        #    '</HEAD>' + '\n' +
+        #    '<SCRIPT LANGUAGE="JavaScript">'+
+        #    '    var orderSpec = "";' + '\n' +
+        #    '    function start()' + '\n' +
+        #    '    {' + '\n' +
+        #    '        var rootElement = compilerinfo.documentElement;' + '\n' +
+        #    '        var transformed = rootElement.transformNode(stylesheet.documentElement);' + '\n' +
+        #    '        maintable.innerHTML = transformed;' + '\n' +
+        #    '    }' + '\n' +
+        #    '    // This function is called when the user clicks in the heading.' + '\n' +
+        #    '    function doClicked (where, type)' + '\n' +
+        #    '    {' + '\n' +
+        #    '        var sortNode = stylesheet.documentElement.selectSingleNode("//xsl:sort");' + '\n' +
+        #    '        // Change the value of the select attribute' + '\n' +
+        #    '        var selectAttr = sortNode.getAttribute("select");' + '\n' +
+        #    '        var s = ' + '"Table:Field[@name=' + "'" + '" + where + "' + "'" + ']";' + '\n' +
+        #    '        sortNode.setAttribute("select", s);' + '\n' +
+        #    '        sortNode.setAttribute("data-type", type);' + '\n' +
+        #    '        start();' + '\n' +
+        #    '    }' + '\n' +
+        #    '</SCRIPT>' + '\n' +
+        #    '<SCRIPT LANGUAGE="JavaScript" FOR="window" EVENT="onload">' + '\n' +
+        #    '    start();' + '\n' +
+        #    '</SCRIPT>' + '\n' +
+        #    '<BODY>' + '\n' +
+        #    '<H1>Compiler Error log : ' + todayStr + '</H1>' + '\n' +
+        #    '<H2>Errors                   : ' + int642str(errors) + '</H2>' + '\n' +
+        #    '<H2>Warnings                 : ' + int642str(warnings) + '</H2>' + '\n' +
+        #    '<H2>Best Practice Deviations : ' + int642str(bpDeviations) + '</H2>' + '\n' +
+        #    '<SPAN ID="maintable">' + '\n' +
+        #    '</SPAN>' + '\n' +
+        #    '<XML ID="stylesheet">' + '\n' +
+        #    '    <?xml version="1.0" ?>' + '\n' +
+        #    '    <xsl:stylesheet version="1.0"' + '\n' +
+        #    '        xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' + '\n' +
+        #    '        xmlns:Table="urn:www.microsoft.com/Formats/Table">' + '\n' +
+        #    '        <xsl:template match= "AxaptaCompilerOutput" >' + '\n' +
+        #    '            <TABLE>' + '\n' +
+        #    '                <TR STYLE="font-weight:bold" BGCOLOR="gray" BORDER="0">' + '\n' +
+        #    '                    <TD onclick="doClicked(\'SysCompilerSeverity\' , \'text\')">Severity</TD>\n' +
+        #    '                    <TD onclick="doClicked(' + "'TreeNodePath' , 'text'" + ')"> Path</TD>' + '\n' +
+        #    '                    <TD onclick="doClicked(' + "'Line', 'number'" + ')" ALIGN="RIGHT">Line</TD>' + '\n' +
+        #    '                    <TD onclick="doClicked(' + "'Column', 'number'" + ')" ALIGN="RIGHT">Col</TD>' + '\n' +
+        #    '                    <TD onclick="doClicked(' + "'SysCompileErrorMessage', 'text'" + ')"> Error message</TD>' + '\n' +
+        #    '                </TR>' + '\n' +
+        #    '                <xsl:for-each select="Table:Record">' + '\n' +
+        #    '                    <xsl:sort select="Table:Field[@name=' + "'createdDate'" + ']" order="ascending"/>' + '\n' +
+        #    '                    <TR>\n' +
+        #    '                        <xsl:variable name="code" select="Table:Field[@name=\'SysCompilerSeverity\']"/>\n' +
+        #    '                        <TD>\n' +
+        #    '                        <xsl:choose>\n' +
+        #    '                            <xsl:when test="$code=0">\n ' +
+        #    '                               <xsl:variable name="window" select="Table:Field[@name=\'SysCompilerOutputTab\']"/> \n' +
+        #    '                               <xsl:choose>\n ' +
+        #    '                                   <xsl:when test="$window=0">Error</xsl:when>\n' +
+        #    '                                   <xsl:when test="$window=1">Error</xsl:when>\n' +
+        #    '                                   <xsl:when test="$window=2">Error</xsl:when>\n' +
+        #    '                                   <xsl:when test="$window=3">BestPractice</xsl:when>\n' +
+        #    '                                   <xsl:when test="$window=4">TO DO</xsl:when>\n' +
+        #    '                               </xsl:choose>\n'                                     +
+        #    '                            </xsl:when>\n'                                     +
+        #    '                            <xsl:when test="$code=1">Warning</xsl:when>\n'     +
+        #    '                            <xsl:when test="$code=2">Warning</xsl:when>\n'     +
+        #    '                            <xsl:when test="$code=3">Warning</xsl:when>\n'     +
+        #    '                            <xsl:when test="$code=4">BestPractice</xsl:when>\n'+
+        #    '                        </xsl:choose>\n' +
+        #    '                        </TD>\n' +
+        #    '                        <TD><xsl:value-of select="Table:Field[@name=' + "'TreeNodePath'" + ']"/></TD>' + '\n' +
+        #    '                        <TD ALIGN="RIGHT"><xsl:value-of select="Table:Field[@name=' + "'Line'" + ']"/></TD>' + '\n' +
+        #    '                        <TD ALIGN="RIGHT"><xsl:value-of select="Table:Field[@name=' + "'Column'" + ']"/></TD>' + '\n' +
+        #    '                        <TD><xsl:value-of select="Table:Field[@name=' + "'SysCompileErrorMessage'" + ']"/></TD>' + '\n' +
+        #    '                    </TR>' + '\n' +
+        #    '                </xsl:for-each>' + '\n' +
+        #    '            </TABLE>' + '\n' +
+        #    '        </xsl:template>' + '\n' +
+        #    '    </xsl:stylesheet>' + '\n' +
+        #    '</XML>' + '\n' +
+        #    '<XML ID="compilerinfo">' + '\n'
+        #    #endMacro
+        #
+        #    #localMacro.htmlEnd
+        #    '</XML>' + '\n' +
+        #    '</BODY>' + '\n' +
+        #    '</HTML>' + '\n'
+        #    #endMacro
+        #
+        #    #localMacro.xmlStylesheet
+        #    '<?xml-stylesheet type="text/xsl" href="' + name + #xslfileext + '"?>'
+        #    #endMacro
+        #
+        #    #localMacro.xmlStartWithAttributes
+        #    '<AxaptaCompilerOutput Date="' + todayStr + '"' +
+        #    ' Errors="' + int642str(errors) + '"' +
+        #    ' Warnings="' + int642str(warnings) + '"' +
+        #    ' BestPracticeDeviations="' + int642str(bpDeviations) + '"' +
+        #    '>'
+        #    #endMacro
+        #
+        #    SysOperationProgress    sysOperationProgress = new SysOperationProgress();
+        #    boolean                 ret;
+        #    TextIo                  file;
+        #    TextIo                  xmlFile;
+        #    Filename                filename = _filename;
+        #    Filename                path;
+        #    Filename                name;
+        #    Filename                ext;
+        #    Filename                xmlFilename;
+        #    int                     i;
+        #    str                     todayStr = strFmt('%1', today());
+        #    RecId                   errors;
+        #    RecId                   warnings;
+        #    RecId                   bpDeviations;
+        #    TextBuffer              tBuffer;
+        #    str                     strThisError;
+        #    ;
+        #
+        #    if (!filename)
+        #    {
+        #        filename = WinAPI::getSaveFileName(0,
+        #                                           [WinAPI::fileType(#html), #allfilesName+#html, #allFilesType, #allFiles],
+        #                                           WinAPI::getFolderPath(#CSIDL_Personal),
+        #                                           "@SYS70445",
+        #                                           #xml,
+        #                                           '');
+        #    }
+        #
+        #    if (filename)
+        #    {
+        #        [path, name, ext] = fileNameSplit(filename);
+        #        xmlFilename = strReplace(filename, ext, #xml);
+        #
+        #        if (WinAPI::pathExists(path) && name)
+        #        {
+        #            file = new TextIo(filename, #io_write, 65001);  // Write the file in UTF8
+        #            xmlFile = new TextIo(xmlFilename, #io_write, 65001);  // Write the file in UTF8
+        #            this.xslExport(strReplace(xmlFilename, #xml, #xslfileext));
+        #            if (file)
+        #            {
+        #                select count(RecId) from tmpCompilerOutput
+        #                     index recId;
+        #
+        #                sysOperationProgress.setTotal(tmpCompilerOutput.RecId);
+        #                sysOperationProgress.setCaption("@SYS70444");
+        #                sysOperationProgress.setAnimation(#AviFindComp);
+        #
+        #                select count(RecId) from tmpCompilerOutput
+        #                     where tmpCompilerOutput.SysCompilerSeverity == SysCompilerSeverity::Error &&
+        #                           tmpCompilerOutput.SysCompilerOutputTab == SysCompilerOutputTab::Error;
+        #                errors = tmpCompilerOutput.RecId;
+        #
+        #                select count(RecId) from tmpCompilerOutput
+        #                     where (tmpCompilerOutput.SysCompilerSeverity == SysCompilerSeverity::WarningLevel1
+        #                         || tmpCompilerOutput.SysCompilerSeverity == SysCompilerSeverity::WarningLevel2
+        #                         || tmpCompilerOutput.SysCompilerSeverity == SysCompilerSeverity::WarningLevel3)
+        #                         && tmpCompilerOutput.SysCompilerOutputTab == SysCompilerOutputTab::Error;
+        #                warnings = tmpCompilerOutput.RecId;
+        #
+        #                select count(RecId) from tmpCompilerOutput
+        #                     where tmpCompilerOutput.SysCompilerOutputTab == SysCompilerOutputTab::BestPractices;
+        #                bpDeviations = tmpCompilerOutput.RecId;
+        #
+        #                file.write(#htmlStart);
+        #                file.write(#compileXmlStart + '\n');
+        #                file.write(#xmlStart + '\n');
+        #
+        #                xmlFile.write(#compileXmlStart + '\n');
+        #                xmlFile.write(#xmlStylesheet + '\n');
+        #                xmlFile.write(#xmlStartWithAttributes + '\n');
+        #
+        #                tBuffer = new TextBuffer();
+        #
+        #                while select tmpCompilerOutput
+        #                    index PathIdx
+        #                {
+        #                    i++;
+        #                    strThisError = tmpCompilerOutput.xml();
+        #                    tBuffer.appendText(strThisError);
+        #                    if(i mod #BufferChunks == 0)
+        #                    {
+        #                        file.write(tBuffer.getText());
+        #                        xmlFile.write(tBuffer.getText());
+        #
+        #                        tBuffer.setText('');
+        #                    }
+        #
+        #                    sysOperationProgress.setText(strFmt('%1 %2', enum2str(tmpCompilerOutput.UtilElementType), tmpCompilerOutput.SysUtilElementName));
+        #                    sysOperationProgress.setCount(i);
+        #                }
+        #
+        #                if(i mod #BufferChunks != 0)
+        #                {
+        #                   file.write(tBuffer.getText());
+        #                   xmlFile.write(tBuffer.getText());
+        #                }
+        #
+        #                file.write(#xmlEnd);
+        #                file.write(#htmlEnd);
+        #                xmlFile.write(#xmlend);
+        #
+        #                ret = true;
+        #            }
+        #        }
+        #        else
+        #        {
+        #            error("@SYS18624");
+        #        }
+        #    }
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #xmlImport
+        #public boolean xmlImport(FilenameOpen _filename = '')
+        #{
+        #    #WinAPI
+        #    #File
+        #
+        #    SysOperationProgress    sysOperationProgress = new SysOperationProgress();
+        #    XmlDocument             xmlDocument = new XmlDocument();
+        #    TmpCompilerOutput       tmp;
+        #    str                     xml;
+        #    TextIo                  file;
+        #    boolean                 ret;
+        #    Filename                filename;
+        #    Filename                path;
+        #    Filename                name;
+        #    Filename                ext;
+        #    int                     i;
+        #    container               record;
+        #    int                     elements;
+        #    boolean                 startFound;
+        #
+        #    if (prmisDefault(_filename))
+        #    {
+        #        filename = WinAPI::getOpenFileName(0,
+        #                                           [WinAPI::fileType(#html), #AllFilesName + #html, #allFilesType, #allFiles],
+        #                                           WinAPI::getFolderPath(#CSIDL_Personal),
+        #                                           "@SYS70659",
+        #                                           #xml,
+        #                                           '');
+        #    }
+        #    else
+        #    {
+        #        filename = _filename;
+        #    }
+        #
+        #    if (filename)
+        #    {
+        #        [path, name, ext] = fileNameSplit(filename);
+        #
+        #        if (name)
+        #        {
+        #            file = new TextIo(filename, #io_read);
+        #
+        #            if (file)
+        #            {
+        #                this.initContext();
+        #                multiCompile = true;
+        #                this.reset(false);
+        #
+        #                sysOperationProgress.setCaption("@SYS70660");
+        #                sysOperationProgress.setTotal(WinAPI::fileSize(filename));
+        #
+        #                file.inRecordDelimiter('>');
+        #
+        #                while (file.status() == IO_Status::Ok &&
+        #                       !startFound)
+        #                {
+        #                    record      = file.read();
+        #                    elements    = conLen(record);
+        #                    for (i=1; i <= elements && !startFound; i++)
+        #                    {
+        #                        if (typeOf(conPeek(record, i)) == Types::String &&
+        #                            strScan(conPeek(record, i) + '>', #xmlStart, 1, strLen(conPeek(record, i)) + 1))
+        #                        {
+        #                            startFound = true;
+        #                        }
+        #                    }
+        #                }
+        #
+        #                file.inRecordDelimiter(#xmlRecordEnd);
+        #                file.inFieldDelimiter(#delimiterEnter);
+        #
+        #                while (file.status() == IO_Status::Ok)
+        #                {
+        #                    record = file.read();
+        #
+        #                    xml      = #xmlVersion;
+        #                    elements = conLen(record);
+        #                    for (i=1; i<=elements; i++)
+        #                    {
+        #                        xml += conPeek(record, i);
+        #                    }
+        #                    xml += #xmlRecordEnd;
+        #
+        #                    if (xmlDocument.loadXml(xml))
+        #                    {
+        #                        Global::recordFromXMLNode(xmlDocument.documentElement(), tmp);
+        #                    }
+        #
+        #                    if (tmp.TreeNodePath)
+        #                    {
+        #                        select firstonly tmpCompilerOutput
+        #                            index PathIdx
+        #                            where tmpCompilerOutput.TreeNodePath            == tmp.TreeNodePath
+        #                               && tmpCompilerOutput.Line                    == tmp.Line
+        #                               && tmpCompilerOutput.Column                  == tmp.Column
+        #                               && tmpCompilerOutput.CompileErrorCode        == tmp.CompileErrorCode
+        #                               && tmpCompilerOutput.SysPropertyName         == tmp.SysPropertyName
+        #                               && tmpCompilerOutput.SysCompilerOutputTab    == tmp.SysCompilerOutputTab;
+        #
+        #                        tmpCompilerOutput.TreeNodePath             = tmp.TreeNodePath;
+        #                        tmpCompilerOutput.Line                     = tmp.Line;
+        #                        tmpCompilerOutput.Column                   = tmp.Column;
+        #                        tmpCompilerOutput.CompileErrorCode         = tmp.CompileErrorCode;
+        #
+        #                        tmpCompilerOutput.CompileErrorString       = tmp.CompileErrorString;
+        #                        tmpCompilerOutput.UtilElementType          = tmp.UtilElementType;
+        #                        tmpCompilerOutput.SysUtilElementName       = tmp.SysUtilElementName;
+        #                        tmpCompilerOutput.SysCompilerSeverity      = tmp.SysCompilerSeverity;
+        #                        tmpCompilerOutput.CompileErrorImage        = tmp.CompileErrorImage;
+        #                        tmpCompilerOutput.LatestCompile            = false;
+        #                        tmpCompilerOutput.SysPropertyName          = tmp.SysPropertyName;
+        #                        tmpCompilerOutput.SysCompilerOutputTab     = tmp.SysCompilerOutputTab;
+        #                        tmpCompilerOutput.SysCompileErrorMessage   = tmp.SysCompileErrorMessage;
+        #                        tmpCompilerOutput.SysAotMethodName         = tmp.SysAotMethodName;
+        #                        tmpCompilerOutput.UtilElementImage         = tmp.UtilElementImage;
+        #                        tmpCompilerOutput.CompileErrorCode         = tmp.CompileErrorCode;
+        #                        tmpCompilerOutput.write();
+        #
+        #                        sysOperationProgress.setText(strFmt('%1 %2', enum2str(tmpCompilerOutput.UtilElementType), tmpCompilerOutput.SysUtilElementName));
+        #                    }
+        #                    sysOperationProgress.setCount(file.filePosition());
+        #                }
+        #
+        #                // Errors
+        #                select count(RecId) from tmpCompilerOutput
+        #                     index TabSeverityIdx
+        #                     where tmpCompilerOutput.SysCompilerOutputTab   == SysCompilerOutputTab::Error
+        #                        && tmpCompilerOutput.SysCompilerSeverity    == SysCompilerSeverity::Error;
+        #
+        #                errorCount           = tmpCompilerOutput.RecId;
+        #
+        #                // Warnings
+        #                select count(RecId) from tmpCompilerOutput
+        #                     index TabSeverityIdx
+        #                     where tmpCompilerOutput.SysCompilerOutputTab   == SysCompilerOutputTab::Error
+        #                        && tmpCompilerOutput.SysCompilerSeverity    != SysCompilerSeverity::Error;
+        #
+        #                warningCount         = tmpCompilerOutput.RecId;
+        #
+        #                // Tasks
+        #                select count(RecId) from tmpCompilerOutput
+        #                     index TabSeverityIdx
+        #                     where tmpCompilerOutput.SysCompilerOutputTab   == SysCompilerOutputTab::ToDo;
+        #
+        #                toDoCount            = tmpCompilerOutput.RecId;
+        #
+        #                // Best Practices
+        #                select count(RecId) from tmpCompilerOutput
+        #                     index TabSeverityIdx
+        #                     where tmpCompilerOutput.SysCompilerOutputTab   == SysCompilerOutputTab::BestPractices;
+        #
+        #                bestPracticesCount   = tmpCompilerOutput.RecId;
+        #
+        #                this.endCompilation();
+        #
+        #                this.updateStatusCompileTxt("@SYS70405");
+        #
+        #                ret = true;
+        #            }
+        #        }
+        #        else
+        #        {
+        #            error("@SYS18624");
+        #        }
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #xslExport
+        #private void xslExport(Filename _xslFilename = '')
+        #{
+        #    #WinAPI
+        #    #File
+        #    #define.xslfileext('.xsl')
+        #
+        #    #localMacro.xslFileContent
+        #    '<?xml version="1.0" ?>' + '\n' +
+        #    '<xsl:stylesheet version="1.0"' + '\n' +
+        #    '    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"' + '\n' +
+        #    '    xmlns:Table="urn:www.microsoft.com/Formats/Table">' + '\n' +
+        #    '    <xsl:template match= "AxaptaCompilerOutput" >' + '\n' +
+        #    '        <html>' + '\n' +
+        #    '            <head>' + '\n' +
+        #    '                <title>Compiler Error log: <xsl:value-of select="\@Date" /></title>\n' +
+        #    '            </head>' + '\n' +
+        #    '            <body>' + '\n' +
+        #    '                <h1>Compiler Error log: <xsl:value-of select="@Date" /></h1>' + '\n' +
+        #    '                <h2>Errors                   : <xsl:value-of select="@Errors" /></h2>' + '\n' +
+        #    '                <h2>Warnings                 : <xsl:value-of select="@Warnings" /></h2>' + '\n' +
+        #    '                <h2>Best Practice Deviations : <xsl:value-of select="@BestPracticeDeviations" /></h2>' + '\n' +
+        #    '                <table>' + '\n' +
+        #    '                    <tr style="font-weight:bold" bgcolor="gray" border="0">' + '\n' +
+        #    '                        <td>Severity</td>\n' +
+        #    '                        <td> Path</td>' + '\n' +
+        #    '                        <td>Line</td>' + '\n' +
+        #    '                        <td>Col</td>' + '\n' +
+        #    '                        <td> Error message</td>' + '\n' +
+        #    '                    </tr>' + '\n' +
+        #    '                <xsl:for-each select="Table:Record">' + '\n' +
+        #    '                    <xsl:sort select="Table:Field[@name=' + "'createdDate'" + ']" order="ascending"/>' + '\n' +
+        #    '                    <tr>\n' +
+        #    '                        <xsl:variable name="code" select="Table:Field[@name=\'SysCompilerSeverity\']"/>\n' +
+        #    '                        <td>\n' +
+        #    '                        <xsl:choose>\n' +
+        #    '                            <xsl:when test="$code=0">\n ' +
+        #    '                               <xsl:variable name="window" select="Table:Field[@name=\'SysCompilerOutputTab\']"/> \n' +
+        #    '                               <xsl:choose>\n ' +
+        #    '                                   <xsl:when test="$window=0">Error</xsl:when>\n' +
+        #    '                                   <xsl:when test="$window=1">Error</xsl:when>\n' +
+        #    '                                   <xsl:when test="$window=2">Error</xsl:when>\n' +
+        #    '                                   <xsl:when test="$window=3">BestPractice</xsl:when>\n' +
+        #    '                                   <xsl:when test="$window=4">TO DO</xsl:when>\n' +
+        #    '                               </xsl:choose>\n'                                     +
+        #    '                            </xsl:when>\n'                                     +
+        #    '                            <xsl:when test="$code=1">Warning</xsl:when>\n'     +
+        #    '                            <xsl:when test="$code=2">Warning</xsl:when>\n'     +
+        #    '                            <xsl:when test="$code=3">Warning</xsl:when>\n'     +
+        #    '                            <xsl:when test="$code=4">BestPractice</xsl:when>\n'+
+        #    '                        </xsl:choose>\n' +
+        #    '                        </td>\n' +
+        #    '                        <td><xsl:value-of select="Table:Field[@name=' + "'TreeNodePath'" + ']"/></td>' + '\n' +
+        #    '                        <td align="right"><xsl:value-of select="Table:Field[@name=' + "'Line'" + ']"/></td>' + '\n' +
+        #    '                        <td align="right"><xsl:value-of select="Table:Field[@name=' + "'Column'" + ']"/></td>' + '\n' +
+        #    '                        <td><xsl:value-of select="Table:Field[@name=' + "'SysCompileErrorMessage'" + ']"/></td>' + '\n' +
+        #    '                    </tr>' + '\n' +
+        #    '                </xsl:for-each>' + '\n' +
+        #    '                </table>' + '\n' +
+        #    '            </body>' + '\n' +
+        #    '        </html>' + '\n' +
+        #    '    </xsl:template>' + '\n' +
+        #    '</xsl:stylesheet>' + '\n'
+        #    #endMacro
+        #
+        #    FileName                xslFilename = _xslFilename;
+        #    Filename                xslPath, xslName, xslExt;
+        #    TextIo                  xslFile;
+        #
+        #    if (!xslFilename)
+        #    {
+        #        xslFilename = WinAPI::getSaveFileName(0,
+        #                                           [WinAPI::fileType(#xslfileext), #allfilesName+#xslfileext, #allFilesType, #allFiles],
+        #                                           WinAPI::getFolderPath(#CSIDL_Personal),
+        #                                           "@SYS70445",
+        #                                           #xslfileext,
+        #                                           '');
+        #    }
+        #
+        #    if (xslFilename)
+        #    {
+        #        [xslPath, xslName, xslExt] = fileNameSplit(xslFilename);
+        #
+        #        if (WinAPI::pathExists(xslPath) && xslName)
+        #        {
+        #            xslFile = new TextIo(xslFilename, #io_write, 65001);  // Write the file in UTF8
+        #
+        #            if (xslFile)
+        #            {
+        #                xslFile.write(#xslFileContent);
+        #            }
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #buildLikePath
+        #public static TreeNodePath buildLikePath(TreeNodePath _likePath)
+        #{
+        #    int startPos = 1;
+        #    int foundPos = strFind(_likePath, '\\', startPos, strLen(_likePath) - startPos + 1);
+        #
+        #    while (foundPos)
+        #    {
+        #        _likePath   = strIns(_likePath, '\\\\\\', foundPos);
+        #
+        #        startPos    = foundPos + 4;
+        #        foundPos    = strFind(_likePath, '\\', startPos, strLen(_likePath) - startPos + 1);
+        #    }
+        #
+        #    return _likePath + '\*';
+        #}
+      ENDSOURCE
+      SOURCE #compileForward
+        #public static client void compileForward(ClassId _classId)
+        #{
+        #    SysCompilerOutput   sysCompilerOutput;
+        #    Dictionary          dictionary      = new Dictionary();
+        #    DictClass           dictClass       = new DictClass(_classId);
+        #    int                 numOfClasses    = dictionary.classCnt();
+        #
+        #    if (SysDictClass::isEqualOrSuperclass(classIdGet(infolog.compilerOutput()), classNum(SysCompilerOutput)))
+        #    {
+        #        sysCompilerOutput = infolog.compilerOutput();
+        #        sysCompilerOutput.startCompilationContext();
+        #    }
+        #
+        #    SysCompilerOutput::compileForwardElement(dictClass, dictionary, numOfClasses);
+        #
+        #    if (sysCompilerOutput)
+        #    {
+        #        sysCompilerOutput.endCompilationContext();
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #compileForwardElement
+        #public static client void compileForwardElement(DictClass _dictClass, Dictionary _dictionary, int _numOfClasses)
+        #{
+        #    #AOT
+        #    ClassNode           classNode;
+        #    DictClass           dictClassLoop;
+        #    DictClass           childClass;
+        #    int                 i;
+        #
+        #    if (_dictClass)
+        #    {
+        #        classNode = infolog.findNode(#ClassesPath + #AOTDelimiter + _dictClass.name());
+        #
+        #        if (classNode)
+        #        {
+        #            classNode.AOTcompile();
+        #
+        #            for (i=1; i <= _numOfClasses; i++)
+        #            {
+        #                dictClassLoop = _dictionary.classObject(_dictionary.classCnt2Id(i));
+        #
+        #                if (dictClassLoop.extend() == _dictClass.id())
+        #                {
+        #                    childClass = new DictClass(dictClassLoop.id());
+        #                    SysCompilerOutput::compileForwardElement(childClass, _dictionary, _numOfClasses);
+        #                }
+        #            }
+        #        }
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #compileSucceeded
+        #//Entry point for test
+        #static public boolean compileSucceeded()
+        #{
+        #    SysCompilerOutput compilerOutput = infolog.compilerOutput() as SysCompilerOutput;
+        #    TmpCompilerOutput errors;
+        #
+        #    if (compilerOutput)
+        #    {
+        #        errors = compilerOutput.compilerOutput();
+        #
+        #        select firstonly errors
+        #            where errors.SysCompilerOutputTab == SysCompilerOutputTab::Error &&
+        #                  errors.SysCompilerSeverity == SysCompilerSeverity::Error &&
+        #                  errors.LatestCompile == true;
+        #
+        #        if (errors)
+        #        {
+        #            return false;
+        #        }
+        #    }
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #construct
+        #public static SysCompilerOutput construct()
+        #{
+        #    return new SysCompilerOutput();
+        #}
+      ENDSOURCE
+      SOURCE #exportLog
+        #public static client void exportLog(FilenameSave _filename = #compileAllFileName)
+        #{
+        #    SysCompilerOutput sysCompilerOutput = infolog.compilerOutput() as SysCompilerOutput;
+        #
+        #    if (sysCompilerOutput)
+        #    {
+        #        if (subStr(_filename,1,1) != '\\')
+        #            _filename = '\\'+_filename;
+        #
+        #        sysCompilerOutput.xmlExport(xInfo::AOTLogDirectory() + _filename);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #hideForm
+        #//Entry point for test
+        #static public void hideForm()
+        #{
+        #    SysCompilerOutput compilerOutput = infolog.compilerOutput() as SysCompilerOutput;
+        #
+        #    if (compilerOutput)
+        #    {
+        #        compilerOutput.makeFormInvisible();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #importLog
+        #public static client void importLog(FilenameOpen _filename = #compileAllFileName)
+        #{
+        #    SysCompilerOutput sysCompilerOutput = infolog.compilerOutput() as SysCompilerOutput;
+        #
+        #    if (sysCompilerOutput)
+        #    {
+        #        if (subStr(_filename,1,1) != '\\')
+        #            _filename = '\\'+_filename;
+        #
+        #        sysCompilerOutput.xmlImport(xInfo::AOTLogDirectory() + _filename);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #pinStatusText
+        #//Entry point for test
+        #static public void pinStatusText()
+        #{
+        #    SysCompilerOutput compilerOutput = infolog.compilerOutput() as SysCompilerOutput;
+        #
+        #    if (compilerOutput)
+        #    {
+        #        compilerOutput.resizeBuildPane();
+        #        compilerOutput.parmPinBtn().toggleValue(true);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #setCompilerTarget
+        #static client void setCompilerTarget(SysCompilerTarget _sysCompilerTarget)
+        #{
+        #    SysCompilationResultProvider compilerOutput;
+        #    SysCompilerTarget sysCompilerTarget = _sysCompilerTarget;
+        #    ;
+        #    if (!infolog)
+        #    {
+        #        sysCompilerTarget = SysCompilerTarget::MessageWindow;
+        #    }
+        #
+        #    switch (sysCompilerTarget)
+        #    {
+        #        case SysCompilerTarget::CompilerDialog:
+        #            if (!(infolog.compilerOutput() is SysCompilationResultProvider))
+        #            {
+        #                infolog.compilerOutput(classfactory.createCompilerOutput());
+        #            }
+        #            break;
+        #        default:
+        #            if (infolog)
+        #            {
+        #                compilerOutput = infolog.compilerOutput() as SysCompilationResultProvider;
+        #
+        #                if (compilerOutput)
+        #                {
+        #                    compilerOutput.finalize();
+        #                    infolog.compilerOutput(null);
+        #                }
+        #            }
+        #            break;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #updateParm
+        #static client boolean updateParm()
+        #{
+        #    SysCompilerOutput   sysCompilerOutput;
+        #    boolean             ret = true;
+        #    ;
+        #    if (infolog.compilerOutput() &&
+        #        SysDictClass::isEqualOrSuperclass(classIdGet(infolog.compilerOutput()), classNum(SysCompilerOutput)))
+        #    {
+        #        sysCompilerOutput = infolog.compilerOutput();
+        #        sysCompilerOutput.getParm();
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

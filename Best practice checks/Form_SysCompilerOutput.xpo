@@ -1,0 +1,1151 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #SysCompilerOutput
+  PROPERTIES
+    Name                #SysCompilerOutput
+    Origin              #{5287A9F5-57E7-4A12-BCE4-E16D54614931}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    SysCompilerOutput       sysCompilerOutput;
+      #    QueryBuildRange         errorsRange;
+      #    SysFormSplitter_X       formSplitter;
+      #
+      #    #SysCompilerOutput
+      #    #Define.rgb(255, 255, 225)
+      #
+      #    #define.CurrentVersion(1)
+      #}
+    ENDSOURCE
+    SOURCE #canClose
+      #public boolean canClose()
+      #{
+      #    boolean ret;
+      #
+      #    if (sysCompilerOutput.canCloseForm())
+      #    {
+      #        ret = true;
+      #    }
+      #    else
+      #    {
+      #        element.design().visible(false);
+      #    }
+      #    return ret;
+      #}
+    ENDSOURCE
+    SOURCE #close
+      #public void close()
+      #{
+      #    TmpCompilerOutput tmp;
+      #
+      #    errors.setTmpData(tmp);
+      #
+      #    if (errorToggle &&
+      #        warningToggle &&
+      #        bpToggle &&
+      #        taskToggle)
+      #    {
+      #        xSysLastValue::saveLast(this);
+      #    }
+      #    super();
+      #}
+    ENDSOURCE
+    SOURCE #hideOnTimeOut
+      #public void hideOnTimeOut()
+      #{
+      #    sysCompilerOutput.resizeBuildPane(true);
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #    super();
+      #
+      #    sysCompilerOutput = this.args().caller() as sysCompilerOutput;
+      #
+      #    if (!sysCompilerOutput)
+      #    {
+      #        sysCompilerOutput = infolog.compilerOutput() as sysCompilerOutput;
+      #    }
+      #
+      #    if (!sysCompilerOutput)
+      #    {
+      #        sysCompilerOutput = SysCompilerOutput::construct();
+      #    }
+      #
+      #    if (sysCompilerOutput)
+      #    {
+      #        sysCompilerOutput.parmStatusErrorTxt(errorToggle);
+      #        sysCompilerOutput.parmStatusWarningTxt(warningToggle);
+      #        sysCompilerOutput.parmStatusToDoTxt(taskToggle);
+      #        sysCompilerOutput.parmStatusBestPracticesTxt(bpToggle);
+      #        sysCompilerOutput.parmBuildText(statusText);
+      #        sysCompilerOutput.parmErrors_ds(errors_ds);
+      #        sysCompilerOutput.parmResetBtn(resetBtn);
+      #        sysCompilerOutput.parmCompileBtn(compileBtn);
+      #        sysCompilerOutput.parmReCompileBtn(reCompileBtn);
+      #        sysCompilerOutput.parmEditBtn(editBtn);
+      #        sysCompilerOutput.parmExportBtn(exportBtn);
+      #        sysCompilerOutput.parmPinBtn(pinButton);
+      #        sysCompilerOutput.parmMainGroup(mainGroup);
+      #
+      #        errorsImage.imageList(sysCompilerOutput.parmImageListStatus());
+      #    }
+      #    else
+      #    {
+      #        element.close();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #initParmDefault
+      #/// <summary>
+      #///    Initializes the internal variables.
+      #/// </summary>
+      #/// <remarks>
+      #///    This method is called when no <c>SysLastValue</c> record can be found when calling the
+      #///    <c>SysLastValue.GetLast</c> method. Remember to call the <c>super</c> method.
+      #/// </remarks>
+      #public void initParmDefault()
+      #{
+      #
+      #}
+    ENDSOURCE
+    SOURCE #lastValueDataAreaId
+      #public dataAreaId lastValueDataAreaId()
+      #{
+      #    return '';
+      #}
+    ENDSOURCE
+    SOURCE #lastValueDesignName
+      #public identifierName lastValueDesignName()
+      #{
+      #    return '';
+      #}
+    ENDSOURCE
+    SOURCE #lastValueElementName
+      #public identifierName lastValueElementName()
+      #{
+      #    return formStr(sysCompilerOutput);
+      #}
+    ENDSOURCE
+    SOURCE #lastValueType
+      #public UtilElementType lastValueType()
+      #{
+      #    return UtilElementType::Form;
+      #}
+    ENDSOURCE
+    SOURCE #lastValueUserId
+      #public userId lastValueUserId()
+      #{
+      #    return curuserid();
+      #}
+    ENDSOURCE
+    SOURCE #pack
+      #public container pack()
+      #{
+      #    return [#CurrentVersion,
+      #            errorToggle.toggleValue(),
+      #            warningToggle.toggleValue(),
+      #            bpToggle.toggleValue(),
+      #            taskToggle.toggleValue(),
+      #            pinButton.toggleValue()];
+      #}
+    ENDSOURCE
+    SOURCE #run
+      #public void run()
+      #{
+      #    super();
+      #
+      #    errorsRange = errors_ds.query().dataSourceNo(1).addRange(fieldnum(TmpCompilerOutput, SysCompilerOutputTab));
+      #    errorsRange.value(queryValue(SysCompilerOutputTab::Error));
+      #    errorsRange.status(RangeStatus::Hidden);
+      #    this.setRange();
+      #
+      #    // Show the newest at top
+      #    errors_ds.query().dataSourceTable(tableNum(TmpCompilerOutput)).addSortField(fieldNum(TmpCompilerOutput, createdDateTime), SortOrder::Descending);
+      #
+      #    formSplitter = new SysFormSplitter_X(split, MainGroup, this);
+      #    xSysLastValue::getLast(this);
+      #}
+    ENDSOURCE
+    SOURCE #setRange
+      #public void setRange()
+      #{
+      #    str range = strfmt('(%1==%2::%3)',
+      #                    fieldStr(TmpCompilerOutput, SysCompilerOutputTab),
+      #                    enumStr(SysCompilerOutputTab),
+      #                    enum2Symbol(enumNum(SysCompilerOutputTab), SysCompilerOutputTab::Status));
+      #
+      #    if (errorToggle.toggleValue())
+      #    {
+      #        range += strfmt(' || ((%1==%2::%3) && (%4==%5::%6)) ',
+      #                    fieldStr(TmpCompilerOutput, SysCompilerOutputTab),
+      #                    enumStr(SysCompilerOutputTab),
+      #                    enum2Symbol(enumNum(SysCompilerOutputTab), SysCompilerOutputTab::Error),
+      #                    fieldStr(TmpCompilerOutput, SysCompilerSeverity),
+      #                    enumStr(SysCompilerSeverity),
+      #                    enum2Symbol(enumNum(SysCompilerSeverity), SysCompilerSeverity::Error));
+      #    }
+      #
+      #    if (warningToggle.toggleValue())
+      #    {
+      #        range += strfmt(' || ((%1==%2::%3) && (%4!=%5::%6)) ',
+      #                    fieldStr(TmpCompilerOutput, SysCompilerOutputTab),
+      #                    enumStr(SysCompilerOutputTab),
+      #                    enum2Symbol(enumNum(SysCompilerOutputTab), SysCompilerOutputTab::Error),
+      #                    fieldStr(TmpCompilerOutput, SysCompilerSeverity),
+      #                    enumStr(SysCompilerSeverity),
+      #                    enum2Symbol(enumNum(SysCompilerSeverity), SysCompilerSeverity::Error));
+      #    }
+      #
+      #    if (taskToggle.toggleValue())
+      #    {
+      #        range += strfmt(' || (%1==%2::%3)',
+      #                    fieldStr(TmpCompilerOutput, SysCompilerOutputTab),
+      #                    enumStr(SysCompilerOutputTab),
+      #                    enum2Symbol(enumNum(SysCompilerOutputTab), SysCompilerOutputTab::ToDo));
+      #    }
+      #
+      #    if (bpToggle.toggleValue())
+      #    {
+      #        range += strfmt(' || (%1==%2::%3)',
+      #                    fieldStr(TmpCompilerOutput, SysCompilerOutputTab),
+      #                    enumStr(SysCompilerOutputTab),
+      #                    enum2Symbol(enumNum(SysCompilerOutputTab), SysCompilerOutputTab::BestPractices));
+      #    }
+      #
+      #    errorsRange.value(strFmt('(%1)', range));
+      #    errors_ds.executeQuery();
+      #}
+    ENDSOURCE
+    SOURCE #unpack
+      #public boolean unpack(container packedClass)
+      #{
+      #    Integer version = conpeek(packedClass,1);
+      #    boolean v1,v2,v3,v4,v5;
+      #
+      #    switch (version)
+      #    {
+      #        case #CurrentVersion:
+      #            [version, v1, v2, v3, v4] = packedClass;
+      #
+      #            errorToggle.toggleValue(v1);
+      #            warningToggle.toggleValue(v2);
+      #            bpToggle.toggleValue(v3);
+      #            taskToggle.toggleValue(v4);
+      #            pinButton.toggleValue(v5);
+      #
+      #            this.setRange();
+      #            break;
+      #
+      #        default:
+      #            return false;
+      #    }
+      #    return true;
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #Errors
+          Table               #TmpCompilerOutput
+          AllowEdit           #No
+          AllowCreate         #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #delete
+          #public void delete()
+          #{
+          #    super();
+          #    sysCompilerOutput.updateCounters();
+          #
+          #    sysCompilerOutput.updateErrorStateText();
+          #    sysCompilerOutput.updateWarningStateText();
+          #    sysCompilerOutput.updateBestPracticesStateText();
+          #    sysCompilerOutput.updateToDoStateText();
+          #}
+        ENDSOURCE
+        SOURCE #displayOption
+          #public void displayOption(Common _p1, FormRowDisplayOption _options)
+          #{
+          #    TmpCompilerOutput p1 = _p1;
+          #    if (p1.LatestCompile)
+          #    {
+          #        _options.backColor(WinAPI::RGB2int(#Rgb));
+          #    }
+          #
+          #    super(_p1, _options);
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Top                 #Bottom edge
+      Caption             #@SYS70440
+      UseCaptionFromMenuItem  #Yes
+      WindowType          #Workspace
+      SetCompany          #No
+      AllowDocking        #Yes
+      DataSource          #Errors
+      TopMargin           #0
+      BottomMargin        #0
+      LeftMargin          #0
+      RightMargin         #0
+      StatusBarStyle      #None
+      ViewEditMode        #View
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneGroup
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane1
+          ElementPosition     #1073741822
+          HierarchyParent     #StatusGroup
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab1
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane1
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #BPGroup
+          ElementPosition     #1227133512
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ButtonGroup
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab1
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #CommandGroup
+          Left                #Auto (right)
+          ElementPosition     #1840700268
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ErrorsGroup
+          ElementPosition     #613566756
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #TaskGroup
+          ElementPosition     #1533916890
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #WarningsGroup
+          ElementPosition     #920350134
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #ErrorsGrid
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1610612734
+          HierarchyParent     #MainGroup
+          VisibleRows         #5
+          ShowRowLabels       #No
+          DataSource          #Errors
+          AlternateRowShading #No
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #mouseDblClick
+            #public int mouseDblClick(int _x, int _y, int _button, boolean _ctrl, boolean _shift)
+            #{
+            #    #SysBpCheck
+            #    MenuFunction menuFunction;
+            #    Args args;
+            #
+            #    int ret = super(_x, _y, _button, _ctrl, _shift);
+            #
+            #    switch (errors.SysCompilerOutputTab)
+            #    {
+            #        case SysCompilerOutputTab::Error:
+            #        case SysCompilerOutputTab::ToDo:
+            #            if (!_ctrl && !_shift)
+            #            {
+            #                sysCompilerOutput.editElement(errors.TreeNodePath, errors.Line, errors.Column, errors.SysPropertyName);
+            #            }
+            #            else
+            #            {
+            #                sysCompilerOutput.showErrorInfo(errors.CompileErrorCode);
+            #            }
+            #            break;
+            #
+            #        case SysCompilerOutputTab::BestPractices:
+            #            if (!_ctrl && !_shift)
+            #            {
+            #                if(errors.CompileErrorCode >= #BPErrorFormStyleFirst && errors.CompileErrorCode <= #BPErrorFormStyleLast)
+            #                {
+            #                    menuFunction = new MenuFunction(menuitemDisplayStr(SysBPStyleCheckAnalysis), MenuItemType::Display);
+            #                    args = new Args();
+            #                    args.parmObject(TreeNode::findNode(SysTreeNode::applObjectPath(errors.TreeNodePath)));
+            #                    menuFunction.run(args);
+            #                }
+            #                else
+            #                {
+            #                    sysCompilerOutput.editElement(errors.TreeNodePath, errors.Line, errors.Column, errors.SysPropertyName);
+            #                }
+            #            }
+            #            else
+            #            {
+            #                sysCompilerOutput.showBPInfo(errors.CompileErrorCode);
+            #            }
+            #            break;
+            #    }
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #ActionPaneGroup
+          Width               #Column width
+          ElementPosition     #1073741822
+          HierarchyParent     #MainGroup
+          Columnspace         #0
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Group
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #0
+          ElementPosition     #1073741823
+          Style               #MarginlessContainer
+          Columns             #3
+          Columnspace         #0
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #MainGroup
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #858993458
+          HierarchyParent     #Group
+          Style               #MarginlessContainer
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Split
+          AutoDeclaration     #Yes
+          Width               #4
+          Height              #Column height
+          VerticalSpacing     #0
+          ElementPosition     #1288490187
+          HierarchyParent     #Group
+          Style               #SplitterVerticalContainer
+          TopMargin           #0
+          BottomMargin        #0
+          LeftMargin          #0
+          RightMargin         #0
+          HideIfEmpty         #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #StatusGroup
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1717986916
+          HierarchyParent     #Group
+          BackStyle           #Opaque
+          BackgroundColor     #Dyn Background white
+          LeftMargin          #0
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUBUTTON
+        PROPERTIES
+          Name                #MenuButton
+          HelpText            #@SYS72787
+          ElementPosition     #1879048185
+          HierarchyParent     #CommandGroup
+          Text                #@SYS2186
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #BPToggle
+          AutoDeclaration     #Yes
+          HelpText            #@SYS344646
+          ElementPosition     #1431655764
+          HierarchyParent     #BPGroup
+          Text                #@SYS344655
+          ButtonDisplay       #Text & Image left
+          NormalImage         #868
+          ImageLocation       #EmbeddedResource
+          KeyTip              #3
+          ToggleButton        #Check
+          ToggleValue         #On
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #    element.setRange();
+            #    errorsGrid.setFocus();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #CompileBtn
+          AutoDeclaration     #Yes
+          HelpText            #@SYS70683
+          ElementPosition     #2080374780
+          HierarchyParent     #CommandGroup
+          Text                #@SYS70441
+          ForcedToOverflow    #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    if (errors.RecId)
+            #    {
+            #        sysCompilerOutput.reCompileElement(errors.TreeNodePath);
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #CreateProjectBtn
+          HelpText            #@SYS344644
+          ElementPosition     #1901417806
+          HierarchyParent     #CommandGroup
+          Text                #@SYS28969
+          MultiSelect         #Yes
+          ForcedToOverflow    #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    SysCompilerOutput.createProject();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #EditBtn
+          AutoDeclaration     #Yes
+          HelpText            #@SYS70468
+          ElementPosition     #1073741820
+          HierarchyParent     #CommandGroup
+          Text                #@SYS453
+          DefaultButton       #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    if (errors.RecId)
+            #    {
+            #        sysCompilerOutput.editElement(errors.TreeNodePath, errors.Line, errors.Column, errors.SysPropertyName);
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #ErrorToggle
+          AutoDeclaration     #Yes
+          HelpText            #@SYS344645
+          ElementPosition     #1431655764
+          HierarchyParent     #ErrorsGroup
+          Text                #@SYS344649
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11341
+          ImageLocation       #EmbeddedResource
+          KeyTip              #1
+          ToggleButton        #Check
+          ToggleValue         #On
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #    element.setRange();
+            #    errorsGrid.setFocus();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #ExportBtn
+          AutoDeclaration     #Yes
+          HelpText            #@SYS70445
+          ElementPosition     #1968526671
+          HierarchyParent     #CommandGroup
+          Text                #@SYS14863
+          ForcedToOverflow    #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #    sysCompilerOutput.xmlExport();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #ImportBtn
+          AutoDeclaration     #Yes
+          HelpText            #@SYS70659
+          ElementPosition     #1923787428
+          HierarchyParent     #CommandGroup
+          Text                #@SYS1052
+          ForcedToOverflow    #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #    sysCompilerOutput.xmlImport();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #PinButton
+          AutoDeclaration     #Yes
+          HelpText            #@SYS344643
+          ElementPosition     #1431655764
+          HierarchyParent     #ButtonGroup
+          Text                #@SYS344656
+          ButtonDisplay       #Image only
+          NormalImage         #11001
+          ImageLocation       #EmbeddedResource
+          ToggleButton        #Check
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #ReCompileBtn
+          AutoDeclaration     #Yes
+          HelpText            #@SYS70686
+          ElementPosition     #2013265915
+          HierarchyParent     #CommandGroup
+          Text                #@SYS70442
+          MultiSelect         #Yes
+          ForcedToOverflow    #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    ;
+            #    sysCompilerOutput.reCompileElement();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #ResetBtn
+          AutoDeclaration     #Yes
+          HelpText            #@SYS70682
+          ElementPosition     #536870910
+          HierarchyParent     #CommandGroup
+          Text                #@SYS3073
+          MultiSelect         #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #    sysCompilerOutput.reset(true);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #TaskToggle
+          AutoDeclaration     #Yes
+          HelpText            #@SYS344647
+          ElementPosition     #1431655764
+          HierarchyParent     #TaskGroup
+          Text                #@SYS344653
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10864
+          ImageLocation       #EmbeddedResource
+          KeyTip              #4
+          ToggleButton        #Check
+          ToggleValue         #On
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #    element.setRange();
+            #    errorsGrid.setFocus();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #WarningToggle
+          AutoDeclaration     #Yes
+          HelpText            #@SYS344648
+          ElementPosition     #1431655764
+          HierarchyParent     #WarningsGroup
+          Text                #@SYS344651
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11442
+          ImageLocation       #EmbeddedResource
+          KeyTip              #2
+          ToggleButton        #Check
+          ToggleValue         #On
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #    element.setRange();
+            #    errorsGrid.setFocus();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #Errors_Line
+          Width               #25
+          ElementPosition     #1145324608
+          HierarchyParent     #ErrorsGrid
+          DataSource          #Errors
+          DataField           #Line
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #SysBPSetup
+          ElementPosition     #1610612733
+          HierarchyParent     #MenuButton
+          MenuItemName        #SysBPSetup
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL MENUITEMBUTTON
+        PROPERTIES
+          Name                #SysCompilerSetup
+          ElementPosition     #1073741822
+          HierarchyParent     #MenuButton
+          MenuItemName        #SysCompilerSetup
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #DiagnosticId
+          ElementPosition     #1771674006
+          HierarchyParent     #ErrorsGrid
+          DataSource          #Errors
+          DataMethod          #errorCodeMoniker
+          ViewEditMode        #View
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #Errors_SysAotMethodName
+          ElementPosition     #1395864366
+          HierarchyParent     #ErrorsGrid
+          DisplayLength       #25
+          DataSource          #Errors
+          DataField           #SysAotMethodName
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #toolTip
+            #public str toolTip()
+            #{
+            #    str          ret;
+            #    ;
+            #    ret =  strfmt("@SYS76594", substr(errors.TreeNodePath,
+            #                               strlen(SysTreeNode::applObjectPath(errors.TreeNodePath)) + 1,
+            #                               strlen(errors.TreeNodePath)));
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #Errors_SysCompileErrorMessage
+          ElementPosition     #717816290
+          HierarchyParent     #ErrorsGrid
+          DisplayLength       #150
+          DisplayHeight       #2
+          Label               #@SYS6303
+          DataSource          #Errors
+          DataField           #SysCompileErrorMessage
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #Errors_WIK_UtilEntryLevel
+          ElementPosition     #1959578826
+          HierarchyParent     #ErrorsGrid
+          DataSource          #Errors
+          DataField           #WIK_UtilEntryLevel
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #StatusText
+          AutoDeclaration     #Yes
+          AllowEdit           #No
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1610612734
+          HierarchyParent     #StatusGroup
+          MultiLine           #Yes
+          ShowLabel           #No
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #onChanged
+            #public void onChanged()
+            #{
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #TreeNodePath
+          AutoDeclaration     #Yes
+          ElementPosition     #942506708
+          HierarchyParent     #ErrorsGrid
+          DisplayLength       #150
+          DisplayHeight       #2
+          DataSource          #Errors
+          DataField           #TreeNodePath
+          ViewEditMode        #View
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL WINDOW
+        PROPERTIES
+          Name                #ErrorsImage
+          AutoDeclaration     #Yes
+          AllowEdit           #No
+          Width               #16
+          Height              #16
+          ElementPosition     #493125872
+          HierarchyParent     #ErrorsGrid
+          Imagemode           #Center
+          BackStyle           #Transparent
+          ShowLabel           #No
+          DataSource          #Errors
+          DataField           #CompileErrorImage
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: END

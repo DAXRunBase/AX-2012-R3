@@ -1,0 +1,400 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Microsoft Dynamics AX Table : TmpCompilerOutput unloaded
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #TmpCompilerOutput
+    EnforceFKRelation 0
+    PROPERTIES
+      Name                #TmpCompilerOutput
+      Label               #@SYS76607
+      TitleField1         #TreeNodePath
+      TitleField2         #CompileErrorString
+      TableType           #InMemory
+      CreateRecIdIndex    #Yes
+      SaveDataPerCompany  #No
+      PrimaryIndex        #PathIdx
+      CreatedDateTime     #Yes
+      DEL_createdTime     #Yes
+      Origin              #{2C110512-0000-1000-F44B-0612E9940AEE}
+      LegacyId            #1298
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #Column
+        INT
+        PROPERTIES
+          Name                #Column
+          Table               #TmpCompilerOutput
+          Origin              #{2A060002-0512-1000-436F-6C756D6E0000}
+          LegacyId            #2
+          ExtendedDataType    #SourceColumnNum
+        ENDPROPERTIES
+        
+      FIELD #CompileErrorCode
+        INT
+        PROPERTIES
+          Name                #CompileErrorCode
+          Table               #TmpCompilerOutput
+          Origin              #{2A100004-0512-1000-49DF-9D7CF56EF043}
+          LegacyId            #4
+          ExtendedDataType    #CompileErrorCode
+        ENDPROPERTIES
+        
+      FIELD #CompileErrorImage
+        INT
+        PROPERTIES
+          Name                #CompileErrorImage
+          HelpText            #@SYS70692
+          Table               #TmpCompilerOutput
+          Origin              #{2A110009-0512-1000-F04C-AD7C97235204}
+          LegacyId            #9
+          ExtendedDataType    #ImageRes
+        ENDPROPERTIES
+        
+      FIELD #CompileErrorString
+        STRING
+        PROPERTIES
+          Name                #CompileErrorString
+          Table               #TmpCompilerOutput
+          Origin              #{2A120005-0512-1000-E389-6A8CA56730D4}
+          LegacyId            #5
+          ExtendedDataType    #CompileErrorString
+          StringSize          #250
+        ENDPROPERTIES
+        
+      FIELD #LatestCompile
+        ENUM
+        PROPERTIES
+          Name                #LatestCompile
+          Visible             #No
+          Table               #TmpCompilerOutput
+          Origin              #{2A0D0010-0512-1000-CBD7-B3E4A9F2526F}
+          LegacyId            #16
+          ExtendedDataType    #NoYesId
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #Line
+        INT
+        PROPERTIES
+          Name                #Line
+          Table               #TmpCompilerOutput
+          Origin              #{2A040003-0512-1000-4C69-6E6500000000}
+          LegacyId            #3
+          ExtendedDataType    #SourceLineNum
+        ENDPROPERTIES
+        
+      FIELD #SysAotMethodName
+        STRING
+        PROPERTIES
+          Name                #SysAotMethodName
+          Label               #@SYS74089
+          HelpText            #@SYS70722
+          Table               #TmpCompilerOutput
+          Origin              #{2A10000E-0512-1000-8F29-1DD200A9A9C1}
+          LegacyId            #14
+          ExtendedDataType    #SysAotMethodName
+          StringSize          #80
+        ENDPROPERTIES
+        
+      FIELD #SysCompileErrorMessage
+        STRING
+        PROPERTIES
+          Name                #SysCompileErrorMessage
+          HelpText            #@SYS70723
+          Table               #TmpCompilerOutput
+          Origin              #{2A16000D-0512-1000-5E2E-FAC0A90FFA12}
+          LegacyId            #13
+          ExtendedDataType    #SysCompileErrorMessage
+          StringSize          #260
+        ENDPROPERTIES
+        
+      FIELD #SysCompilerOutputTab
+        ENUM
+        PROPERTIES
+          Name                #SysCompilerOutputTab
+          Visible             #No
+          Table               #TmpCompilerOutput
+          Origin              #{2A140011-0512-1000-F333-1946F0A30AEE}
+          LegacyId            #17
+          EnumType            #SysCompilerOutputTab
+        ENDPROPERTIES
+        
+      FIELD #SysCompilerSeverity
+        ENUM
+        PROPERTIES
+          Name                #SysCompilerSeverity
+          Visible             #No
+          Table               #TmpCompilerOutput
+          Origin              #{2A130008-0512-1000-CAE5-820BE8592DEF}
+          LegacyId            #8
+          EnumType            #SysCompilerSeverity
+        ENDPROPERTIES
+        
+      FIELD #SysPropertyName
+        STRING
+        PROPERTIES
+          Name                #SysPropertyName
+          Table               #TmpCompilerOutput
+          Origin              #{2A0F000B-0512-1000-591F-0018AACBCCE3}
+          LegacyId            #11
+          ExtendedDataType    #SysPropertyName
+          StringSize          #40
+        ENDPROPERTIES
+        
+      FIELD #SysUtilElementName
+        STRING
+        PROPERTIES
+          Name                #SysUtilElementName
+          HelpText            #@SYS70719
+          Table               #TmpCompilerOutput
+          Origin              #{2A120007-0512-1000-36ED-EEC18C826F7C}
+          LegacyId            #7
+          ExtendedDataType    #SysUtilElementName
+          StringSize          #40
+        ENDPROPERTIES
+        
+      FIELD #TreeNodePath
+        STRING
+        PROPERTIES
+          Name                #TreeNodePath
+          Table               #TmpCompilerOutput
+          Origin              #{2A0C0001-0512-1000-C4E5-7E24437F6465}
+          LegacyId            #1
+          ExtendedDataType    #TreeNodePath
+          StringSize          #400
+        ENDPROPERTIES
+        
+      FIELD #UtilElementImage
+        INT
+        PROPERTIES
+          Name                #UtilElementImage
+          HelpText            #@SYS70707
+          Table               #TmpCompilerOutput
+          Origin              #{2A10000F-0512-1000-FC7B-82E8FC5824DF}
+          LegacyId            #15
+          ExtendedDataType    #ImageRes
+        ENDPROPERTIES
+        
+      FIELD #UtilElementType
+        ENUM
+        PROPERTIES
+          Name                #UtilElementType
+          Table               #TmpCompilerOutput
+          Origin              #{2A0F0006-0512-1000-FC7B-8211EFC43AEC}
+          LegacyId            #6
+          ExtendedDataType    #SysUtilElementType
+          EnumType            #UtilElementType
+        ENDPROPERTIES
+        
+      FIELD #WIK_UtilEntryLevel
+        STRING
+        PROPERTIES
+          Name                #WIK_UtilEntryLevel
+          Label               #@SYS56472
+          HelpText            #@SYS342472
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Table               #TmpCompilerOutput
+          Origin              #{C7ED3903-EBA0-4E08-A755-FAC63428C281}
+          StringSize          #30
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #UtilElementType
+          #SysUtilElementName
+          #SysAotMethodName
+          #Line
+          #Column
+          #SysCompileErrorMessage
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #PathIdx
+      PROPERTIES
+        Name                #PathIdx
+        AllowDuplicates     #No
+        Origin              #{2B070001-0512-1000-5061-746849647800}
+        LegacyId            #1
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #TreeNodePath
+        #Line
+        #Column
+        #CompileErrorCode
+        #SysPropertyName
+      ENDINDEXFIELDS
+      
+      #DateTimeIdx
+      PROPERTIES
+        Name                #DateTimeIdx
+        Origin              #{2B0B0003-0512-1000-F713-6EC966696D65}
+        LegacyId            #3
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #createdDateTime
+      ENDINDEXFIELDS
+      
+      #TabSeverityIdx
+      PROPERTIES
+        Name                #TabSeverityIdx
+        Origin              #{2B0E0004-0512-1000-67A7-ED932A70C984}
+        LegacyId            #4
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #SysCompilerOutputTab
+        #SysCompilerSeverity
+      ENDINDEXFIELDS
+      
+      #LatestCompileIdx
+      PROPERTIES
+        Name                #LatestCompileIdx
+        Origin              #{2B100005-0512-1000-CBD7-B3E4A9A50569}
+        LegacyId            #5
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #LatestCompile
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    FULLTEXTINDICES
+    ENDFULLTEXTINDICES
+    REFERENCES
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      SOURCE #compileControl
+        #// BP deviation documented
+        #display SysAotControlName compileControl(TmpCompilerOutput _tmp)
+        #{
+        #    #File
+        #    #define.methods('Methods')
+        #
+        #    TreeNodePath        treeNodePath        = _tmp.TreeNodePath;
+        #    SysAotControlName   sysAotControlName;
+        #    int                 position;
+        #    int                 strlength;
+        #    ;
+        #    if (_tmp.UtilElementType != UtilElementType::Job ||
+        #        _tmp.UtilElementType != UtilElementType::Macro ||
+        #        _tmp.UtilElementType != UtilElementType::Class)
+        #    {
+        #        strLength           = strlen(treeNodePath);
+        #        position            = strfind(treeNodePath, #FilePathDelimiter , strLength, -strLength) - 1;
+        #        treeNodePath        = strdel(treeNodePath, strLength, -(strLength - position));
+        #
+        #        strLength           = strlen(treeNodePath);
+        #        position            = strfind(treeNodePath, #FilePathDelimiter , strLength, -strLength) - 1;
+        #        sysAotControlName   = substr(treeNodePath, strLength, -(strLength - position - 1));
+        #
+        #        if (sysAotControlName == #methods)
+        #        {
+        #            treeNodePath        = strdel(treeNodePath, strLength, -(strLength - position));
+        #
+        #            strLength           = strlen(treeNodePath);
+        #            position            = strfind(treeNodePath, #FilePathDelimiter , strLength, -strLength);
+        #            sysAotControlName   = substr(treeNodePath, strLength, -(strLength - position));
+        #
+        #            if (sysAotControlName == _tmp.SysUtilElementName)
+        #            {
+        #                sysAotControlName = '';
+        #            }
+        #        }
+        #        else
+        #        {
+        #            sysAotControlName = '';
+        #        }
+        #    }
+        #    return sysAotControlName;
+        #}
+      ENDSOURCE
+      SOURCE #compileErrorMessage
+        #// BP deviation documented
+        #display SysCompileErrorMessage compileErrorMessage(TmpCompilerOutput _tmp)
+        #{
+        #    return infolog.compilerOutput().getErrorMessage(_tmp.CompileErrorCode, _tmp.SysCompilerSeverity, _tmp.CompileErrorString);
+        #}
+      ENDSOURCE
+      SOURCE #compileMethod
+        #// BP deviation documented
+        #display SysAotMethodName compileMethod(TmpCompilerOutput _tmp)
+        #{
+        #    SysAotMethodName    sysAotMethodName;
+        #    ;
+        #
+        #    if (_tmp.SysPropertyName)
+        #    {
+        #        sysAotMethodName = strfmt("@SYS76608", _tmp.SysPropertyName);
+        #    }
+        #    else
+        #    {
+        #        if (_tmp.UtilElementType != UtilElementType::Job ||
+        #            _tmp.UtilElementType != UtilElementType::Macro)
+        #        {
+        #            sysAotMethodName    = SysTreeNode::pathName(_tmp.TreeNodePath);
+        #        }
+        #    }
+        #    return sysAotMethodName;
+        #}
+      ENDSOURCE
+      SOURCE #errorCodeMoniker
+        #//BP Deviation documented
+        #public display SysBPDiagnosticMoniker errorCodeMoniker()
+        #{
+        #    SysBPDiagnosticMoniker result;
+        #
+        #    int errorcode = this.CompileErrorCode;
+        #
+        #    if (errorcode < 0)
+        #    {
+        #        errorcode = 10000 + errorcode;
+        #    }
+        #
+        #    if (this.SysCompilerOutputTab == SysCompilerOutputTab::Error)
+        #    {
+        #        result = strfmt('Err:%1', errorcode);
+        #    }
+        #    else if (this.SysCompilerOutputTab == SysCompilerOutputTab::BestPractices)
+        #    {
+        #        result =  strfmt('BP:%1', errorcode);
+        #    }
+        #    else
+        #    {
+        #        result =  strfmt('%1', errorcode);
+        #    }
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #utilElementType2Image
+        #// BP deviation documented
+        #public display ImageRes utilElementType2Image(TmpCompilerOutput _tmpCompilerOutput)
+        #{
+        #    return ImageListAppl_Aot::utilElementType2Image(_tmpCompilerOutput.UtilElementType);
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END
