@@ -1,0 +1,40 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_AddLabelToVCS unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_AddLabelToVCS
+    #static void WIK_AddLabelToVCS(Args _args)
+    #{
+    #    #AOT
+    #    #define.LanguageModuleId('WIK')
+    #
+    #    TreeNode                node;
+    #    SysLabelFile            labelFile;
+    #    TreeNodeTraverser       tnt = new TreeNodeTraverser(
+    #        TreeNode::findNode(strFmt(#LabelFileLanguagesPath,
+    #        #LanguageModuleId)).AOTfirstChild());
+    #    SysVersionControlSystem vcs = versioncontrol.parmSysVersionControlSystem();
+    #
+    #    node = tnt.next();
+    #
+    #    while (vcs && node)
+    #    {
+    #        labelFile   = SysLabelFile::newLanguageModule(
+    #            strReplace(node.AOTname(), '_', '-'), #LanguageModuleId);
+    #        vcs.commandAdd(labelFile);
+    #
+    #        node = tnt.next();
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{EDA6C896-6E53-47FD-B8BF-C14BF3088EBB}
+  ENDPROPERTIES
+  
+
+***Element: END

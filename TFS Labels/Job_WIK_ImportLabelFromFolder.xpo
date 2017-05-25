@@ -1,0 +1,45 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_ImportLabelFromFolder unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_ImportLabelFromFolder
+    #static void WIK_ImportLabelFromFolder(Args _args)
+    #{
+    #    #AOT
+    #
+    #    SysLabelFile            labelFile;
+    #    Set                     languages = new Set(Types::String);
+    #    System.Array            fileList = System.IO.Directory::GetFiles(@"C:\TEMP\", "*.ald");
+    #    Filename                fileName;
+    #    int                     i;
+    #
+    #    for (i = 0; i < CLRInterop::getAnyTypeForObject(fileList.get_Length()); i++)
+    #    {
+    #        fileName = CLRInterop::getAnyTypeForObject(fileList.GetValue(i));
+    #        info(fileName);
+    #        labelFile = sysLabelFile::newFilename(fileName);
+    #        languages.add(labelFile.parmLanguageId());
+    #
+    #        if (!Treenode::findNode(strfmt(#LabelFileLanguagePath,
+    #            labelFile.parmModuleId(),
+    #            strReplace(labelFile.parmLanguageId(), '-', '_'))))
+    #        {
+    #            SysLabelFile::createLabelFileInAOT(labelFile.parmModuleId(), languages);
+    #        }
+    #
+    #        labelFile.importAldFile(fileName);
+    #    }
+    #    info("Done");
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{21DCC494-2DDE-4C70-8919-3B4301B1FAEA}
+  ENDPROPERTIES
+  
+
+***Element: END
