@@ -1,0 +1,226 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #WIK_RuntimeFormGroupCtrl
+  PROPERTIES
+    Name                #WIK_RuntimeFormGroupCtrl
+    Origin              #{23DFFA53-28CD-47D5-9B29-2BD52335EFCE}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #run
+      #public void run()
+      #{
+      #    element.WIK_addFieldGroup();
+      #
+      #    super();
+      #}
+    ENDSOURCE
+    SOURCE #WIK_addFieldGroup
+      #public void WIK_addFieldGroup()
+      #{
+      #    #AOT
+      #    #Properties
+      #
+      #    TreeNode            fieldGroupRoot = TreeNode::findNode(strFmt('%1\\%2\\Field Groups\\%3',
+      #        #TablesPath,
+      #        tableStr(InventTable),
+      #        tableFieldgroupStr(InventTable, Name)));
+      #    TreeNodeIterator    tni = fieldGroupRoot.AOTiterator();
+      #    TreeNode            fieldGroupNode = tni ? tni.next() : null;
+      #    int                 fieldNo;
+      #    DictField           dictField;
+      #    FormControlType     controlType;
+      #    Object              formControl;
+      #
+      #    formDataGroup.hideIfEmpty(false);
+      #    formDataGroup.caption(fieldGroupRoot.AOTgetProperty(#PropertyLabel));
+      #
+      #    while (fieldGroupNode)
+      #    {
+      #        fieldNo = (select firstOnly AxId from SysModelElement
+      #            where  SysModelElement.ParentId     == tableNum(InventTable)
+      #                && SysModelElement.ElementType  == UtilElementType::TableField
+      #                && SysModelElement.Name         == fieldGroupNode.AOTname()).AxId;
+      #
+      #        dictField = new DictField(tableNum(InventTable), fieldNo);
+      #
+      #        if (!dictField)
+      #        {
+      #            // display method in field group
+      #            fieldGroupNode = tni.next();
+      #            continue;
+      #        }
+      #
+      #        switch (dictField.baseType())
+      #        {
+      #            case Types::Int64 :
+      #                controlType = FormControlType::Int64;
+      #                break;
+      #            case Types::Integer :
+      #                controlType = FormControlType::Integer;
+      #                break;
+      #            case Types::String :
+      #                controlType = FormControlType::String;
+      #                break;
+      #            case Types::Date :
+      #                controlType = FormControlType::Date;
+      #                break;
+      #            case Types::UtcDateTime :
+      #                controlType = FormControlType::DateTime;
+      #                break;
+      #
+      #            //TODO: Implement all field types
+      #        }
+      #
+      #        formControl = formdatagroup.addControl(controlType, strFmt('InventTable_%1', fieldGroupNode.AOTname()));
+      #        formControl.dataSource(InventTable_ds.id());
+      #        formControl.dataField(fieldNo);
+      #        formControl.label(dictField.label());
+      #
+      #        fieldGroupNode = tni.next();
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #InventTable
+          Table               #InventTable
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL GROUP
+        PROPERTIES
+          Name                #FormDataGroup
+          AutoDeclaration     #Yes
+          ElementPosition     #1073741823
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: END
