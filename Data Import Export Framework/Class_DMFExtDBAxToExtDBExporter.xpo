@@ -1,0 +1,537 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: DMFExtDBAxToExtDBExporter unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #DMFExtDBAxToExtDBExporter
+    PROPERTIES
+      Name                #DMFExtDBAxToExtDBExporter
+      Extends             #RunBaseBatch
+      RunOn               #Server
+      Origin              #{68D4A9D1-280C-4707-B939-00849C458046}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #caption
+        #public ClassDescription caption()
+        #{
+        #    return "@SYP4862547" + ': ' + entityName;
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #/// <summary>
+        #/// The <c>DMFExtDBAxToExtDBExporter</c> is used to export external data from AX to SQL External Data Services.
+        #/// </summary>
+        #class DMFExtDBAxToExtDBExporter extends RunBaseBatch
+        #{
+        #    DMFEntityName   entityName;
+        #    DMFExecutionId  executionId;
+        #    utcdatetime     lastSyncTime;
+        #    int64           syncVersion;
+        #    RecId           executionLogId;
+        #    DMFSourceName   dmfSourceName;
+        #    container       queryData;
+        #    str             syncTable;
+        #    DMFRefreshType  syncType;
+        #    NoYes           skipStaging;
+        #    boolean         isBatch;
+        #    Name            changeTrackingQuery;
+        #    int64           axSyncVersion;
+        #    DMFSyncGroupName    syncGroupName, groupName;
+        #
+        #    #define.CurrentVersion(1)
+        #    #localmacro.CurrentList
+        #        entityName,
+        #        executionId,
+        #        lastSyncTime,
+        #        syncVersion,
+        #        executionLogId,
+        #        dmfSourceName,
+        #        queryData,
+        #        syncTable,
+        #        syncType,
+        #        skipStaging,
+        #        isBatch,
+        #        changeTrackingQuery,
+        #        axSyncVersion,
+        #        syncGroupName,
+        #        groupName
+        #    #endmacro
+        #}
+      ENDSOURCE
+      SOURCE #pack
+        #public container pack()
+        #{
+        #    return [#currentVersion,#currentList];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmAXSyncVersion
+        #public int64 parmAXSyncVersion(int64 _axSyncVersion = axSyncVersion)
+        #{
+        #    axSyncVersion = _axSyncVersion;
+        #    return axSyncVersion;
+        #}
+      ENDSOURCE
+      SOURCE #parmChangeTrackingQuery
+        #public Name parmChangeTrackingQuery(Name _changeTrackingQuery = changeTrackingQuery)
+        #{
+        #    changeTrackingQuery = _changeTrackingQuery;
+        #    return changeTrackingQuery;
+        #}
+      ENDSOURCE
+      SOURCE #parmEntityName
+        #public DMFEntityName parmEntityName(DMFEntityName _entityName = entityName)
+        #{
+        #    entityName = _entityName;
+        #    return entityName;
+        #}
+      ENDSOURCE
+      SOURCE #parmExecutionId
+        #public DMFExecutionId parmExecutionId(DMFExecutionId _executionId = executionId)
+        #{
+        #    executionId = _executionId;
+        #    return executionId;
+        #}
+      ENDSOURCE
+      SOURCE #parmExecutionLogId
+        #public RecId parmExecutionLogId(RecId _executionLogId = executionLogId)
+        #{
+        #    executionLogId = _executionLogId;
+        #
+        #    return executionLogId;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parmGroupName
+        #public DMFSyncGroupName parmGroupName(DMFSyncGroupName _groupName = groupName)
+        #{
+        #    groupName = _groupName;
+        #    return groupName;
+        #}
+      ENDSOURCE
+      SOURCE #parmIsBatch
+        #public boolean parmIsBatch(boolean _isBatch = isBatch)
+        #{
+        #    isBatch = _isBatch;
+        #    return isBatch;
+        #}
+      ENDSOURCE
+      SOURCE #parmLastSyncTime
+        #public utcdatetime parmLastSyncTime(utcdatetime _lastSyncTime = lastSyncTime)
+        #{
+        #    lastSyncTime = _lastSyncTime;
+        #    return lastSyncTime;
+        #}
+      ENDSOURCE
+      SOURCE #parmQueryData
+        #public container parmQueryData(container _queryData = queryData)
+        #{
+        #    queryData = _queryData;
+        #    return queryData;
+        #}
+      ENDSOURCE
+      SOURCE #parmSkipStaging
+        #public NoYes parmSkipStaging(NoYes _skipStaging = skipStaging)
+        #{
+        #    skipStaging = _skipStaging;
+        #    return skipStaging;
+        #}
+      ENDSOURCE
+      SOURCE #parmSource
+        #public DMFSourceName parmSource(DMFSourceName _dmfSourceName)
+        #{
+        #    dmfSourceName = _dmfSourceName;
+        #    return dmfSourceName;
+        #}
+      ENDSOURCE
+      SOURCE #parmSyncGroupName
+        #public DMFSyncGroupName parmSyncGroupName(DMFSyncGroupName _syncGroupName = syncGroupName)
+        #{
+        #    syncGroupName = _syncGroupName;
+        #    return syncGroupName;
+        #}
+      ENDSOURCE
+      SOURCE #parmSyncTable
+        #public str parmSyncTable(str _syncTable = syncTable)
+        #{
+        #    syncTable = _syncTable;
+        #    return syncTable;
+        #}
+      ENDSOURCE
+      SOURCE #parmSyncType
+        #public DMFRefreshType parmSyncType(DMFRefreshType _syncType = syncType)
+        #{
+        #    syncType = _syncType;
+        #    return syncType;
+        #}
+      ENDSOURCE
+      SOURCE #parmSyncVersion
+        #public int64 parmSyncVersion(int64 _syncVersion = syncVersion)
+        #{
+        #    syncVersion = _syncVersion;
+        #    return syncVersion;
+        #}
+      ENDSOURCE
+      SOURCE #run
+        #public void run()
+        #{
+        #    DMFDefinitionGroupExecution definitionGroupExecution;
+        #    str                         packageResult;
+        #    boolean                     isLastSync;
+        #    DMFEntityDbGroupEntity      entityDbGroupEntity;
+        #    DMFExtDBChangeTracking      extDBChangeTracking;
+        #    AifChangeTrackingTable      changeTrackingTempTable;
+        #    str                         syncTempTable;
+        #    int                         noOfInsertedRecords, noOfupdatedRecords;
+        #    CLRObject                   ssisPkgHelper;
+        #
+        #    #define.successResult("Success")
+        #    #DMFExtDB
+        #    #OCCRetryCount
+        #
+        #    select firstOnly EntityName, EntityGroupName from entityDbGroupEntity
+        #        where entityDbGroupEntity.EntityName == entityName
+        #            && entityDbGroupEntity.EntityGroupName == groupName;
+        #
+        #    select firstonly forUpdate StagingStatus from definitionGroupExecution
+        #        where   definitionGroupExecution.ExecutionId == executionId &&
+        #                definitionGroupExecution.Entity == entityDbGroupEntity.EntityName;
+        #
+        #    isLastSync = syncType == DMFRefreshType::IncrementalPush? true : false;
+        #
+        #    //check to see if there is any error in the DMF target to staging export
+        #    if (definitionGroupExecution.StagingStatus == DMFBatchJobStatus::Error)
+        #    {
+        #        DMFExtDBSyncGroupExecution::reportErrorAndThrow(executionLogId, entityDbGroupEntity.EntityGroupName, packageResult);
+        #    }
+        #    else
+        #    {
+        #        if (skipStaging == NoYes::Yes)
+        #        {
+        #            extDBChangeTracking = new DMFExtDBChangeTracking(changeTrackingQuery, #extDBuser);
+        #            changeTrackingTempTable = extDBChangeTracking.getChanges(axSyncVersion);
+        #            syncTempTable = changeTrackingTempTable.getPhysicalTableName();
+        #            ssisPkgHelper = DMFExtDBAxToExtDBExporter::createAndExecuteExportPackageToExtDB(entityDbGroupEntity,executionId, dmfSourceName, queryData, syncTempTable, syncType, skipStaging, isLastSync);
+        #        }
+        #        else
+        #        {
+        #           ssisPkgHelper = DMFExtDBAxToExtDBExporter::createAndExecuteExportPackageToExtDB(entityDbGroupEntity,executionId, dmfSourceName, queryData, syncTable, syncType, skipStaging, isLastSync);
+        #        }
+        #
+        #        packageResult = ssisPkgHelper.get_PackageResult();
+        #        if (packageResult != #successResult)
+        #        {
+        #            error(strFmt("%1", packageResult));
+        #            DMFExtDBSyncGroupExecution::reportErrorAndThrow(executionLogId, entityDbGroupEntity.EntityName, packageResult);
+        #        }
+        #    }
+        #
+        #    if (syncGroupName == "")
+        #    {
+        #        select firstOnly forUpdate entityDbGroupEntity
+        #            where entityDbGroupEntity.EntityName == entityName;
+        #    }
+        #    else
+        #    {
+        #        select firstOnly forUpdate entityDbGroupEntity
+        #            where entityDbGroupEntity.EntityName == entityName
+        #                && entityDbGroupEntity.EntityGroupName == syncGroupName;
+        #    }
+        #
+        #    try
+        #    {
+        #        ttsbegin;
+        #
+        #        if (packageResult == #successResult)
+        #        {
+        #            definitionGroupExecution.TargetStatus   = DMFBatchJobStatus::Finished;
+        #            definitionGroupExecution.update();
+        #        }
+        #
+        #        entityDbGroupEntity.AxSyncVersion = syncVersion;
+        #        entityDbGroupEntity.AxLastSyncTime = lastSyncTime;
+        #        entityDbGroupEntity.LastExportedExecutionId  = executionId;
+        #        entityDbGroupEntity.update();
+        #        ttscommit;
+        #        entityDbGroupEntity.updateEntityVersion(groupName,entityName,syncVersion);
+        #    }
+        #    catch (Exception::UpdateConflict)
+        #    {
+        #        if (appl.ttsLevel() == 0)
+        #        {
+        #            if (xSession::currentRetryCount() >= #RetryNum)
+        #            {
+        #                throw Exception::UpdateConflictNotRecovered;
+        #            }
+        #            else
+        #            {
+        #                retry;
+        #            }
+        #        }
+        #        else
+        #        {
+        #            throw Exception::UpdateConflict;
+        #        }
+        #    }
+        #    catch(Exception::DuplicateKeyException)
+        #    {
+        #        if (appl.ttsLevel() == 0)
+        #        {
+        #            if (xSession::currentRetryCount() >= #RetryNum)
+        #            {
+        #                throw Exception::DuplicateKeyExceptionNotRecovered;
+        #            }
+        #            else
+        #            {
+        #                retry;
+        #            }
+        #        }
+        #        else
+        #        {
+        #            throw Exception::DuplicateKeyException;
+        #        }
+        #    }
+        #
+        #    noOfInsertedRecords = ssisPkgHelper.get_InsertedRowCount();
+        #    noOfupdatedRecords  = ssisPkgHelper.get_UpdatedRowCount();
+        #    DMFExtDBSyncGroupExecution::updateCount(noOfInsertedRecords,noOfupdatedRecords,executionId,this.parmExecutionLogId(),entityName);
+        #    info(strFmt("@SYP4862550", noOfInsertedRecords, noOfupdatedRecords, entityDbGroupEntity.EntityName, dmfSourceName));
+        #}
+      ENDSOURCE
+      SOURCE #unpack
+        #public boolean unpack(container _packedClass)
+        #{
+        #    Version version = RunBase::getVersion(_packedClass);
+        #
+        #    switch (version)
+        #    {
+        #        case #CurrentVersion:
+        #            [version,#CurrentList]    = _packedClass;
+        #            break;
+        #
+        #        default:
+        #            return false;
+        #    }
+        #    return true;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #createAndExecuteExportPackageToExtDB
+        #public static server CLRObject createAndExecuteExportPackageToExtDB(DMFEntityDbGroupEntity _entityDbGroupEntity,DMFExecutionId _eid, DMFSourceName _dmfSourceName, Container _queryData, str _syncTable = '', DMFRefreshType _syncType = DMFRefreshType::FullPush, NoYes _skipStaging = NoYes::Yes, boolean _isLastSync = false)
+        #{
+        #    CLRObject           retval = '';
+        #    System.Type         serviceClientType;
+        #    str                 vsAssembliesPath;
+        #    FilePath            configFilePath;
+        #    str                 sourceQuery = '';
+        #    QueryRun            queryRun;
+        #    str                 axDatabaseName, axDatabaseServer;
+        #    DMFEntity           dmfEntity = DMFEntity::find(_entityDbGroupEntity.EntityName);
+        #    DMFParameters       parameters = DMFParameters::find();
+        #    PartitionKey        partitionKey = getcurrentpartition();
+        #    DataAreaId          dataAreaId  = curext();
+        #    SysSQLSystemInfo    sqlInfo = SysSQLSystemInfo::construct();
+        #
+        #    CLRObject   ex;
+        #    CLRObject   dmfEntityProxy
+        #        = new CLRObject('Microsoft.Dynamics.AX.Framework.Tools.DMF.ServiceProxy.DmfEntityProxy') ;
+        #    CLRObject helperClient;
+        #    CLRObject ssisPkgHelper
+        #        = new CLRObject('Microsoft.Dynamics.AX.Framework.Tools.DMF.ServiceProxy.DMFServiceReference.DMFEntityDBHelper');
+        #
+        #    #DMF
+        #    #define.serviceHelper('Microsoft.Dynamics.AX.Framework.Tools.DMF.ServiceProxy.DMFServiceReference.ServiceContractClient')
+        #    #define.definitionGroup('DefinitionGroup')
+        #    #define.executionID('ExecutionID')
+        #    #define.locale('Locale')
+        #    #define.entityName('EntityName')
+        #    #define.sourceQuery('SourceQuery')
+        #    #define.additionalColumns('AdditionalColumns')
+        #    #define.isLastSync('IsLastSync')
+        #    #define.partition('Partition')
+        #    #define.dataAreaId('DataAreaId')
+        #    TableName entityTableName = dmfEntity.EntityTable;
+        #
+        #    try
+        #    {
+        #        if (_skipStaging == NoYes::Yes)
+        #        {
+        #            queryRun = new QueryRun(_queryData);
+        #            sourceQuery = DMFExtDBAxToExtDBExporter::getSourceQuery(_entityDbGroupEntity, _dmfSourceName, queryRun.query(), _syncTable, _syncType);
+        #        }
+        #
+        #        axDatabaseName = sqlInfo.getloginDatabase();
+        #        axDatabaseServer = sqlInfo.getLoginServer();
+        #
+        #        ssisPkgHelper.set_IsLastSync(_isLastSync);
+        #        ssisPkgHelper.set_IsTrigger(false);
+        #        ssisPkgHelper.set_BatchSize(parameters.BatchSize);
+        #        ssisPkgHelper.set_DatabaseName(axDatabaseName);
+        #        ssisPkgHelper.set_ServerName(axDatabaseServer);
+        #        ssisPkgHelper.set_SourceTable(entityTableName);
+        #        ssisPkgHelper.set_DestinationConnectionString(DMFExtDBSetup::getExtDBConnectionStr(_dmfSourceName));
+        #        ssisPkgHelper.set_DestinationTable(entityTableName);
+        #        //ssisPkgHelper.set_DMFEntityName(_entityDbGroupEntity.EntityName);
+        #        ssisPkgHelper.set_XmlFields(DMFExtDBAxToExtDBExporter::getListOfMappedFields(_entityDbGroupEntity.EntityName));
+        #
+        #        serviceClientType = CLRInterop::getType(#serviceHelper);
+        #        vsAssembliesPath = xInfo::directory(DirectoryType::Bin);
+        #        configFilePath = Microsoft.Dynamics.IntegrationFramework.ServiceReference::GetConfigFilePath(serviceClientType, vsAssembliesPath);
+        #        helperClient = Microsoft.Dynamics.IntegrationFramework.ServiceReference::CreateServiceClient(serviceClientType, configFilePath);
+        #        DmfEntityProxy.set_ClientProxy(helperClient);
+        #        ssisPkgHelper = DmfEntityProxy.UpdatePackageVariable(ssisPkgHelper,#definitionGroup,_entityDbGroupEntity.EntityGroupName);
+        #        ssisPkgHelper = DmfEntityProxy.UpdatePackageVariable(ssisPkgHelper,#executionID,_eid);
+        #        ssisPkgHelper = DmfEntityProxy.UpdatePackageVariable(ssisPkgHelper,#locale,'1033');
+        #        ssisPkgHelper = DmfEntityProxy.UpdatePackageVariable(ssisPkgHelper,#entityName,_entityDbGroupEntity.EntityName);
+        #        ssisPkgHelper = DmfEntityProxy.UpdatePackageVariable(ssisPkgHelper,#sourceQuery,sourceQuery);
+        #        ssisPkgHelper = DmfEntityProxy.UpdatePackageVariable(ssisPkgHelper,#additionalColumns, DMFIsInEntityDBPublishAndPublishAll::parmAddColumn());
+        #        ssisPkgHelper = DmfEntityProxy.UpdatePackageVariable(ssisPkgHelper,#isLastSync, _isLastSync);
+        #        ssisPkgHelper = DmfEntityProxy.UpdatePackageVariable(ssisPkgHelper,#partition, partitionKey);
+        #        ssisPkgHelper = DmfEntityProxy.UpdatePackageVariable(ssisPkgHelper,#dataAreaId, dataAreaId);
+        #
+        #        retval = DmfEntityProxy.CreateAndExecutePackgeEntityDBExport(ssisPkgHelper);
+        #    }
+        #    catch (Exception::CLRError)
+        #    {
+        #        ex = CLRInterop::getLastException();
+        #
+        #        if (ex != null)
+        #        {
+        #            DMFExtDBAxToExtDBExporter::handleException(DmfEntityProxy.get_ErrorCode(), ex);
+        #
+        #        }
+        #        else
+        #        {
+        #            throw error("@SYP4862582");
+        #        }
+        #
+        #    }
+        #
+        #    return retval;
+        #}
+      ENDSOURCE
+      SOURCE #getListOfMappedFields
+        #public static System.String[] getListOfMappedFields(Name _entityName)
+        #{
+        #    DMFTargetXMLToEntityMap targetMap;
+        #    DMFTargetXML            targetXMLField;
+        #    DictTable               dictTable ;
+        #    SysDictField            dictField;
+        #    System.String[]         xmlFields;
+        #    int64                   cnt;
+        #    int                     i=0;
+        #
+        #    select count(RecId)  from targetMap where targetMap.entity == _entityName;
+        #
+        #    cnt = targetMap.RecId;
+        #    xmlFields = new System.String[cnt]();
+        #
+        #    while select XmlField,Entity from  targetMap order by Position asc
+        #        where targetMap.entity == _entityName
+        #            && targetMap.MappingType == DMFMappingType::Assignment
+        #        join XMLField,Entity from targetXMLField where targetXMLField.Entity == targetMap.Entity &&
+        #            targetXMLField.XMLField == targetMap.XMLField
+        #    {
+        #        dictTable =  new DictTable(tableName2id(DMFEntity::find(targetMap.Entity).EntityTable));
+        #        dictField = new SysDictField(dictTable.id(), fieldName2id(dictTable.id(), targetMap.XMLField));
+        #        if (dictField)
+        #        {
+        #            xmlFields.SetValue(strUpr(dictField.name(DbBackend::Sql)), i);
+        #            i++;
+        #        }
+        #    }
+        #
+        #    return xmlFields;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #getSourceQuery
+        #public static server str getSourceQuery(DMFEntityDbGroupEntity _entityDbGroupEntity, DMFSourceName _dmfSourceName, Query _query, str _SyncTable, DMFRefreshType _syncType)
+        #{
+        #    str                     tempString;
+        #    str                     fieldString = '', subSqlStmt, sqlStmtStr;
+        #    System.String           sqlStmt;
+        #    int                     pos;
+        #    DMFTargetXMLToEntityMap targetMap;
+        #    DMFTargetXML            targetXML;
+        #    str                     fieldDefault;
+        #    DictTable               dictTable, targetTable;
+        #    int                     indexOfSqlStmt;
+        #    SysDictField            dictField, entityField, targetField;
+        #
+        #
+        #    sqlStmt = DMFGenerateSSISPackage::getQueryValue(_query.pack());
+        #    pos = sqlStmt.IndexOf(' FROM ', System.StringComparison::OrdinalIgnoreCase);
+        #    tempString=sqlStmt;
+        #    tempString = strDel(tempString, 0, pos);
+        #
+        #    while select EntityField,XmlField,entity from  targetMap order by Position asc
+        #        where targetMap.entity == _entityDbGroupEntity.EntityName
+        #        join TargetTable, TargetField, XmlField from targetXML
+        #            where targetXML.XmlField == targetMap.XmlField &&
+        #                  targetXML.Entity == targetMap.Entity
+        #    {
+        #        dictTable =  new DictTable(tableName2id(DMFEntity::find(targetMap.Entity).EntityTable));
+        #        fieldDefault = dictTable.fieldSqlDefault(fieldNum(DMFTargetXMLToEntityMap, EntityField));
+        #        dictField = new SysDictField(dictTable.id(), fieldName2id(dictTable.id(), targetMap.XMLField));
+        #        entityField = new SysDictField(dictTable.id(), fieldName2id(dictTable.id(), targetMap.EntityField));
+        #        targetTable = new DictTable(tableName2id(targetXML.TargetTable));
+        #        targetField = new SysDictField(targetTable.id(), fieldName2id(targetTable.id(), targetMap.EntityField));
+        #        if(dictField && entityField && targetField && targetField.saveContents())
+        #        {
+        #            fieldDefault = dictTable.fieldSqlDefault(entityField.id());
+        #            fieldString = fieldString+strFmt('ISNULL(T1.%1, %2) AS %3 ',strUpr(entityField.name(DbBackend::Sql)), fieldDefault, strUpr(dictField.name(DbBackend::Sql)))+',';
+        #        }
+        #    }
+        #
+        #
+        #    fieldString = subStr(fieldString, 0, (strLen(fieldString)-1));
+        #
+        #    sqlStmt=strFmt('SELECT %1',fieldString)+tempString;
+        #
+        #    sqlStmtStr = sqlStmt;
+        #
+        #    indexOfSqlStmt = sqlStmt.IndexOf('ORDER BY', System.StringComparison::OrdinalIgnoreCase);
+        #    subSqlStmt = subStr(sqlStmtStr, indexOfSqlStmt, strLen(sqlStmtStr));
+        #
+        #    if (_syncType == DMFRefreshType::IncrementalPush)
+        #    {
+        #        sqlStmt = strReplace(sqlStmt, subSqlStmt, strFmt("@SYP4862619", _SyncTable, subSqlStmt));
+        #    }
+        #
+        #    return sqlStmt;
+        #}
+      ENDSOURCE
+      SOURCE #handleException
+        #public static void handleException(CLRObject _errorCode, CLRObject ex)
+        #{
+        #    str errorDescription;
+        #
+        #    /*if (ex.get_InnerException())
+        #    {
+        #        ex = ex.get_InnerException();
+        #    }
+        #
+        #    if(_errorCode)
+        #    {
+        #        errorDescription = SysLabel::labelId2String(DMFStagingErrorCode::find(_errorCode).LabelId);
+        #    }
+        #    if(errorDescription)
+        #    {
+        #        throw error(strFmt(errorDescription));
+        #    }
+        #    else
+        #    {*/
+        #        throw error(ex.get_Message());
+        #    //}
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END
