@@ -12,19 +12,7 @@ Formatversion: 1
     #{
     #    WIK_FixTableAndFieldId  fixTableAndFieldId = WIK_FixTableAndFieldId::construct(false, false, false, true);
     #
-    #    //info(tableId2name(101111)); //= UNKNOWN
-    #    //WIK_FixTableAndFieldId::replaceTableId('JAD_CCCOUNTRYREGIONTABLE', 101110);   // Old table: JADCREDITCARDCOUNTRYREGIONTABLE
-    #    //WIK_FixTableAndFieldId::replaceTableId('JAD_CCMERCHANTADFLEX', 101117);       // Old table: JADCREDITCARDMERCHANTADFLEX
-    #    //WIK_FixTableAndFieldId::replaceTableId('JAD_CCREGIONTABLE', 101111);          // Old table: JADCREDITCARDREGIONTABLE
-    #
     #    fixTableAndFieldId.run();
-    #
-    #    //TreeNode            treeNode = TreeNode::findNode(@'\Data dictionary\Views\TaxTransGeneralJournalAccountEntryView');
-    #    //SysDictField        sdf;
-    #    //
-    #    //info(treeNode.treeNodeName());
-    #    //info(strfmt('%1', tableName2id(treeNode.treeNodeName())));
-    #    //sdf = SysDictField::newName(treeNode.treeNodeName(), 'LedgerDimension');
     #}
   ENDSOURCE
   PROPERTIES
