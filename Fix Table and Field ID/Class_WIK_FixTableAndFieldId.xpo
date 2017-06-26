@@ -1,0 +1,684 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: WIK_FixTableAndFieldId unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #WIK_FixTableAndFieldId
+    PROPERTIES
+      Name                #WIK_FixTableAndFieldId
+      RunOn               #Server
+      Origin              #{024F69BB-6BA7-4EE2-9049-E944E0E08630}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #class WIK_FixTableAndFieldId
+        #{
+        #    TreeNodeIterator            tableIterator;
+        #
+        #    boolean                     showNotExists;
+        #    boolean                     showProgressBar;
+        #    SysOperationProgress        progress;
+        #    int64                       totalCnt;
+        #
+        #    boolean                     onlyCustomLayers;
+        #    boolean                     onlyEnabledLicConfs;
+        #    boolean                     onlyRegularTables;
+        #}
+      ENDSOURCE
+      SOURCE #deleteDictionary
+        #private void deleteDictionary(
+        #    TableId _applTableId = -1
+        #    )
+        #{
+        #    SqlDictionary   sqlDictionary;
+        #    SysDictField    sysDictField;
+        #    DictTable       dictTable;
+        #
+        #    //TODO: Implement view field validation
+        #
+        #    // Delete the fields from the sql dictionary that does not exist in the AOT
+        #    while select forUpdate sqlDictionary
+        #        where  sqlDictionary.tabId      == _applTableId
+        #            && sqlDictionary.fieldId    != 0
+        #    {
+        #        if (sqlDictionary.flags == 0)
+        #        {
+        #            sysDictField = SysDictField::findFieldByName(tableId2name(_applTableId), sqlDictionary.name);
+        #
+        #            if (!sysDictField)
+        #            {
+        #                info(strfmt('Field %1.%2 does not exist in the AOT. Deleted from the sqlDictionary.', tableId2name(_applTableId), sqlDictionary.name));
+        #                sqlDictionary.delete();
+        #            }
+        #        }
+        #        //else if (sqlDictionary.flags == 1)
+        #        //{
+        #        //}
+        #    }
+        #
+        #    // Delete the tables/views from the sql dictionary that don't exist in the AOT
+        #    select firstOnly forUpdate sqlDictionary
+        #        where  sqlDictionary.tabId      == _applTableId
+        #            && sqlDictionary.fieldId    == 0
+        #            && sqlDictionary.flags      == 0;
+        #
+        #    dictTable = new DictTable(tableName2id(sqlDictionary.name));
+        #
+        #    if (sqlDictionary && !dictTable)
+        #    {
+        #        if (sqlDictionary.flags == 0)
+        #        {
+        #            info(strfmt('Table %1 does not exist in the AOT. Deleted from SQLDictionary.', sqlDictionary.name));
+        #        }
+        #        else if (sqlDictionary.flags == 1)
+        #        {
+        #            info(strfmt('View %1 does not exist in the AOT. Deleted from SQLDictionary.', sqlDictionary.name));
+        #        }
+        #        sqlDictionary.delete();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #executeSQL
+        #private void executeSQL()
+        #{
+        # /*
+        # * Verify if the objects are also created in the database
+        # */
+        #/*
+        #    SysSQLSystemInfo                systemInfo =  SysSQLSystemInfo::construct();
+        #    str                             loginDatabase = systemInfo.getloginDatabase();
+        #    Connection                      odbcConnection;
+        #    Statement                       statement;
+        #    ResultSet                       resultSet;
+        #    str                             sql;
+        #
+        #        odbcConnection = new Connection();
+        #
+        #        if (odbcConnection)
+        #        {
+        #            tableIterator.reset();
+        #            tableNode       = tableIterator.next();
+        #            while (tableNode)
+        #            {
+        #                dictTable       = new DictTable(tableNode.applObjectId());
+        #                //tableName       = tableNode.treeNodeName();
+        #                tableName       = dictTable.name(DbBackend::Sql);
+        #                tableName       = tableName == '' ? dictTable.name() : tableName;
+        #
+        #                print 'SQL: ' + tableName;
+        #
+        #                // Filter out unwanted tables
+        #                isTemporary = findProperty(tableNode.AOTgetProperties(), #PropertyTemporary);
+        #                if (tableNode.applObjectLayer() >= UtilEntryLevel::bus
+        #                    && isTemporary != 'Yes'
+        #                    && (dictTable.configurationKeyId() ? new DictConfigurationKey(dictTable.configurationKeyId()).enabled() : true))
+        #                {
+        #                    sql = strfmt("SELECT * FROM %1.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '%2'",
+        #                        loginDatabase,
+        #                        tableName
+        #                        );
+        #
+        #                    perm = new SqlStatementExecutePermission(sql);
+        #                    perm.assert();
+        #
+        #                    statement = odbcConnection.createStatement();
+        #                    resultSet = statement.executeQuery(sql);
+        #
+        #                    if (!resultSet.next())
+        #                    {
+        #                        warning(strfmt('Table or view does not exist, or has to be renamed in SQL: %1', tableName));
+        #                    }
+        #
+        #                    resultSet.close();
+        #                    statement.close();
+        #
+        #                    CodeAccessPermission::revertAssert();
+        #                }
+        #
+        #                tableNode   = tableIterator.next();
+        #            }
+        #        }
+        #        else
+        #        {
+        #            error("Failed to log on to the database through ODBC.");
+        #        }
+        #
+        #        odbcConnection = null;*/
+        #
+        #}
+      ENDSOURCE
+      SOURCE #fixDictionary
+        #/// <summary>
+        #/// Verify if the objects are referenced correctly in the AX SQL Dictionary
+        #/// </summary>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #/// <exception cref="Exception::UpdateConflictNotRecovered">
+        #///
+        #/// </exception>
+        #/// <exception cref="Exception::UpdateConflict">
+        #///
+        #/// </exception>
+        #private void fixDictionary()
+        #{
+        #    #AOT
+        #    #OCCRetryCount
+        #
+        #    TreeNode            rootNode = TreeNode::findNode(#TablesPath);
+        #    TreeNode            tableNode;
+        #    DictTable           dictTable;
+        #    DictView            dictView;
+        #    TableId             applTableId;
+        #    IdentifierName      tableName;
+        #    int64               cnt;
+        #    boolean             skip;
+        #    boolean             isTemporary;
+        #
+        #    try
+        #    {
+        #        // Iterate through all tables in the AOT
+        #        tableIterator   = rootNode.AOTiterator();
+        #
+        #        if (showProgressBar)
+        #        {
+        #            this.initProgressBar();
+        #        }
+        #
+        #        tableNode   = tableIterator.next();
+        #        cnt         = 0;
+        #
+        #        ttsBegin;
+        #
+        #        while (tableNode)
+        #        {
+        #            dictTable   = new DictTable(tableNode.applObjectId());
+        #            tableName   = strUpr(tableNode.treeNodeName());
+        #            applTableId = tableNode.applObjectId();
+        #            skip        = false;
+        #
+        #            if (showProgressBar)
+        #            {
+        #                cnt++;
+        #                progress.incCount();
+        #                progress.setText(strFmt('%1 / %2 - %3', cnt, totalCnt, tableName));
+        #            }
+        #
+        #            // Filter out unwanted tables
+        #            isTemporary = dictTable.isTmp() || dictTable.isTempDb();
+        #
+        #            if ((!onlyCustomLayers || SysTreeNode::getHighestLayer(tableNode) >= UtilEntryLevel::isp)
+        #                && (!onlyRegularTables || !isTemporary)
+        #                && (!onlyEnabledLicConfs || (dictTable.configurationKeyId() ? new DictConfigurationKey(dictTable.configurationKeyId()).enabled() : true)))
+        #            {
+        #                skip = this.validateTableNode(tableNode, tableName, applTableId);
+        #
+        #                if (!skip)
+        #                {
+        #                    this.validateFieldNode(tableNode, tableName, applTableId);
+        #                }
+        #            }
+        #
+        #            //this.deleteDictionary(applTableId);
+        #
+        #            tableNode.treeNodeRelease();
+        #            tableNode = tableIterator.next();
+        #        }
+        #
+        #        ttsCommit;
+        #
+        #        progress.kill();
+        #
+        #        // Iterate through all views in the AOT
+        #        /*rootNode = TreeNode::findNode(#ViewsPath);
+        #        tableIterator   = rootNode.AOTiterator();
+        #        tableNode       = tableIterator.next();
+        #        cnt = 0;
+        #
+        #        ttsBegin;
+        #
+        #        while (tableNode)
+        #        {
+        #            dictTable   = new DictTable(tableNode.applObjectId());
+        #            tableName   = strUpr(tableNode.treeNodeName());
+        #            applTableId = tableNode.applObjectId();
+        #            skip        = false;
+        #
+        #            if (showProgressBar)
+        #            {
+        #                cnt++;
+        #                progress.incCount();
+        #                progress.setText(strFmt('%1 / %2 - %3', cnt, totalCnt, tableName));
+        #            }
+        #
+        #            if (SysTreeNode::getHighestLayer(tableNode) >= UtilEntryLevel::isp
+        #                && !isTemporary
+        #                && (dictView.configurationKeyId() ? new DictConfigurationKey(dictView.configurationKeyId()).enabled() : true))
+        #            {
+        #                skip = this.validateTableNode(tableNode, tableName, applTableId);
+        #
+        #                if (!skip)
+        #                {
+        #                    this.validateFieldNode(tableNode, tableName, applTableId);
+        #                }
+        #            }
+        #
+        #            this.deleteDictionary(applTableId);
+        #
+        #            tableNode.treeNodeRelease();
+        #            tableNode = tableIterator.next();
+        #        }
+        #
+        #        ttsCommit;*/
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        retry;
+        #    }
+        #    catch (Exception::UpdateConflict)
+        #    {
+        #        if (appl.ttsLevel() == 0)
+        #        {
+        #            if (xSession::currentRetryCount() >= #RetryNum)
+        #            {
+        #                throw Exception::UpdateConflictNotRecovered;
+        #            }
+        #            else
+        #            {
+        #                retry;
+        #            }
+        #        }
+        #        else
+        #        {
+        #            throw Exception::UpdateConflict;
+        #        }
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #getNextFieldId
+        #/// <summary>
+        #/// Temporary non-system field ID for replacing
+        #/// </summary>
+        #/// <param name="_tableId">
+        #///
+        #/// </param>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #private int getNextFieldId(
+        #    TableId _tableId
+        #    )
+        #{
+        #    int             ret = 0;
+        #    SqlDictionary   dict;
+        #
+        #    if (_tableId)
+        #    {
+        #        select firstonly maxOf(FieldId) from dict
+        #            order by FieldId desc
+        #            where  dict.tabId       == _tableId
+        #                && dict.fieldId     < 60000;
+        #
+        #        ret = dict.fieldId + 1;
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #getNextTableId
+        #/// <summary>
+        #/// Temporary non-system table ID for replacing
+        #/// </summary>
+        #/// <returns>
+        #///
+        #/// </returns>
+        #/// <remarks>
+        #///
+        #/// </remarks>
+        #private int getNextTableId()
+        #{
+        #    //int             ret = 0;
+        #    SqlDictionary   dict;
+        #
+        #    select firstonly maxOf(TabId) from dict
+        #        order by TabId desc
+        #        where dict.tabId  < 60000;
+        #
+        #    //ret = dict.tabId + 1;
+        #
+        #    //select firstonly dict
+        #        //where dict.tabId == ret;
+        #
+        #    //if (dict)
+        #    //{
+        #        //ret = 0;
+        #    //}
+        #
+        #    return dict.tabId; //ret;
+        #}
+      ENDSOURCE
+      SOURCE #initProgressBar
+        #private void initProgressBar()
+        #{
+        #    #AVIFiles
+        #
+        #    TreeNode        node = tableIterator.next();
+        #
+        #    progress = SysOperationProgress::newGeneral(#AVIUpdate, 'Table synch', 1);
+        #    totalCnt = 0;
+        #
+        #    while (node)
+        #    {
+        #        totalCnt++;
+        #        node = tableIterator.next();
+        #    }
+        #
+        #    progress.setTotal(totalCnt);
+        #
+        #    tableIterator.reset();
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #public void new(
+        #    boolean _onlyCustomLayers = false,
+        #    boolean _onlyEnabledLicConfs = false,
+        #    boolean _onlyRegularTables = false,
+        #    boolean _showProgressBar = false,
+        #    boolean _showNotExists = false
+        #    )
+        #{
+        #    onlyCustomLayers    = _onlyCustomLayers;
+        #    onlyEnabledLicConfs = _onlyEnabledLicConfs;
+        #    onlyRegularTables   = _onlyRegularTables;
+        #    showProgressBar     = _showProgressBar;
+        #    showNotExists       = _showNotExists;
+        #}
+      ENDSOURCE
+      SOURCE #run
+        #public void run()
+        #{
+        #    try
+        #    {
+        #        this.fixDictionary();
+        #    }
+        #    catch
+        #    {
+        #        exceptionTextFallThrough();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #validateFieldNode
+        #private void validateFieldNode(
+        #    TreeNode        _tableNode = null,
+        #    IdentifierName  _tableName = '',
+        #    TableId         _applTableId = -1
+        #    )
+        #{
+        #    TreeNodeIterator    fieldIterator;
+        #    TreeNode            fieldNode;
+        #    FieldId             applFieldId;
+        #    FieldId             freeFieldId;
+        #    IdentifierName      fieldName;
+        #    SqlDictionary       sqlDictionary;
+        #    SqlDictionary       checkDictionary;
+        #
+        #    if (_tableNode)
+        #    {
+        #        fieldIterator   = _tableNode.AOTfindChild('Fields').AOTiterator();
+        #        fieldNode       = fieldIterator.next();
+        #
+        #        while (fieldNode)
+        #        {
+        #            applFieldId = fieldNode.applObjectId();
+        #            fieldName   = strUpr(fieldNode.treeNodeName());
+        #
+        #            // Skip deleted fields
+        #            //if (substr(fieldName, 1, 4) == 'DEL_')
+        #            //{
+        #                //fieldNode   = fieldIterator.next();
+        #                //continue;
+        #            //}
+        #
+        #            // Check if the field has the correct ID
+        #            select firstonly sqlDictionary
+        #                where sqlDictionary.tabId       == _applTableId
+        #                    && sqlDictionary.fieldId     == applFieldId
+        #                    && sqlDictionary.name        == fieldName;
+        #
+        #            if (!sqlDictionary)
+        #            {
+        #                select firstonly sqlDictionary
+        #                    where sqlDictionary.tabId       == _applTableId
+        #                        && sqlDictionary.name        == fieldName;
+        #
+        #                if (sqlDictionary)
+        #                {
+        #                    // If the destination field ID is occupied, move it out of the way
+        #                    select firstonly checkDictionary
+        #                        where checkDictionary.tabId     == _applTableId
+        #                            && checkDictionary.fieldId   == applFieldId;
+        #
+        #                    if (checkDictionary)
+        #                    {
+        #                        freeFieldId = this.getNextFieldId(_applTableId);
+        #                        info(strfmt('FieldId destination exists as %1.%2 :: %3 :: %4 -> %5', _tableName, checkDictionary.name, _applTableId, checkDictionary.fieldId, freeFieldId));
+        #                        ReleaseUpdateDB::changeFieldId(_applTableId, checkDictionary.fieldId, freeFieldId, _tableName, checkDictionary.name);
+        #                    }
+        #
+        #                    info(strfmt('FieldId fix :: %1.%2 :: %3 :: %4 -> %5', _tableName, fieldName, _applTableId, sqlDictionary.fieldId, applFieldId));
+        #                    ReleaseUpdateDB::changeFieldId(_applTableId, sqlDictionary.fieldId, applFieldId, _tableName, fieldName);
+        #                }
+        #                else if (showNotExists)
+        #                {
+        #                    if (SysTreeNode::getHighestLayer(fieldNode) >= UtilEntryLevel::isp
+        #                        && substr(fieldName, 1, 4) != 'DEL_')
+        #                    {
+        #                        info(strfmt('Custom Field %1.%2 does not exist in the SqlDictionary', _tableName, fieldName));
+        #                    }
+        #                }
+        #            }
+        #            fieldNode       = fieldIterator.next();
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #validateTableNode
+        #private boolean validateTableNode(
+        #    TreeNode        _tableNode = null,
+        #    IdentifierName  _tableName = '',
+        #    TableId         _applTableId = -1
+        #    )
+        #{
+        #    boolean         skip = false;
+        #    int             freeTableId;
+        #    SqlDictionary   sqlDictionary;
+        #    SqlDictionary   checkDictionary;
+        #    TreeNode        treeNodeCheck;
+        #
+        #    if (_tableNode)
+        #    {
+        #        // Skip deleted tables
+        #        //if (substr(_tableName, 1, 4) == 'DEL_')
+        #        //{
+        #            //skip = true;
+        #            //return skip;
+        #        //}
+        #
+        #        // Check if the table has the correct ID
+        #        select firstonly RecId from sqlDictionary
+        #            where  sqlDictionary.tabId      == _applTableId
+        #                && sqlDictionary.fieldId    == 0
+        #                && sqlDictionary.name       == _tableName;
+        #
+        #        // Table ID not found, either not synchronised or has a wrong ID
+        #        if (!sqlDictionary)
+        #        {
+        #            select firstonly * from sqlDictionary
+        #                where sqlDictionary.fieldId == 0
+        #                    && sqlDictionary.name       == _tableName;
+        #            //TODO: Handle table rename if it is only matching by ID
+        #
+        #            if (sqlDictionary)
+        #            {
+        #                // If the destination table ID is occupied, move it out of the way
+        #                select firstonly * from checkDictionary
+        #                    where checkDictionary.tabId     == _applTableId
+        #                        && checkDictionary.fieldId  == 0;
+        #
+        #                if (checkDictionary)
+        #                {
+        #                    freeTableId = this.getNextTableId();
+        #                    info(strfmt('TableId destination exists as %1 :: %3 -> %4', checkDictionary.name, _applTableId, checkDictionary.tabId, freeTableId));
+        #                    if (freeTableId > 0)
+        #                    {
+        #                        ReleaseUpdateDB::changeTableId(checkDictionary.tabId, freeTableId, checkDictionary.name);
+        #                    }
+        #                }
+        #
+        #                info(strfmt('TableId fix :: %1 :: %2 -> %3', _tableName, sqlDictionary.tabId, _applTableId));
+        #                ReleaseUpdateDB::changeTableId(sqlDictionary.tabId, _applTableId, _tableName);
+        #            }
+        #            else
+        #            {
+        #                select firstOnly forUpdate * from sqlDictionary
+        #                    where sqlDictionary.tabId       == _applTableId
+        #                        && sqlDictionary.fieldId    == 0
+        #                        && sqlDictionary.name       != _tableName;
+        #
+        #                treeNodeCheck   = TreeNode::findNode(strFmt(@'\Data dictionary\Tables\%1', sqlDictionary.name));
+        #
+        #                if (sqlDictionary)
+        #                {
+        #                    sqlDictionary.name = strUpr(_tableName);
+        #                    sqlDictionary.sqlName = strUpr(_tableName);
+        #                    sqlDictionary.update();
+        #                    info(strFmt('Table %1 has been renamed as %2, due to matching id %3', sqlDictionary.name, _tableName, _applTableId));
+        #                }
+        #                else if (showNotExists)
+        #                {
+        #                    info(strfmt('Custom Table %1 does not exist in the SqlDictionary', _tableName));
+        #                }
+        #
+        #                skip = true;
+        #            }
+        #        }
+        #    }
+        #
+        #    return skip;
+        #}
+      ENDSOURCE
+      SOURCE #construct
+        #public server static WIK_FixTableAndFieldId construct(
+        #    boolean _onlyCustomLayers = false,
+        #    boolean _onlyEnabledLicConfs = false,
+        #    boolean _onlyRegularTables = false,
+        #    boolean _showProgressBar = false,
+        #    boolean _showNotExists = false
+        #    )
+        #{
+        #    return new WIK_FixTableAndFieldId(
+        #        _onlyCustomLayers,
+        #        _onlyEnabledLicConfs,
+        #        _onlyRegularTables,
+        #        _showProgressBar,
+        #        _showNotExists);
+        #}
+      ENDSOURCE
+      SOURCE #replaceTableId
+        #public static void replaceTableId(
+        #    TableName   _tableName,
+        #    TableId     _newTableId,
+        #    TableName   _oldTableName
+        #    )
+        #{
+        #    SysModelElement     modelElement;
+        #    SqlDictionary       sqlDictionary;
+        #    TableId             oldTableId;
+        #
+        #    SysSQLSystemInfo                sqlSystemInfo;
+        #    SqlStatementExecutePermission   permission;
+        #    Statement                       statement;
+        #    OdbcConnection                  odbcConnection;
+        #    LoginProperty                   loginProperty;
+        #    str                             sqlStmt;
+        #    int                             updateResult;
+        #
+        #    select firstOnly RecId from sqlDictionary
+        #        where sqlDictionary.TableId == _newTableId;
+        #
+        #    if (sqlDictionary)
+        #    {
+        #        error(strFmt('Table already exists in the SQLDictionary with Id %1, unable to replace with table %2', _newTableId, _newTableId));
+        #        return;
+        #    }
+        #
+        #    // Validate if the table to be updated exists in the AOT
+        #    select firstOnly * from modelElement
+        #        where  modelElement.Name        == _tableName
+        #            && modelElement.ElementType == UtilElementType::Table;
+        #
+        #    if (modelElement.RecId != 0
+        #        //&& tableId2name(_newTableId) == 'UNKNOWN'
+        #        )
+        #    {
+        #        // Find the current table id to be replaced within the dictionary
+        #        select firstOnly tabId, name from sqlDictionary
+        #            where  sqlDictionary.name       == _oldTableName
+        #                && sqlDictionary.fieldId    == 0;
+        #        oldTableId = sqlDictionary.tabId;
+        #
+        #        // Fix the TableId in SQL due to limitations on updating the SysModelElement view
+        #        loginProperty = new LoginProperty();
+        #        sqlSystemInfo = SysSQLSystemInfo::construct();
+        #        loginProperty.setServer(sqlSystemInfo.getLoginServer());
+        #        loginProperty.setDatabase(strFmt('%1_model', sqlSystemInfo.getloginDatabase()));
+        #        odbcConnection = new OdbcConnection(loginProperty);
+        #
+        #        sqlStmt = strFmt('UPDATE [dbo].[ModelElement] SET [AxId] = %1 WHERE [Name] = \'%2\' AND [ElementType] = %3',
+        #            _newTableId,
+        #            strUpr(_tableName),//ReleaseUpdateDB::backendTableName(oldTableId),
+        #            enum2int(UtilElementType::Table));
+        #
+        #        permission = new SqlStatementExecutePermission(sqlStmt);
+        #        permission.assert();
+        #        statement = odbcConnection.createStatement();
+        #        // BP Deviation Documented
+        #        statement.executeUpdate(sqlStmt);
+        #
+        #        if (statement.getLastError())
+        #        {
+        #            info(statement.getLastErrorText());
+        #        }
+        #
+        #        statement.close();
+        #
+        #        CodeAccessPermission::revertAssert();
+        #
+        #        ttsBegin;
+        #
+        #        info(strFmt('Replacing AX TableId for table %1 id %2 from old table %3 id %4', _tableName, _newTableId, sqlDictionary.name, oldTableId));
+        #
+        #        update_recordSet sqlDictionary
+        #            setting tabId = _newTableId
+        #            where sqlDictionary.tabId == oldTableId;
+        #
+        #        ttsCommit;
+        #
+        #        //TODO: Validate NumberSequence integrity
+        #    }
+        #
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

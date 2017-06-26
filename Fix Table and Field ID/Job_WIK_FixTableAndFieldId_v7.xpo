@@ -1,0 +1,35 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_FixTableAndFieldId_v7 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_FixTableAndFieldId_v7
+    #static void WIK_FixTableAndFieldId_v7(Args _args)
+    #{
+    #    WIK_FixTableAndFieldId  fixTableAndFieldId = WIK_FixTableAndFieldId::construct(false, false, false, true);
+    #
+    #    //info(tableId2name(101111)); //= UNKNOWN
+    #    //WIK_FixTableAndFieldId::replaceTableId('JAD_CCCOUNTRYREGIONTABLE', 101110);   // Old table: JADCREDITCARDCOUNTRYREGIONTABLE
+    #    //WIK_FixTableAndFieldId::replaceTableId('JAD_CCMERCHANTADFLEX', 101117);       // Old table: JADCREDITCARDMERCHANTADFLEX
+    #    //WIK_FixTableAndFieldId::replaceTableId('JAD_CCREGIONTABLE', 101111);          // Old table: JADCREDITCARDREGIONTABLE
+    #
+    #    fixTableAndFieldId.run();
+    #
+    #    //TreeNode            treeNode = TreeNode::findNode(@'\Data dictionary\Views\TaxTransGeneralJournalAccountEntryView');
+    #    //SysDictField        sdf;
+    #    //
+    #    //info(treeNode.treeNodeName());
+    #    //info(strfmt('%1', tableName2id(treeNode.treeNodeName())));
+    #    //sdf = SysDictField::newName(treeNode.treeNodeName(), 'LedgerDimension');
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{BFC884FB-6716-4CA1-925D-5077C2FD9012}
+  ENDPROPERTIES
+  
+
+***Element: END
