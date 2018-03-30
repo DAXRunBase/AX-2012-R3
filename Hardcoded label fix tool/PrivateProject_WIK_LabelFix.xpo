@@ -1,0 +1,1557 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Microsoft Dynamics AX Table : WIK_LabelFix unloaded
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #WIK_LabelFix
+    EnforceFKRelation 1
+    PROPERTIES
+      Name                #WIK_LabelFix
+      Label               #@WIK1994
+      TitleField1         #TreeNodePath
+      TitleField2         #LabelId
+      CreateRecIdIndex    #Yes
+      TableGroup          #Reference
+      PrimaryIndex        #SurrogateKey
+      ClusterIndex        #TreeNodeIdx
+      Origin              #{07B2301B-1648-400A-B0E0-BE577695EB3C}
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #ColumnNum
+        INT
+        PROPERTIES
+          Name                #ColumnNum
+          Label               #@SYS5771
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Table               #WIK_LabelFix
+          Origin              #{854B2D7A-D9FD-43EE-916D-785FD990C436}
+          ExtendedDataType    #Counter
+        ENDPROPERTIES
+        
+      FIELD #LabelId
+        STRING
+        PROPERTIES
+          Name                #LabelId
+          Table               #WIK_LabelFix
+          Origin              #{6639A5D6-4697-45DF-BE84-36956C036696}
+          ExtendedDataType    #LabelId
+          StringSize          #14
+        ENDPROPERTIES
+        
+      FIELD #LabelString
+        STRING
+        PROPERTIES
+          Name                #LabelString
+          Table               #WIK_LabelFix
+          Origin              #{7A8AC60B-9BAF-478B-8F86-2350C68F5DE5}
+          ExtendedDataType    #LabelString
+          StringSize          #1999
+        ENDPROPERTIES
+        
+      FIELD #LabelType
+        ENUM
+        PROPERTIES
+          Name                #LabelType
+          Table               #WIK_LabelFix
+          Origin              #{885E171B-EFC8-406D-BC02-A7F96C897CBC}
+          EnumType            #WIK_LabelType
+        ENDPROPERTIES
+        
+      FIELD #LineNum
+        INT
+        PROPERTIES
+          Name                #LineNum
+          Label               #@SYS134384
+          Table               #WIK_LabelFix
+          Origin              #{1E408DDD-116F-446C-BB45-5A36F9336027}
+          ExtendedDataType    #Counter
+        ENDPROPERTIES
+        
+      FIELD #TreeNodePath
+        STRING
+        PROPERTIES
+          Name                #TreeNodePath
+          Table               #WIK_LabelFix
+          Origin              #{8C8679F4-2BCF-4152-A53E-355E522895F6}
+          ExtendedDataType    #TreeNodePath
+          StringSize          #400
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #General
+        PROPERTIES
+          Name                #General
+          Label               #General
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #TreeNodePath
+          #LabelId
+          #LabelString
+          #LabelType
+          #LineNum
+          #ColumnNum
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #TreeNodeIdx
+      PROPERTIES
+        Name                #TreeNodeIdx
+        AllowDuplicates     #No
+        Origin              #{3C2FA259-1484-44FC-8EB9-816EB4CC5200}
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #TreeNodePath
+        #LabelType
+        #LineNum
+        #ColumnNum
+      ENDINDEXFIELDS
+      
+      #LabelStringIdx
+      PROPERTIES
+        Name                #LabelStringIdx
+        Origin              #{CECDDF59-2283-4574-A18D-54D4F2B3DB55}
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #LabelString
+      ENDINDEXFIELDS
+      
+      #LabelIdIdx
+      PROPERTIES
+        Name                #LabelIdIdx
+        Origin              #{89068DD0-68A9-498B-AFBB-065710E4B1E8}
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #LabelId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    FULLTEXTINDICES
+    ENDFULLTEXTINDICES
+    REFERENCES
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: DBE
+
+; Microsoft Dynamics AX Enumtype : WIK_LabelType unloaded
+; --------------------------------------------------------------------------------
+  ENUMTYPEVERSION 1
+  
+  ENUMTYPE #WIK_LabelType
+    PROPERTIES
+      Name                #WIK_LabelType
+      Label               #@RET3452
+      Help                #@WIK1388
+      UseEnumValue        #Yes
+      Origin              #{49AB8C5A-8EEE-45DD-8F35-5ACC40F012B9}
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+      #Label
+      PROPERTIES
+        Name                #Label
+        Label               #Label
+        EnumValue           #0
+      ENDPROPERTIES
+      
+      #Description
+      PROPERTIES
+        Name                #Description
+        Label               #Description
+        EnumValue           #1
+      ENDPROPERTIES
+      
+      #DeveloperDocumentation
+      PROPERTIES
+        Name                #DeveloperDocumentation
+        Label               #DeveloperDocumentation
+        EnumValue           #2
+      ENDPROPERTIES
+      
+      #SingularLabel
+      PROPERTIES
+        Name                #SingularLabel
+        Label               #SingularLabel
+        EnumValue           #3
+      ENDPROPERTIES
+      
+      #Help
+      PROPERTIES
+        Name                #Help
+        Label               #Help
+        EnumValue           #4
+      ENDPROPERTIES
+      
+      #HelpText
+      PROPERTIES
+        Name                #HelpText
+        Label               #HelpText
+        EnumValue           #5
+      ENDPROPERTIES
+      
+      #AnalysisLabel
+      PROPERTIES
+        Name                #AnalysisLabel
+        Label               #AnalysisLabel
+        EnumValue           #6
+      ENDPROPERTIES
+      
+      #CollectionLabel
+      PROPERTIES
+        Name                #CollectionLabel
+        Label               #CollectionLabel
+        EnumValue           #7
+      ENDPROPERTIES
+      
+      #Caption
+      PROPERTIES
+        Name                #Caption
+        Label               #Caption
+        EnumValue           #8
+      ENDPROPERTIES
+      
+      #Text
+      PROPERTIES
+        Name                #Text
+        Label               #Text
+        EnumValue           #9
+      ENDPROPERTIES
+      
+      #MethodText
+      PROPERTIES
+        Name                #MethodText
+        Label               #Method text
+        EnumValue           #10
+      ENDPROPERTIES
+      
+    ENDTYPEELEMENTS
+  ENDENUMTYPE
+  
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #WIK_LabelFix
+  PROPERTIES
+    Name                #WIK_LabelFix
+    Origin              #{2F561BFB-FAC2-47F9-89DD-36823C0197A9}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    WIK_LabelFixEngine      labelFixEngine;
+      #    boolean                 refreshLabels;
+      #    SysFormSplitter_X       formSplitter;
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #    labelFixEngine  = new WIK_LabelFixEngine();
+      #
+      #    super();
+      #
+      #    formSplitter = new SysFormSplitter_X(groupSplitter, GroupLeft, element);
+      #    //if (element.args() && element.args().dataset())
+      #    //{
+      #        //WIK_LabelFix.setTmpData(element.args().record());
+      #    //}
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #WIK_LabelFix
+          Table               #WIK_LabelFix
+          AllowCreate         #No
+          AllowDelete         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+          DATAFIELD TreeNodePath
+            PROPERTIES
+              AllowEdit           #No
+            ENDPROPERTIES
+            
+            METHODS
+            ENDMETHODS
+          ENDDATAFIELD
+          
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #leave
+          #public boolean leave()
+          #{
+          #    boolean ret;
+          #
+          #    ret = super();
+          #
+          #    if (WIK_LabelFix.LabelId == '***')
+          #    {
+          #        refreshLabels = true;
+          #    }
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #active
+          #public int active()
+          #{
+          #    int         ret;
+          #
+          #    ret = super();
+          #
+          #    //if (WIK_LabelFix.LabelId == "@SYS85761" || refreshLabels)
+          #    //{
+          #        //startLengthyOperation();
+          #        //SysModelElementLabel_ds.executeQuery();
+          #        //endLengthyOperation();
+          #        //refreshLabels = false;
+          #    //}
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #SysModelElementLabel
+          Table               #SysModelElementLabel
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          JoinSource          #WIK_LabelFix
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #markChanged
+          #public void markChanged()
+          #{
+          #    super();
+          #
+          #    if (SysModelElementLabel_ds.recordsMarked())
+          #    {
+          #        WIK_LabelFix.LabelId = SysModelElementLabel.LabelId;
+          #        SysModelElementLabel_ds.markRecords(new Array(Types::Record));
+          #    }
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #public void init()
+          #{
+          #    QueryBuildDataSource        qbds;
+          #
+          #    super();
+          #
+          #    qbds = this.queryBuildDataSource();
+          #    qbds.addDynalink(fieldNum(SysModelElementLabel, Text), WIK_LabelFix, fieldNum(WIK_LabelFix, LabelString));
+          #    SysQuery::findOrCreateRange(qbds, fieldNum(SysModelElementLabel, Language)).value(queryValue(strReplace(currentUserLanguage(), "@SYS91455", '_')));
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+    SysModelElementLabel WIK_LabelFix
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #@WIK1994
+      TitleDatasource     #WIK_LabelFix
+      DataSource          #WIK_LabelFix
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #715827882
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #ButtonGroup
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GroupLeft
+          DataSource          #WIK_LabelFix
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid1
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GroupRight
+          DataSource          #SysModelElementLabel
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Group
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          Columns             #3
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GroupLeft
+          AutoDeclaration     #Yes
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #805306366
+          HierarchyParent     #Group
+          DataSource          #WIK_LabelFix
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GroupRight
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1677721597
+          HierarchyParent     #Group
+          DataSource          #SysModelElementLabel
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GroupSplitter
+          AutoDeclaration     #Yes
+          Width               #5
+          Height              #Column height
+          AlignControl        #Yes
+          ElementPosition     #1207959549
+          HierarchyParent     #Group
+          FrameType           #Raised 3D
+          BackgroundColor     #Window background
+          HideIfEmpty         #No
+          AlignChild          #No
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #mouseDown
+            #int mouseDown(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int ret;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    return formSplitter.mouseDown(x, y, button, ctrl, shift);
+            #}
+          ENDSOURCE
+          SOURCE #mouseMove
+            #int mouseMove(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int ret;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    return formSplitter.mouseMove(x,y,button,ctrl,shift);
+            #}
+          ENDSOURCE
+          SOURCE #mouseUp
+            #int mouseUp(int x, int y, int button, boolean ctrl, boolean shift)
+            #{
+            #    int ret;
+            #
+            #    ret = super(x, y, button, ctrl, shift);
+            #
+            #    return formSplitter.mouseUp(x, y, button, ctrl, shift);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #CommitBtn
+          ElementPosition     #1610612734
+          HierarchyParent     #ButtonGroup
+          MultiSelect         #Yes
+          NeedsRecord         #Yes
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    Common                  currentRecord;
+            #    MultiSelectionHelper    msh         = MultiSelectionHelper::construct();
+            #    SysTmpRecIdMap          recIdMap    = SysTmpRecIdMap::construct(Types::Integer);
+            # 
+            #    super();
+            #   
+            #    msh.parmCacheRecords(false);
+            #    msh.parmDatasource(WIK_LabelFix_ds);
+            # 
+            #    currentRecord = msh.getFirst();
+            # 
+            #    while (currentRecord)
+            #    {
+            #        recIdMap.insert(currentRecord.RecId, true);
+            #        currentRecord = msh.getNext();
+            #    }
+            #
+            #    labelFixEngine.commitChanges(recIdMap.keySet());
+            #
+            #    WIK_LabelFix_ds.research(true);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #ScanBtn
+          ElementPosition     #1073741822
+          HierarchyParent     #ButtonGroup
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #
+            #    labelFixEngine.populate(true);
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMBOBOX
+        PROPERTIES
+          Name                #WIK_LabelFix_LabelType
+          ElementPosition     #1932735281
+          HierarchyParent     #Grid
+          DataSource          #WIK_LabelFix
+          DataField           #LabelType
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #WIK_LabelFix_ColumnNum
+          ElementPosition     #2075900857
+          HierarchyParent     #Grid
+          DataSource          #WIK_LabelFix
+          DataField           #ColumnNum
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #WIK_LabelFix_LineNum
+          ElementPosition     #2004318069
+          HierarchyParent     #Grid
+          DataSource          #WIK_LabelFix
+          DataField           #LineNum
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WIK_LabelFix_LabelId
+          ElementPosition     #1717986916
+          HierarchyParent     #Grid
+          DataSource          #WIK_LabelFix
+          DataField           #LabelId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WIK_LabelFix_LabelString
+          ElementPosition     #1288490187
+          HierarchyParent     #Grid
+          DataSource          #WIK_LabelFix
+          DataField           #LabelString
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #WIK_LabelFix_TreeNodePath
+          ElementPosition     #858993458
+          HierarchyParent     #Grid
+          DataSource          #WIK_LabelFix
+          DataField           #TreeNodePath
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #SysModelElementLabel_Comment
+          ElementPosition     #1610612733
+          HierarchyParent     #Grid1
+          DataSource          #SysModelElementLabel
+          DataField           #Comment
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #SysModelElementLabel_LabelId
+          ElementPosition     #1073741822
+          HierarchyParent     #Grid1
+          DataSource          #SysModelElementLabel
+          DataField           #LabelId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #SysModelElementLabel_Text
+          ElementPosition     #1879048189
+          HierarchyParent     #Grid1
+          DataSource          #SysModelElementLabel
+          DataField           #Text
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: WIK_LabelFixEngine unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #WIK_LabelFixEngine
+    PROPERTIES
+      Name                #WIK_LabelFixEngine
+      RunOn               #Server
+      Origin              #{3B198E02-1189-4E93-8CA9-254A1F69E5A6}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #class WIK_LabelFixEngine
+        #{
+        #    #AOT
+        #    #Properties
+        #
+        #    LanguageId              languageIdDB;
+        #}
+      ENDSOURCE
+      SOURCE #commitChanges
+        #public void commitChanges(
+        #    Set     _recIdKeySet
+        #    )
+        #{
+        #    SetEnumerator       se = _recIdKeySet.getEnumerator();
+        #    WIK_LabelFix        labelFix;
+        #
+        #    while (se.moveNext())
+        #    {
+        #        select firstOnly * from labelFix
+        #            where labelFix.RecId == se.current();
+        #
+        #        WIK_LabelFixEngine::processTreeNode(labelFix);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #insertFix
+        #private void insertFix(
+        #    TreeNode    _treeNode,
+        #    str         _aotProperty
+        #    )
+        #{
+        #    #Properties
+        #    WIK_LabelFix            labelFix;
+        #    anytype                 labelTxt;
+        #    SysLabelEdit            label = new SysLabelEdit();
+        #    SysModelElementLabel    modelLabel;
+        #
+        #    labelTxt    = _treeNode.AOTgetProperty(_aotProperty);
+        #    if (strLen(labelTxt) > 0
+        #        && subStr(labelTxt, 1, 1) != @'@')
+        #    {
+        #        try
+        #        {
+        #            labelFix.clear();
+        #            labelFix.TreenodePath   = _treeNode.treeNodePath();
+        #            labelFix.LabelString    = labelTxt;
+        #            switch (_aotProperty)
+        #            {
+        #                case #PropertyLabel :
+        #                    labelFix.LabelType      = WIK_LabelType::Label;
+        #                    break;
+        #                case #PropertyDescription :
+        #                    labelFix.LabelType      = WIK_LabelType::Description;
+        #                    break;
+        #                case #PropertySingularLabel :
+        #                    labelFix.LabelType      = WIK_LabelType::SingularLabel;
+        #                    break;
+        #                case #PropertyDeveloperDocumentation :
+        #                    labelFix.LabelType      = WIK_LabelType::DeveloperDocumentation;
+        #                    break;
+        #                case #PropertyHelp :
+        #                    labelFix.LabelType      = WIK_LabelType::Help;
+        #                    break;
+        #                case #PropertyHelpText :
+        #                    labelFix.LabelType      = WIK_LabelType::HelpText;
+        #                    break;
+        #                case #PropertyAnalysisLabel :
+        #                    labelFix.LabelType      = WIK_LabelType::AnalysisLabel;
+        #                    break;
+        #                case #PropertyCollectionLabel :
+        #                    labelFix.LabelType      = WIK_LabelType::CollectionLabel;
+        #                    break;
+        #                case #PropertyCaption :
+        #                    labelFix.LabelType      = WIK_LabelType::Caption;
+        #                    break;
+        #                case #PropertyText :
+        #                    labelFix.LabelType      = WIK_LabelType::Text;
+        #                    break;
+        #            }
+        #            select count(RecId) from modelLabel
+        #                where modelLabel.Text == labelTxt
+        #                    && modelLabel.Language == languageIdDB;
+        #            labelFix.LabelId        = modelLabel.RecId > 1 ? '***' : modelLabel.RecId == 1 ? (select firstOnly LabelId from SysModelElementLabel
+        #                where SysModelElementLabel.Text == labelTxt
+        #                    && SysModelElementLabel.Language == languageIdDB).LabelId : '';//Label.findLabel(currentUserLanguage(), labelTxt);
+        #            labelFix.doInsert();
+        #        }
+        #        catch
+        #        {
+        #            exceptionTextFallThrough();
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #insertMethodFix
+        #private void insertMethodFix(
+        #    Treenode    _treeNode,
+        #    str         _labelText,
+        #    int         _line,
+        #    int         _column
+        #    )
+        #{
+        #    #Properties
+        #    WIK_LabelFix            labelFix;
+        #    anytype                 labelTxt;
+        #    SysLabelEdit            label = new SysLabelEdit();
+        #    SysModelElementLabel    modelLabel;
+        #
+        #    labelTxt    = _labelText;
+        #
+        #    if (strLen(_labelText) > 0
+        #        && subStr(_labelText, 1, 1) != @'@')
+        #    {
+        #        labelFix.clear();
+        #        labelFix.TreenodePath   = _treeNode.treeNodePath();
+        #        labelFix.LabelString    = labelTxt;
+        #        labelFix.LineNum        = _line;
+        #        labelFix.ColumnNum      = _column;
+        #
+        #        labelFix.LabelType      = WIK_LabelType::MethodText;
+        #
+        #        select count(RecId) from modelLabel
+        #            where modelLabel.Text == labelTxt
+        #                && modelLabel.Language == languageIdDB;
+        #        labelFix.LabelId        = modelLabel.RecId > 1 ? '***' : modelLabel.RecId == 1 ? (select firstOnly LabelId from SysModelElementLabel
+        #            where SysModelElementLabel.Text == labelTxt
+        #                && SysModelElementLabel.Language == languageIdDB).LabelId : '';//Label.findLabel(currentUserLanguage(), labelTxt);
+        #        labelFix.doInsert();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #populate
+        #public void populate(
+        #    boolean _dropContents = false
+        #    )
+        #{
+        #    WIK_LabelFix                        labelFix;
+        #    System.Diagnostics.Stopwatch        stopWatch;
+        #    System.TimeSpan                     elapsed;
+        #
+        #    if (_dropContents)
+        #    {
+        #        delete_from labelFix;
+        #            //where labelFix.TreeNodePath like '*base enum*';
+        #    }
+        #
+        #    stopWatch = new System.Diagnostics.Stopwatch();
+        #    stopWatch.Start();
+        #
+        #    languageIdDB = strReplace(currentUserLanguage(), '-', '_');
+        #
+        #    this.scanTree(TreeNode::findNode(#TablesPath));
+        #    this.scanTree(TreeNode::findNode(#ExtendedDataTypesPath));
+        #    this.scanTree(TreeNode::findNode(#BaseEnumsPath));
+        #    this.scanTree(TreeNode::findNode(#ConfigurationKeysPath));
+        #    this.scanTree(TreeNode::findNode(#PerspectivesPath));
+        #    this.scanTree(TreeNode::findNode(#MenusPath));
+        #    this.scanTree(TreeNode::findNode(#MenuItemsDisplayPath));
+        #    this.scanTree(TreeNode::findNode(#MenuItemsOutputPath));
+        #    this.scanTree(TreeNode::findNode(#MenuItemsActionPath));
+        #    this.scanTree(TreeNode::findNode(#ViewsPath));
+        #    this.scanTree(TreeNode::findNode(#TableMapsPath));
+        #    this.scanTree(TreeNode::findNode(#SecurityKeysPath));
+        #    this.scanTree(TreeNode::findNode(#PerspectivesPath));
+        #    this.scanTree(TreeNode::findNode(#SecPrivilegesPath));
+        #    this.scanTree(TreeNode::findNode(#SecDutiesPath));
+        #    this.scanTree(TreeNode::findNode(#SecRolesPath));
+        #    this.scanTree(TreeNode::findNode(#SecProcessCyclesPath));
+        #    this.scanTree(TreeNode::findNode(#SecPolicyPath));
+        #    this.scanTree(TreeNode::findNode(#ResourcesPath));
+        #    this.scanTree(TreeNode::findNode(#FormsPath));
+        #
+        #    this.scanMethods(TreeNode::findNode(#TablesPath));
+        #    this.scanMethods(TreeNode::findNode(#TableMapsPath));
+        #    this.scanMethods(TreeNode::findNode(#ClassesPath));
+        #    this.scanMethods(TreeNode::findNode(#FormsPath));
+        #    //this.scanMethods(TreeNode::findNode(#JobsPath));
+        #
+        #    stopWatch.Stop();
+        #    elapsed = stopWatch.get_Elapsed();
+        #
+        #    info(strFmt('Elapsed time: %1', CLRInterop::getAnyTypeForObject(elapsed.ToString())));
+        #}
+      ENDSOURCE
+      SOURCE #run
+        #public void run()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #scanMethods
+        #private void scanMethods(
+        #    TreeNode    _rootNode
+        #    )
+        #{
+        #    #AOT
+        #    #TokenTypes
+        #    #SysBPCheck
+        #    TreeNodeIterator        tableIterator;
+        #    TreeNodeTraverser       treeNodeTraverser;
+        #    TreeNode                currentNode;
+        #    SysScannerClass         sysScanner;
+        #    MemberFunction          memberFunction;
+        #    str                     scanStr;
+        #    Int                     symbol;
+        #
+        #    if (!_rootNode)
+        #    {
+        #        return;
+        #    }
+        #
+        #    try
+        #    {
+        #        tableIterator   = _rootNode.AOTiterator();
+        #        currentNode     = tableIterator.next();
+        #    }
+        #    catch
+        #    {
+        #        info(strFmt('Node is not accessible: %1', _rootNode.treeNodePath()));
+        #        exceptionTextFallThrough();
+        #    }
+        #
+        #    while (currentNode)
+        #    {
+        #        if (currentNode.AOTLayer() >= UtilEntryLevel::cus)
+        #        {
+        #            treeNodeTraverser = new TreeNodeTraverser(currentNode);
+        #
+        #            if (treeNodeTraverser)
+        #            {
+        #                while (treeNodeTraverser.next())
+        #                {
+        #                    memberFunction  = treeNodeTraverser.currentNode();
+        #
+        #                    if (memberFunction && memberFunction.AOTgetSource())
+        #                    {
+        #                        sysScanner      = new SysScannerClass(memberFunction);
+        #
+        #                        if (sysScanner.lines())
+        #                        {
+        #                            symbol = 1;
+        #
+        #                            while (symbol)
+        #                            {
+        #                                scanStr = sysScanner.string();
+        #
+        #                                if (symbol == #TextConstant)
+        #                                {
+        #                                    if (subStr(sysScanner.sourceLine(), sysScanner.startColumn(), 1) == #CharDoubleQuote
+        #                                    ||  subStr(sysScanner.sourceLine(), sysScanner.startColumn(), 1) == #CharSingleQuote) // double quote: User Interface text
+        #                                    {
+        #                                        if (!SysLabel::isLabelId(sysScanner.string())) // Method contains text constant
+        #                                        {
+        #                                            this.insertMethodFix(treeNodeTraverser.currentNode(), sysScanner.string(), sysScanner.line(), sysScanner.startColumn());
+        #                                        }
+        #
+        #                                    }
+        #                                }
+        #                                symbol = sysScanner.nextSymbol();
+        #                            }
+        #                        }
+        #                    }
+        #                }
+        #            }
+        #        }
+        #        currentNode = tableIterator.next();
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #scanTree
+        #private void scanTree(
+        #    TreeNode    _rootNode
+        #    )
+        #{
+        #    TreeNodeIterator        tableIterator;
+        #    TreeNodeTraverser       treeNodeTraverser;
+        #    TreeNode                currentNode;
+        #    UtilElementType         type;
+        #
+        #    #LOCALMACRO.CheckAOTProperty
+        #        if (findProperty(currentNode.AOTgetProperties(), %1))
+        #        {
+        #            this.insertFix(currentNode, %1);
+        #        }
+        #    #ENDMACRO
+        #
+        #    if (!_rootNode)
+        #    {
+        #        return;
+        #    }
+        #
+        #    try
+        #    {
+        #        tableIterator   = _rootNode.AOTiterator();
+        #        currentNode     = tableIterator.next();
+        #    }
+        #    catch
+        #    {
+        #        info(strFmt("Node is not accessible: %1", _rootNode.treeNodePath()));
+        #        exceptionTextFallThrough();
+        #    }
+        #
+        #    while (currentNode)
+        #    {
+        #        if (currentNode.AOTLayer() >= UtilEntryLevel::cus)
+        #        {
+        #            type = currentNode.utilElement().recordType;
+        #            switch (type)
+        #            {
+        #                //TODO:Parts Queries Services
+        #                case UtilElementType::ActionTool :
+        #                case UtilElementType::Resource :
+        #                case UtilElementType::SecDuty :
+        #                case UtilElementType::SecPolicy :
+        #                case UtilElementType::SecPrivilege :
+        #                case UtilElementType::SecProcessCycle :
+        #                case UtilElementType::SecRole :
+        #                case UtilElementType::SecurityKey :
+        #                case UtilElementType::DisplayTool :
+        #                case UtilElementType::ExtendedType :
+        #                case UtilElementType::ConfigurationKey :
+        #                case UtilElementType::Perspective :
+        #                case UtilElementType::Menu :
+        #                case UtilElementType::OutputTool :
+        #                case UtilElementType::TableField :
+        #                case UtilElementType::TableFieldGroup :
+        #                    #CheckAOTProperty(#PropertyLabel)
+        #                    #CheckAOTProperty(#PropertyHelp)
+        #                    #CheckAOTProperty(#PropertyHelpText)
+        #                    #CheckAOTProperty(#PropertyCollectionLabel)
+        #                    #CheckAOTProperty(#PropertyDescription)
+        #                    break;
+        #                case UtilElementType::Enum :
+        #                    #CheckAOTProperty(#PropertyLabel)
+        #                    #CheckAOTProperty(#PropertySingularLabel)
+        #                    #CheckAOTProperty(#PropertyHelp)
+        #                    #CheckAOTProperty(#PropertyHelpText)
+        #
+        #                    treeNodeTraverser    = new TreeNodeTraverser(TreeNode::findNode(currentNode.treeNodePath()));
+        #
+        #                    while (treeNodeTraverser.next())
+        #                    {
+        #                        currentNode = treeNodeTraverser.currentNode();
+        #                        #CheckAOTProperty(#PropertyLabel)
+        #                    }
+        #                    break;
+        #                case UtilElementType::Table :
+        #                case UtilElementType::TableMap :
+        #                case UtilElementType::ViewQuery :
+        #                    #CheckAOTProperty(#PropertyLabel)
+        #                    #CheckAOTProperty(#PropertySingularLabel)
+        #                    #CheckAOTProperty(#PropertyDeveloperDocumentation)
+        #
+        #                    this.scanTree(TreeNode::findNode(currentNode.treeNodePath() + #AOTDelimiter + 'Fields'));
+        #                    this.scanTree(TreeNode::findNode(currentNode.treeNodePath() + #AOTDelimiter + 'Field groups'));
+        #                    break;
+        #                case UtilElementType::Form :
+        #                    treeNodeTraverser    = new TreeNodeTraverser(TreeNode::findNode(currentNode.treeNodePath() + #AOTDelimiter + 'Designs\\Design'));
+        #
+        #                    while (treeNodeTraverser.next())
+        #                    {
+        #                        currentNode = treeNodeTraverser.currentNode();
+        #
+        #                        if (findProperty(currentNode.AOTgetProperties(), #PropertyName) || findProperty(currentNode.AOTgetProperties(), #PropertyCaption))
+        #                        {
+        #                            #CheckAOTProperty(#PropertyCaption)
+        #                            #CheckAOTProperty(#PropertyText)
+        #                            #CheckAOTProperty(#PropertyLabel)
+        #                            #CheckAOTProperty(#PropertyHelpText)
+        #                        }
+        #                    }
+        #                default :
+        #                    currentNode = tableIterator.next();
+        #                    continue;
+        #            }
+        #        }
+        #
+        #        currentNode = tableIterator.next();
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #main
+        #static void main(Args _args)
+        #{
+        #    WIK_LabelFixEngine      labelFixEngine = new WIK_LabelFixEngine();
+        #    labelFixEngine.run();
+        #}
+      ENDSOURCE
+      SOURCE #processTreeNode
+        #client static void processTreeNode(
+        #    WIK_LabelFix    _labelFix
+        #    )
+        #{
+        #    #File
+        #    #Properties
+        #    TreeNode                    treeNode        = TreeNode::findNode(_labelFix.TreeNodePath);
+        #    TreeNode                    rootNode        = SysTreeNode::getRootElement(treeNode);
+        #    SysVersionControllable      controllable    = rootNode ? SysTreeNode::newTreeNode(rootNode) : null;
+        #    SysVersionControlSystem     vcs             = versionControl.parmSysVersionControlSystem();
+        #    LanguageId                  languageId;
+        #    SysLabel                    sysLabel;
+        #    SysLabelEdit                sysLabelEdit;
+        #    Editor                      classEditor;
+        #    LabelType                   tmpLabel;
+        #
+        #    if (!controllable || _labelFix.LabelId == '***')
+        #    {
+        #        return;
+        #    }
+        #
+        #    languageId  = currentUserLanguage();
+        #    sysLabel    = new SysLabel(languageId);
+        #    sysLabelEdit    = new SysLabelEdit();
+        #
+        #    try
+        #    {
+        #        ttsBegin;
+        #        if (vcs.allowCreate(controllable))
+        #        {
+        #            // Can only assert IO permission on client-side
+        #            vcs.commandAdd(controllable);
+        #        }
+        #        else if (vcs.allowCheckOut(controllable))
+        #        {
+        #            vcs.commandCheckOut(controllable);
+        #        }
+        #
+        #        if (!_labelFix.LabelId)
+        #        {
+        #            tmpLabel = sysLabelEdit.findLabel(
+        #                languageId,
+        #                SysLabel::seachStringBuildExactStr(
+        #                    SysLabel::searchStringBuildSpecialCharString(_labelFix.LabelString)));
+        #
+        #            _labelFix.LabelId = tmpLabel ? tmpLabel :
+        #                sysLabelEdit.labelInsert(languageId, _labelFix.LabelString, '', SysLabelApplModule::None, 'WIK');
+        #        }
+        #
+        #        if (_labelFix.LabelId)
+        #        {
+        #            switch (_labelFix.LabelType)
+        #            {
+        #                case WIK_LabelType::Label :
+        #                    treeNode.AOTsetProperty(#PropertyLabel, _labelFix.LabelId);
+        #                    break;
+        #                case WIK_LabelType::Description :
+        #                    treeNode.AOTsetProperty(#PropertyDescription, _labelFix.LabelId);
+        #                    break;
+        #                case WIK_LabelType::SingularLabel :
+        #                    treeNode.AOTsetProperty(#PropertySingularLabel, _labelFix.LabelId);
+        #                    break;
+        #                case WIK_LabelType::DeveloperDocumentation :
+        #                    treeNode.AOTsetProperty(#PropertyDeveloperDocumentation, _labelFix.LabelId);
+        #                    break;
+        #                case WIK_LabelType::Help :
+        #                    treeNode.AOTsetProperty(#PropertyHelp, _labelFix.LabelId);
+        #                    break;
+        #                case WIK_LabelType::HelpText :
+        #                    treeNode.AOTsetProperty(#PropertyHelpText, _labelFix.LabelId);
+        #                    break;
+        #                case WIK_LabelType::AnalysisLabel :
+        #                    treeNode.AOTsetProperty(#PropertyAnalysisLabel, _labelFix.LabelId);
+        #                    break;
+        #                case WIK_LabelType::CollectionLabel :
+        #                    treeNode.AOTsetProperty(#PropertyCollectionLabel, _labelFix.LabelId);
+        #                    break;
+        #                case WIK_LabelType::Caption :
+        #                    treeNode.AOTsetProperty(#PropertyCaption, _labelFix.LabelId);
+        #                    break;
+        #                case WIK_LabelType::Text :
+        #                    treeNode.AOTsetProperty(#PropertyText, _labelFix.LabelId);
+        #                    break;
+        #                case WIK_LabelType::MethodText:
+        #                    classEditor = Editor::open(_labelFix.TreeNodePath);
+        #                    classEditor.gotoLine(_labelFix.LineNum);
+        #                    classEditor.gotoCol(_labelFix.ColumnNum);
+        #                    classEditor.replace(_labelFix.LabelString, _labelFix.LabelId, false);
+        #
+        #                    classEditor.gotoCol(_labelFix.ColumnNum - 1);
+        #                    if (classEditor.search("'"))
+        #                    {
+        #                        classEditor.replace("'",'"', false);
+        #                        classEditor.gotoCol(_labelFix.ColumnNum + strLen(_labelFix.LabelId));
+        #                        classEditor.replace("'",'"', false);
+        #                    }
+        #                    break;
+        #            }
+        #            rootNode.AOTsave();
+        #            _labelFix.selectForUpdate(true);
+        #            _labelFix.delete();
+        #            rootNode.AOTrefresh();
+        #        }
+        #        ttsCommit;
+        #    }
+        #    catch
+        #    {
+        #        exceptionTextFallThrough();
+        #    }
+        #
+        #    CodeAccessPermission::revertAssert();
+        #}
+      ENDSOURCE
+      SOURCE #scanTreeStatic
+        #public static void scanTreeStatic(
+        #    TreeNode    _rootNode
+        #    )
+        #{
+        #    #Properties
+        #
+        #    TreeNodeTraverser       treeNodeTraverser;
+        #    TreeNode                currentNode;
+        #    UtilElementType         type;
+        #    LanguageId              languageIdDB = strReplace(currentUserLanguage(), '-', '_');
+        #
+        #    void insertFix(
+        #        TreeNode    _treeNode,
+        #        str         _aotProperty
+        #        )
+        #    {
+        #        WIK_LabelFix            labelFix;
+        #        anytype                 labelTxt;
+        #        SysLabelEdit            label = new SysLabelEdit();
+        #        SysModelElementLabel    modelLabel;
+        #
+        #        labelTxt    = _treeNode.AOTgetProperty(_aotProperty);
+        #        if (strLen(labelTxt) > 0
+        #            && subStr(labelTxt, 1, 1) != @'@')
+        #        {
+        #            try
+        #            {
+        #                labelFix.clear();
+        #                labelFix.TreenodePath   = _treeNode.treeNodePath();
+        #                labelFix.LabelString    = labelTxt;
+        #                switch (_aotProperty)
+        #                {
+        #                    case #PropertyLabel :
+        #                        labelFix.LabelType      = WIK_LabelType::Label;
+        #                        break;
+        #                    case #PropertyDescription :
+        #                        labelFix.LabelType      = WIK_LabelType::Description;
+        #                        break;
+        #                    case #PropertySingularLabel :
+        #                        labelFix.LabelType      = WIK_LabelType::SingularLabel;
+        #                        break;
+        #                    case #PropertyDeveloperDocumentation :
+        #                        labelFix.LabelType      = WIK_LabelType::DeveloperDocumentation;
+        #                        break;
+        #                    case #PropertyHelp :
+        #                        labelFix.LabelType      = WIK_LabelType::Help;
+        #                        break;
+        #                    case #PropertyHelpText :
+        #                        labelFix.LabelType      = WIK_LabelType::HelpText;
+        #                        break;
+        #                    case #PropertyAnalysisLabel :
+        #                        labelFix.LabelType      = WIK_LabelType::AnalysisLabel;
+        #                        break;
+        #                    case #PropertyCollectionLabel :
+        #                        labelFix.LabelType      = WIK_LabelType::CollectionLabel;
+        #                        break;
+        #                    case #PropertyCaption :
+        #                        labelFix.LabelType      = WIK_LabelType::Caption;
+        #                        break;
+        #                    case #PropertyText :
+        #                        labelFix.LabelType      = WIK_LabelType::Text;
+        #                        break;
+        #                }
+        #                select count(RecId) from modelLabel
+        #                    where modelLabel.Text == labelTxt
+        #                        && modelLabel.Language == languageIdDB;
+        #                labelFix.LabelId        = modelLabel.RecId > 1 ? '***' : modelLabel.RecId == 1 ? (select firstOnly LabelId from SysModelElementLabel
+        #                    where SysModelElementLabel.Text == labelTxt
+        #                        && SysModelElementLabel.Language == languageIdDB).LabelId : '';//Label.findLabel(currentUserLanguage(), labelTxt);
+        #                labelFix.doInsert();
+        #            }
+        #            catch
+        #            {
+        #                exceptionTextFallThrough();
+        #            }
+        #        }
+        #    }
+        #
+        #    #LOCALMACRO.CheckAOTProperty
+        #        if (findProperty(currentNode.AOTgetProperties(), %1))
+        #        {
+        #            insertFix(currentNode, %1);
+        #        }
+        #    #ENDMACRO
+        #
+        #    if (!_rootNode)
+        #    {
+        #        return;
+        #    }
+        #
+        #    currentNode     = _rootNode;
+        #
+        #    if (currentNode.AOTLayer() >= UtilEntryLevel::cus)
+        #    {
+        #        type = currentNode.utilElement().recordType;
+        #        switch (type)
+        #        {
+        #            //TODO:Parts Queries Services
+        #            case UtilElementType::ActionTool :
+        #            case UtilElementType::Resource :
+        #            case UtilElementType::SecDuty :
+        #            case UtilElementType::SecPolicy :
+        #            case UtilElementType::SecPrivilege :
+        #            case UtilElementType::SecProcessCycle :
+        #            case UtilElementType::SecRole :
+        #            case UtilElementType::SecurityKey :
+        #            case UtilElementType::DisplayTool :
+        #            case UtilElementType::ExtendedType :
+        #            case UtilElementType::Menu :
+        #            case UtilElementType::OutputTool :
+        #            case UtilElementType::TableField :
+        #            case UtilElementType::TableFieldGroup :
+        #                #CheckAOTProperty(#PropertyLabel)
+        #                #CheckAOTProperty(#PropertyHelp)
+        #                #CheckAOTProperty(#PropertyHelpText)
+        #                #CheckAOTProperty(#PropertyCollectionLabel)
+        #                #CheckAOTProperty(#PropertyDescription)
+        #                break;
+        #            case UtilElementType::Table :
+        #            case UtilElementType::TableMap :
+        #            case UtilElementType::ViewQuery :
+        #                #CheckAOTProperty(#PropertyLabel)
+        #                #CheckAOTProperty(#PropertySingularLabel)
+        #                #CheckAOTProperty(#PropertyDeveloperDocumentation)
+        #
+        #                WIK_LabelFixEngine::scanTreeStatic(TreeNode::findNode(currentNode.treeNodePath() + #AOTDelimiter + 'Fields'));
+        #                WIK_LabelFixEngine::scanTreeStatic(TreeNode::findNode(currentNode.treeNodePath() + #AOTDelimiter + 'Field groups'));
+        #                break;
+        #            case UtilElementType::Enum :
+        #                #CheckAOTProperty(#PropertyLabel)
+        #                #CheckAOTProperty(#PropertySingularLabel)
+        #                #CheckAOTProperty(#PropertyHelp)
+        #                #CheckAOTProperty(#PropertyHelpText)
+        #                treeNodeTraverser    = new TreeNodeTraverser(TreeNode::findNode(currentNode.treeNodePath()));
+        #
+        #                while (treeNodeTraverser.next())
+        #                {
+        #                    currentNode = treeNodeTraverser.currentNode();
+        #                    #CheckAOTProperty(#PropertyLabel)
+        #                }
+        #                break;
+        #            case UtilElementType::Form :
+        #                treeNodeTraverser    = new TreeNodeTraverser(TreeNode::findNode(currentNode.treeNodePath() + #AOTDelimiter + 'Designs\\Design'));
+        #
+        #                while (treeNodeTraverser.next())
+        #                {
+        #                    currentNode = treeNodeTraverser.currentNode();
+        #
+        #                    if (findProperty(currentNode.AOTgetProperties(), #PropertyName) || findProperty(currentNode.AOTgetProperties(), #PropertyCaption))
+        #                    {
+        #                        #CheckAOTProperty(#PropertyCaption)
+        #                        #CheckAOTProperty(#PropertyText)
+        #                        #CheckAOTProperty(#PropertyLabel)
+        #                        #CheckAOTProperty(#PropertyHelpText)
+        #                    }
+        #                }
+        #            default :
+        #        }
+        #    }
+        #
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: PRN
+
+; Microsoft Dynamics AX Project : WIK_LabelFix unloaded
+; --------------------------------------------------------------------------------
+  PROJECTVERSION 2
+  
+  PROJECT #WIK_LabelFix
+  PRIVATE
+  PROPERTIES
+    Name                #WIK_LabelFix
+    Origin              #{18A8EAE3-3CD2-4992-8810-2B361C350BCE}
+  ENDPROPERTIES
+  
+    PROJECTCLASS ProjectNode
+    BEGINNODE
+      FILETYPE 0
+      UTILTYPE 44
+      UTILOBJECTID 114055
+      NODETYPE 204
+      NAME #WIK_LabelFix
+    ENDNODE
+    BEGINNODE
+      FILETYPE 0
+      UTILTYPE 40
+      UTILOBJECTID 103633
+      NODETYPE 209
+      NAME #WIK_LabelType
+    ENDNODE
+    BEGINNODE
+      FILETYPE 0
+      UTILTYPE 11
+      UTILOBJECTID 0
+      NODETYPE 201
+      NAME #WIK_LabelFix
+    ENDNODE
+    BEGINNODE
+      FILETYPE 0
+      UTILTYPE 45
+      UTILOBJECTID 1046919
+      NODETYPE 329
+      NAME #WIK_LabelFixEngine
+    ENDNODE
+  ENDPROJECT
+  
+
+***Element: END
