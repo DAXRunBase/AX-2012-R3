@@ -1,0 +1,135 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_GDPR_enable_roles unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_GDPR_enable_roles
+    #static void WIK_GDPR_enable_roles(Args _args)
+    #{
+    #    #AOT
+    #
+    #    // List of tables which might contain sensitive data
+    #    container           tables = [
+    #        [menuitemDisplayStr(CustTable), UtilElementType::DisplayTool]
+    #        ,[menuitemDisplayStr(CustTableListPage), UtilElementType::DisplayTool]
+    #        ,[menuitemDisplayStr(CustTableEdit), UtilElementType::DisplayTool]
+    #        ,[menuitemDisplayStr(CustTableDetails), UtilElementType::DisplayTool]
+    #        ,[menuitemDisplayStr(GlobalAddressBookListPage), UtilElementType::DisplayTool]
+    #        ,[menuitemDisplayStr(DirPartyTable), UtilElementType::DisplayTool]
+    #        ,[menuitemDisplayStr(DirPartyTableEdit), UtilElementType::DisplayTool]
+    #        ];
+    #
+    #    // Append role settings?
+    #    boolean                 update = NoYes::Yes;
+    #
+    #    UtilElementType         objectType;
+    #    str                     objectName;
+    #    int                     i = 1;
+    #    SysSecFlatDataTable     objects;
+    #    SysSecFlatDataTable     allObjects;
+    #    SysUserLogRoleSettings  roleSettings;
+    #    SecurityRole            securityRole;
+    #
+    #    allObjects.setTmp();
+    #
+    #    while (i <= conLen(tables))
+    #    {
+    #        objectName = conPeek(conPeek(tables, i), 1);
+    #        objectType = conPeek(conPeek(tables, i), 2);
+    #
+    #        switch (objectType)
+    #        {
+    #            // Implemented from \Forms\SysSecObjectsInRole\init
+    #            case UtilElementType::DisplayTool:
+    #                SysSecObjectsFromEntryPoint::GenerateData(
+    #                    SysSecObjectsAnalyzeType::SecViewRelatedRoles,
+    #                    objectName,
+    #                    enum2int(objectType));
+    #                break;
+    #
+    #            case UtilElementType::OutputTool:
+    #                SysSecObjectsFromEntryPoint::GenerateData(
+    #                    SysSecObjectsAnalyzeType::SecViewRelatedRoles,
+    #                    objectName,
+    #                    enum2int(objectType));
+    #                break;
+    #
+    #            case UtilElementType::ActionTool:
+    #                SysSecObjectsFromEntryPoint::GenerateData(
+    #                    SysSecObjectsAnalyzeType::SecViewRelatedRoles,
+    #                    objectName,
+    #                    enum2int(objectType));
+    #                break;
+    #
+    #            case UtilElementType::Table:
+    #                SysSecObjectsFromSecurableObject::GenerateData(
+    #                    objectName,
+    #                    enum2int(objectType));
+    #                break;
+    #        }
+    #
+    #        while select objects
+    #        {
+    #            allObjects.clear();
+    #            buf2Buf(objects, allObjects);
+    #            allObjects.doInsert();
+    #        }
+    #
+    #        i++;
+    #    }
+    #
+    #    if (update)
+    #    {
+    #        i = 0;
+    #        ttsBegin;
+    #
+    #        update_recordSet roleSettings
+    #            setting HasAccessToSensitiveData = NoYes::No;
+    #
+    #        // No join for Tmp object, must use nested loop
+    #        while select allObjects
+    #            group by Role//, IsOverride
+    #            where allObjects.IsOverride    == NoYes::No
+    #                && ((allObjects.AccessRight != AccessRight::View && allObjects.AccessRight != AccessRight::NoAccess)
+    #                    && (allObjects.EntryPointAccess !=  AccessRight::View && allObjects.EntryPointAccess != AccessRight::NoAccess))
+    #        {
+    #            select firstOnly forUpdate roleSettings
+    #                join RecId from securityRole
+    #                    where  securityRole.AotName      == allObjects.Role
+    #                        && roleSettings.SecurityRole == securityRole.RecId;
+    #
+    #            if (roleSettings)
+    #            {
+    #                roleSettings.HasAccessToSensitiveData = NoYes::Yes;
+    #                roleSettings.doUpdate();
+    #                i++;
+    #            }
+    #        }
+    #
+    #        ttsCommit;
+    #
+    #        info(strFmt('%1 security roles have been updated', i));
+    #    }
+    #
+    #    while select Role, RoleName
+    #        from allObjects
+    #        group by RoleName, Role//, AccessRight, EntryPointAccess
+    #        where allObjects.IsOverride     == NoYes::No
+    #            && ((allObjects.AccessRight != AccessRight::View && allObjects.AccessRight != AccessRight::NoAccess)
+    #                && (allObjects.EntryPointAccess !=  AccessRight::View && allObjects.EntryPointAccess != AccessRight::NoAccess))
+    #    {
+    #        info(strFmt('%1 (%2)', allObjects.Role, allObjects.RoleName));
+    #    }
+    #}
+    #
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{ABF030A1-5290-4B27-9F1D-03BE136F8121}
+  ENDPROPERTIES
+  
+
+***Element: END
