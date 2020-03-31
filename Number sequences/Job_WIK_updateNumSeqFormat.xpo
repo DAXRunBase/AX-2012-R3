@@ -1,0 +1,101 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: WIK_updateNumSeqFormat unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #WIK_updateNumSeqFormat
+    #static void WIK_updateNumSeqFormat(Args _args)
+    #{
+    #    // SET THESE PARAMETER VALUES -->
+    #    #define.NumberSequenceToUpdate('SalesOrder')
+    #    /*
+    #        Alphanumeric format value   =   -2
+    #        Constant format value       =   -1
+    #        Company format value        =   0
+    #    */
+    #    container               newFormat =
+    #        [
+    #            [-2, '#####'],
+    #            [-1, 'SO20A']
+    #        ];
+    #    // SET THESE PARAMETER VALUES <--
+    #
+    #    #OCCRetryCount
+    #    #define.SleepTime(100)
+    #    container               currentFormat;
+    #    NumberSequenceTable     numberSequenceTable;
+    #    str                     annotatedFormat;
+    #    str                     format;
+    #
+    #    currentFormat = NumberSeq::parseAnnotatedFormat(numberSequenceTable.AnnotatedFormat);
+    #
+    #    try
+    #    {
+    #        ttsBegin;
+    #
+    #        numberSequenceTable = NumberSequenceTable::findByNaturalKey(
+    #            #NumberSequenceToUpdate,
+    #            NumberSeqScopeFactory::createDefaultScope().getId(),
+    #            true
+    #            );
+    #
+    #        if (!numberSequenceTable)
+    #        {
+    #            throw error(Error::missingRecord(tableStr(NumberSequenceTable)));
+    #        }
+    #
+    #        annotatedFormat = NumberSeq::createAnnotatedFormatFromSegments(newFormat);
+    #        format = NumberSeq::createAnnotatedFormatFromSegments(newFormat, false);
+    #
+    #        numberSequenceTable.selectForUpdate(true);
+    #        numberSequenceTable.AnnotatedFormat = annotatedFormat;
+    #        numberSequenceTable.Format          = format;
+    #        numberSequenceTable.NextRec         = 1;
+    #        info(strFmt('Updating number sequence %1 format %2 -> format %3',
+    #            numberSequenceTable.NumberSequence,
+    #            numberSequenceTable.orig().Format,
+    #            numberSequenceTable.Format
+    #            ));
+    #        numberSequenceTable.update();
+    #
+    #        ttsCommit;
+    #    }
+    #    catch (Exception::Deadlock)
+    #    {
+    #        sleep(#SleepTime);
+    #        retry;
+    #    }
+    #    catch (Exception::UpdateConflict)
+    #    {
+    #        if (appl.ttsLevel() == 0)
+    #        {
+    #            if (xSession::currentRetryCount() >= #RetryNum)
+    #            {
+    #                throw Exception::UpdateConflictNotRecovered;
+    #            }
+    #            else
+    #            {
+    #                retry;
+    #            }
+    #        }
+    #        else
+    #        {
+    #            throw Exception::UpdateConflict;
+    #        }
+    #    }
+    #    catch
+    #    {
+    #        exceptionTextFallThrough();
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{5B6DD52C-4DAA-4C40-993B-075A9474048E}
+  ENDPROPERTIES
+  
+
+***Element: END
